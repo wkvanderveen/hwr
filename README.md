@@ -2,11 +2,12 @@
 Repository for the Handwriting Recognition course, 2019
 
 Planning:
+* April 18-25:
+  - Segmentation: Tomas & Robert
+  - Test YOLO implementation: Ruben
+  - Data augmentation: Emile & Werner
 
-Segmentation: Ruben
-Binarization: Tomas
-Neural Network: Werner & Emile
-Statistics: Roberts
+
 
 
 Deadlines:
@@ -17,3 +18,4 @@ June 30: Hand in final report
 
 
 Article list (for the report references):
+https://github.com/YunYang1994/tensorflow-yolov3
