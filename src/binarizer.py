@@ -59,6 +59,13 @@ class Binarizer:
 		return cv2.dilate(img, se, iterations = 1)
 
 	def apply_mask(self, img):
+		'''
+		Creates a mask from the image to segement out the backgroud. 
+		Uses Otsu to create thresholds to use when the mask is applied.
+		Outputs a binarized image.
+		Works best with bw images (not binarized)
+		'''
+
 		mask = b.dilate(img, 20)
 		mask = b.erode(mask, 20)
 		(y_max, x_max) = np.shape(img)
@@ -69,11 +76,6 @@ class Binarizer:
 		for y in range(y_max):
 			for x in range(x_max):
 				img_out[y][x] = 255 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 0
-		
-		# for y in range(y_max):
-		# 	for x in range(x_max):
-		# 		img[y][x] = 255 if (img[y][x] < img_thres and img[y][x] > mask_thres) else 0
-
 		return img_out
 
 	def compare_imgs(self, col_img, bw_img):
@@ -102,9 +104,28 @@ class Binarizer:
 			y_hist[idx] = np.sum(img[idx, :]) / 255
 
 		for idx in range(x_max):
-			x_hist[idx] = np.sum(img[idx, :]) / 255
+			x_hist[idx] = np.sum(img[:, idx]) / 255
 
 		return (y_hist, x_hist)
+
+	def crop_img_hist(self, img, y_hist, x_hist):
+		'''
+		Uses the previously computed histograms to crop the image
+		Assumes the scroll is centered (it often is)
+		'''
+		(y_max, x_max) = np.shape(img)
+
+		center_y = uint8(y_max/2)
+		center_x = uint8(x_max/2)
+		left = 0
+		right = x_max
+		top = 0
+		bot = y_max
+
+		for idx in range(center_x, 1, x_max):
+			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx-2]:
+				pass
+				#left here
 
 
 
@@ -152,21 +173,39 @@ if __name__ == '__main__':
 
 	# bw_img = b.binarize_otsu(bw_img)
 
+	# ### working example
+	# img = b.apply_mask(bw_img)
+	# img = b.dilate(img, 2)
+	# img = b.dilate(img, 2)
+	# img = b.erode(img, 2)
 
-	# img = b.binarize_simple(bw_img, 100)
-	img = b.apply_mask(bw_img)
-	img = b.dilate(img, 2)
-	img = b.dilate(img, 2)
-	img = b.erode(img, 2)
+	# img = b.erode(img, 4)
+	# img = b.dilate(img, 4)
+	# ### end example
 
-	img = b.erode(img, 4)
-	img = b.dilate(img, 4)
+	img = b.binarize_otsu(bw_img)
+	(y_hist, x_hist) = b.get_hist_bin_img(img)
 
+
+	##convolve histograms with gaussian difference filter
+	s, m = 2, 5
+	denom = np.sqrt(2*np.pi*s*s)
+	gauss = [np.exp(-z*z/(2*s*s))/denom for z in range(-m, m+1)] 
+	window = np.convolve(gauss, [1, -1])
+	y_hist_conv = np.convolve(y_hist, window)
+
+
+	print(y_hist_conv, max(y_hist_conv))
+
+	print(sum(y_hist_conv != 0))
+
+	print(len(y_hist), len(y_hist_conv))
+	# print(x_hist, max(x_hist))
 
 
 
 	# img_besides = np.concatenate((img, alt_img), axis=1)
 
-	cv2.imshow('img', img)
-	cv2.waitKey(0)
-	cv2.imwrite(join(path, 'img_out.png'), img)
+	# cv2.imshow('img', img)
+	# cv2.waitKey(0)
+	# cv2.imwrite(join(path, 'img_out.png'), img)
