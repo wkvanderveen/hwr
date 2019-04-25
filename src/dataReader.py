@@ -12,7 +12,7 @@ class DataReader:
 		self.path = '../../data/letters/' #define path of example letter images
 		self.save_path = '../../data/'
 		self.save_file = self.save_path + "letters"
-		self.threshold = 200 
+		self.threshold = 200
 
 	def read_letters(self):
 		letters = []
@@ -23,7 +23,7 @@ class DataReader:
 				img_path = sub_path+'/'+sub_file
 				#print(img_path)
 				letters.append(plt.imread(img_path))
-		letters = self.binarize_images(np.array(letters))
+		letters = np.array(letters)
 		print("Number of letters found in dataset:", letters.shape)
 		np.save(self.save_file, letters)
 		print("Letters saved as npy file: ", self.save_file)

@@ -58,7 +58,30 @@ class Binarizer:
 		se = np.ones((se_size, se_size), np.uint8)
 		return cv2.dilate(img, se, iterations = 1)
 
+	def apply_mask(self, img):
+		mask = b.dilate(img, 20)
+		mask = b.erode(mask, 20)
+		(y_max, x_max) = np.shape(img)
+		img_thres = mahotas.thresholding.otsu(img) #create otsu threshold
+		mask_thres = mahotas.thresholding.otsu(mask) #create otsu threshold
 
+		for y in range(y_max):
+			for x in range(x_max):
+				img[y][x] = 255 if img[y][x] < img_thres and mask[y][x] > mask_thres else 0
+		return img
+
+	def compare_imgs(self, col_img, bw_img):
+		img = np.zeros(np.shape(bw_img)) #alloc memory
+		(y_max, x_max) = np.shape(bw_img)
+		for y in range(y_max):
+			for x in range(x_max):
+				if bw_img[y][x] == col_img[y][x][0] and \
+					bw_img[y][x] == col_img[y][x][1] and \
+					bw_img[y][x] == col_img[y][x][2]:
+					img[y][x] = 255
+				else:
+					img[y][x] = bw_img[y][x]
+		return img
 
 
 
@@ -90,16 +113,31 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	img = cv2.imread(join(path, 'test_img.jpg'))
+	# col_img = cv2.imread(join(path, 'test_img.jpg'))
+	col_img = cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01.jpg'))
+	bw_img =  cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01-fused.jpg'))
+	print(np.shape(bw_img))
+	print(np.shape(col_img))
+	
 
-	img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY) #convert to grayscale
-	#print(np.shape(img))
+	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
-	alt_img = b.open(img, 2)
-	alt_img = b.erode(alt_img, 5)
-	alt_img = b.binarize_simple(alt_img, 180)
+	img = b.compare_imgs(col_img, bw_img)
 
-	img_besides = np.concatenate((img, alt_img), axis=1)
 
-	cv2.imshow('img', alt_img)
+	# img = b.apply_mask(img)
+	# img = b.dilate(img, 2)
+	# img = b.dilate(img, 2)
+	# img = b.erode(img, 2)
+
+	# img = b.erode(img, 4)
+	# img = b.dilate(img, 4)
+
+
+
+
+	# img_besides = np.concatenate((img, alt_img), axis=1)
+
+	cv2.imshow('img', img)
 	cv2.waitKey(0)
+	cv2.imwrite(join(path, 'img_out.png'), img)
