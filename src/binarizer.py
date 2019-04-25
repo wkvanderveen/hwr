@@ -64,11 +64,17 @@ class Binarizer:
 		(y_max, x_max) = np.shape(img)
 		img_thres = mahotas.thresholding.otsu(img) #create otsu threshold
 		mask_thres = mahotas.thresholding.otsu(mask) #create otsu threshold
+		img_out = np.zeros((y_max, x_max)) #alloc memory
 
 		for y in range(y_max):
 			for x in range(x_max):
-				img[y][x] = 255 if img[y][x] < img_thres and mask[y][x] > mask_thres else 0
-		return img
+				img_out[y][x] = 255 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 0
+		
+		# for y in range(y_max):
+		# 	for x in range(x_max):
+		# 		img[y][x] = 255 if (img[y][x] < img_thres and img[y][x] > mask_thres) else 0
+
+		return img_out
 
 	def compare_imgs(self, col_img, bw_img):
 		img = np.zeros(np.shape(bw_img)) #alloc memory
@@ -82,6 +88,26 @@ class Binarizer:
 				else:
 					img[y][x] = bw_img[y][x]
 		return img
+
+	def get_hist_bin_img(self, img, dim = 0):
+		'''
+		Bins the amount of 255 pixels in rows and columns, then returns the histograms
+		This function expects a binarized image
+		'''
+		(y_max, x_max) = np.shape(img)
+		y_hist = np.zeros(y_max)
+		x_hist = np.zeros(x_max)
+
+		for idx in range(y_max):
+			y_hist[idx] = np.sum(img[idx, :]) / 255
+
+		for idx in range(x_max):
+			x_hist[idx] = np.sum(img[idx, :]) / 255
+
+		return (y_hist, x_hist)
+
+
+
 
 
 
@@ -113,25 +139,28 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	# col_img = cv2.imread(join(path, 'test_img.jpg'))
-	col_img = cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01.jpg'))
-	bw_img =  cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01-fused.jpg'))
-	print(np.shape(bw_img))
-	print(np.shape(col_img))
+	col_img = cv2.imread(join(path, 'test_img.jpg'))
+	# col_img = cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01.jpg'))
+	# bw_img =  cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01-fused.jpg'))
+	# print(np.shape(bw_img))
+	# print(np.shape(col_img))
 	
 
-	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
+	bw_img = cv2.cvtColor(col_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
-	img = b.compare_imgs(col_img, bw_img)
+	# # img = b.compare_imgs(col_img, bw_img)
+
+	# bw_img = b.binarize_otsu(bw_img)
 
 
-	# img = b.apply_mask(img)
-	# img = b.dilate(img, 2)
-	# img = b.dilate(img, 2)
-	# img = b.erode(img, 2)
+	# img = b.binarize_simple(bw_img, 100)
+	img = b.apply_mask(bw_img)
+	img = b.dilate(img, 2)
+	img = b.dilate(img, 2)
+	img = b.erode(img, 2)
 
-	# img = b.erode(img, 4)
-	# img = b.dilate(img, 4)
+	img = b.erode(img, 4)
+	img = b.dilate(img, 4)
 
 
 
