@@ -11,6 +11,7 @@ from os.path import join, abspath
 import os
 import numpy as np
 import skimage
+import matplotlib.pyplot as plt
 
 class Binarizer:
 	def __init__(self):
@@ -91,7 +92,7 @@ class Binarizer:
 					img[y][x] = bw_img[y][x]
 		return img
 
-	def get_hist_bin_img(self, img, dim = 0):
+	def get_hist_bin_img(self, img):
 		'''
 		Bins the amount of 255 pixels in rows and columns, then returns the histograms
 		This function expects a binarized image
@@ -110,11 +111,11 @@ class Binarizer:
 
 	def crop_img_hist(self, img, y_hist, x_hist):
 		'''
-		Uses the previously computed histograms to crop the image
+		Uses histograms to crop the image
 		Assumes the scroll is centered (it often is)
 		'''
 		(y_max, x_max) = np.shape(img)
-
+		(y_hist, x_hist) = self.get_hist_bin_img(img)
 		center_y = uint8(y_max/2)
 		center_x = uint8(x_max/2)
 		left = 0
@@ -122,10 +123,37 @@ class Binarizer:
 		top = 0
 		bot = y_max
 
-		for idx in range(center_x, 1, x_max):
-			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx-2]:
-				pass
-				#left here
+		#calculate bounds
+
+		for idx in range(center_x, x_max - 1, 1): #loop from center to right of image, step size = 1
+			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
+				right = idx
+				break
+
+		for idx in range(center_x, 0 + 1, -1): #loop from center to left of image,step size = -1
+			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
+				left = idx
+				break
+
+		for idx in range(center_y, y_max + 1, -1): #loop from center to left of image,step size = -1
+			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
+				top = idx
+				break
+
+		for idx in range(center_y, 0 + 1, -1): #loop from center to left of image,step size = -1
+			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
+				bot = idx
+				break
+
+		print('l, r, t, b, centerx, centery', left, right, top, bot, center_x, center_y)
+		return img[bot:top, left:right]
+
+
+
+
+
+
+				
 
 
 
@@ -194,6 +222,12 @@ if __name__ == '__main__':
 	window = np.convolve(gauss, [1, -1])
 	y_hist_conv = np.convolve(y_hist, window)
 
+	plt.figure(1)
+	plt.subplot(211)
+	plt.plot(y_hist)
+	plt.subplot(212)
+	plt.plot(y_hist_conv)
+	plt.show()
 
 	print(y_hist_conv, max(y_hist_conv))
 
