@@ -153,7 +153,7 @@ def resize_image_correct_bbox(image, boxes, image_h, image_w):
 
 
 def draw_boxes(image, boxes, scores, labels, classes, detection_size,
-               font='./data/font/FiraMono-Medium.otf', show=True):
+               font='./font/FiraMono-Medium.otf', show=True):
     """
     :param boxes, shape of  [num, 4]
     :param scores, shape of [num, ]
@@ -182,6 +182,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
         draw.rectangle([tuple(text_origin), tuple(text_origin+text_size)], fill=colors[labels[i]])
         # # draw bbox
         draw.text(tuple(text_origin), bbox_text, fill=(0,0,0), font=font)
+        print(text_origin, bbox_text)
 
     image.show() if show else None
     return image
