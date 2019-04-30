@@ -19,10 +19,10 @@ import os
 
 
 IMAGE_H, IMAGE_W = 32, 32
-classes = os.listdir('../../data/augmented/letters/')
+classes = os.listdir('../../data/test/')
 num_classes = len(classes)
 
-image_path = "../../data/augmented/letters/Dalet/Dalet21-ORIG.jpeg"
+image_path = "../../data/train/navis-QIrug-Qumran_extr09_0709-line-006-y1=602-y2=818-zone-HUMAN-x=0527-y=0119-w=0037-h=0050-ybas=0148-nink=855-segm=COCOS5cocos.jpg"
 img = Image.open(image_path)
 img_resized = np.array(img.resize(size=(IMAGE_W, IMAGE_H)), dtype=np.float32)
 img_resized = img_resized / 255.
