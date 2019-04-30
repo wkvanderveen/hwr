@@ -40,12 +40,15 @@ def data_augmenter():
 
     # loop over the input images
     j = 0
+    img_h, img_w = 32, 32
     for imagePath in imagePaths:
         # load the image, pre-process it, and store it in the data list
         image = cv2.imread(imagePath)
+        image = cv2.resize(image, (img_w, img_h))
 
         while (True):
             if STATE == ORIGINAL_IMAGE:
+                cv2.imwrite(imagePath, image)
                 increment_state()
                 continue
 
@@ -75,17 +78,16 @@ def data_augmenter():
 def generateTextLabels():
     sets = ["../../data/test", "../../data/train"]
 
-    f = open("../../data/dataset.txt", "w+")
-    f = open("../../data/anchors.txt", "w+")
-
     img_h, img_w = 32, 32
 
-    def write_to_dataset(path, x1, x2, y1, y2, c):
-        with open("../../data/dataset.txt", "a") as filename:
+    def write_to_dataset(type, path, x1, x2, y1, y2, c):
+        with open("../../data/dataset_{}.txt".format(type), "a") as filename:
             print(f"{path} {x1 - 1} {x2 - 1} {y1} {y2} {c - 1}", file=filename)
 
     for set in sets:
         for root, dirs, files in os.walk(set):
+            type = os.path.split(set)[1]
+
             if dirs:
                 idx = 0
                 num_letters = len(dirs)
@@ -96,7 +98,7 @@ def generateTextLabels():
             print("Processing letter {} ({}/{})...".format(letter, idx, num_letters))
 
             for name in files:
-                write_to_dataset(os.path.join(root, name), 0, 0, img_w, img_h, idx)
+                write_to_dataset(type, os.path.join(root, name), 0, 0, img_w, img_h, idx)
 
 
 data_augmenter()

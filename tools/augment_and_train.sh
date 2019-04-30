@@ -1,11 +1,10 @@
 # Before running, ensure that the data folder only contains the "letters" data (with subfolders for each letter)
 
 # Create augmented dataset from original data, and anchors and labels
-python3 augment_data.py
+python3 split.py
+python3 data_augmenter.py
 
 # Convert augmented data into large .tfrecord files. Creates train and test folders.
-cat ../../data/dataset.txt | head -n  55000 > ../../data/dataset_train.txt
-cat ../../data/dataset.txt | tail -n +55001 > ../../data/dataset_test.txt
 python3 core/convert_tfrecord.py --dataset_txt ../../data/dataset_train.txt --tfrecord_path_prefix ../../data/dataset_train
 python3 core/convert_tfrecord.py --dataset_txt ../../data/dataset_test.txt  --tfrecord_path_prefix ../../data/dataset_test
 
