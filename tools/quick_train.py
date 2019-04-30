@@ -17,9 +17,9 @@ from core import utils, yolov3
 from core.dataset import dataset, Parser
 sess = tf.Session()
 
-IMAGE_H, IMAGE_W = 416, 416
+IMAGE_H, IMAGE_W = 32, 32
 BATCH_SIZE       = 8
-STEPS            = 2500
+STEPS            = 600
 LR               = 0.001 # if Nan, set 0.0005, 0.0001
 DECAY_STEPS      = 100
 DECAY_RATE       = 0.9
