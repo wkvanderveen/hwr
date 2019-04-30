@@ -109,44 +109,83 @@ class Binarizer:
 
 		return (y_hist, x_hist)
 
-	def crop_img_hist(self, img, y_hist, x_hist):
+	def are_equal(self, x, y, range_):
+		return x + range_ > y and x - range_ < y
+
+	def crop_img_hist(self, img):
 		'''
 		Uses histograms to crop the image
 		Assumes the scroll is centered (it often is)
+		Assumes the image is ot yet binarized
 		'''
+		img = self.binarize_otsu(img)
 		(y_max, x_max) = np.shape(img)
 		(y_hist, x_hist) = self.get_hist_bin_img(img)
-		center_y = uint8(y_max/2)
-		center_x = uint8(x_max/2)
+		center_y = np.uint(y_max/2)
+		center_x = np.uint(x_max/2)
 		left = 0
 		right = x_max
 		top = 0
 		bot = y_max
 
 		#calculate bounds
+		ran = 20 #values should be roughly similar for ran consecutive values to crop the image there, should be an even int
 
-		for idx in range(center_x, x_max - 1, 1): #loop from center to right of image, step size = 1
-			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
-				right = idx
+		count = 0
+		val = x_hist[center_x]
+		for idx in range(center_x - 1, 0, -1): #loop from center to right of image, step size = 1
+			if self.are_equal(x_hist[idx], val, 10):
+				count += 1
+			else:
+				count = 0
+				val = x_hist[idx]
+
+			if count == ran:
+				left = np.uint(idx + ran/2)
 				break
 
-		for idx in range(center_x, 0 + 1, -1): #loop from center to left of image,step size = -1
-			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
-				left = idx
+		count = 0
+		val = x_hist[center_x]
+		for idx in range(center_x + 1, x_max, 1): #loop from center to right of image, step size = 1
+			if self.are_equal(x_hist[idx], val, 5):
+				count += 1
+			else:
+				count = 0
+				val = x_hist[idx]
+
+			if count == ran:
+				right = np.uint(idx - ran/2)
 				break
 
-		for idx in range(center_y, y_max + 1, -1): #loop from center to left of image,step size = -1
-			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
-				top = idx
+
+		count = 0
+		val = y_hist[center_y]
+		for idx in range(center_y - 1, 0, -1): #loop from center to right of image, step size = 1
+			if self.are_equal(y_hist[idx], val, 10):
+				count += 1
+			else:
+				count = 0
+				val = y_hist[idx]
+
+			if count == ran:
+				top = np.uint8(idx + ran/2)
 				break
 
-		for idx in range(center_y, 0 + 1, -1): #loop from center to left of image,step size = -1
-			if x_hist[idx] < x_hist[idx-1] and x_hist[idx] < x_hist[idx+1]: #found local minima
-				bot = idx
+		count = 0
+		val = y_hist[center_y]
+		for idx in range(center_y + 1, y_max, 1): #loop from center to right of image, step size = 1
+			if self.are_equal(y_hist[idx], val, 10):
+				count += 1
+			else:
+				count = 0
+				val = y_hist[idx]
+
+			if count == ran:
+				bot = np.uint8(idx - ran/2)
 				break
 
 		print('l, r, t, b, centerx, centery', left, right, top, bot, center_x, center_y)
-		return img[bot:top, left:right]
+		return (left, right, bot, top)
 
 
 
@@ -188,8 +227,9 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	col_img = cv2.imread(join(path, 'test_img.jpg'))
-	# col_img = cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01.jpg'))
+	img_name = 'P21-Fg006-R-C01-R01-fused.jpg';
+	# col_img = cv2.imread(join(path, 'test_img.jpg'))
+	col_img = cv2.imread(join(join(path, 'image-data'), img_name))
 	# bw_img =  cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01-fused.jpg'))
 	# print(np.shape(bw_img))
 	# print(np.shape(col_img))
@@ -211,35 +251,48 @@ if __name__ == '__main__':
 	# img = b.dilate(img, 4)
 	# ### end example
 
-	img = b.binarize_otsu(bw_img)
-	(y_hist, x_hist) = b.get_hist_bin_img(img)
+	
 
 
 	##convolve histograms with gaussian difference filter
-	s, m = 2, 5
+
+	img = b.binarize_otsu(bw_img)
+	(y_hist, x_hist) = b.get_hist_bin_img(img)
+
+	s, m = 3, 10
 	denom = np.sqrt(2*np.pi*s*s)
 	gauss = [np.exp(-z*z/(2*s*s))/denom for z in range(-m, m+1)] 
 	window = np.convolve(gauss, [1, -1])
 	y_hist_conv = np.convolve(y_hist, window)
 
+	x_hist_conv = np.convolve(x_hist, window)
+
 	plt.figure(1)
-	plt.subplot(211)
+	plt.title(img_name)
+	plt.subplot(221)
 	plt.plot(y_hist)
-	plt.subplot(212)
+	plt.title('y_hist, '+ img_name)
+	plt.subplot(222)
 	plt.plot(y_hist_conv)
+	plt.title('y_hist_conv, '+ img_name)
+
+	plt.subplot(223)
+	plt.plot(x_hist)
+	plt.title('x_hist, '+ img_name)
+	plt.subplot(224)
+	plt.plot(x_hist_conv)
+	plt.title('x_hist_conv, '+ img_name)
+
 	plt.show()
 
-	print(y_hist_conv, max(y_hist_conv))
+	## end convolve test
 
-	print(sum(y_hist_conv != 0))
-
-	print(len(y_hist), len(y_hist_conv))
-	# print(x_hist, max(x_hist))
-
+	(l, r, b, t) = b.crop_img_hist(bw_img)
+	img = img[:, l:r]
 
 
 	# img_besides = np.concatenate((img, alt_img), axis=1)
 
-	# cv2.imshow('img', img)
-	# cv2.waitKey(0)
+	cv2.imshow('img', img)
+	cv2.waitKey(0)
 	# cv2.imwrite(join(path, 'img_out.png'), img)
