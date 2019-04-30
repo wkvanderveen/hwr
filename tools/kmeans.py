@@ -134,7 +134,7 @@ if __name__ == '__main__':
             f.writelines(str(width) + " " + str(height) + " ")
 
     WithinClusterMeanDist = np.mean(distances[np.arange(distances.shape[0]),nearest_clusters])
-    plot_cluster_result(clusters, nearest_clusters, 1-WithinClusterMeanDist, anno_result, args.cluster_num)
+    # plot_cluster_result(clusters, nearest_clusters, 1-WithinClusterMeanDist, anno_result, args.cluster_num)
 
 
 

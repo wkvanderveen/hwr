@@ -35,7 +35,7 @@ all_detections   = []
 all_annotations  = []
 all_aver_precs   = {CLASSES[i]:0. for i in range(NUM_CLASSES)}
 
-test_tfrecord    = "../../data/*.tfrecords"
+test_tfrecord    = "../../data/dataset_test.tfrecords"
 parser           = Parser(IMAGE_H, IMAGE_W, ANCHORS, NUM_CLASSES)
 testset          = dataset(parser, test_tfrecord , batch_size=1, shuffle=None, repeat=False)
 

@@ -34,7 +34,7 @@ class parser(argparse.ArgumentParser):
         )
 
         self.add_argument(
-            "--num_classes", "-nc", default=80, type=int,
+            "--num_classes", "-nc", default=27, type=int,
             help="[default: %(default)s] The number of classes ...",
             metavar="<NC>",
         )
@@ -62,14 +62,14 @@ class parser(argparse.ArgumentParser):
         )
 
         self.add_argument(
-            "--image_h", "-ih", default=416, type=int,
-            help="[default: %(default)s] The height of image, 416 or 608",
+            "--image_h", "-ih", default=32, type=int,
+            help="[default: %(default)s] The height of image",
             metavar="<IH>",
         )
 
         self.add_argument(
-            "--image_w", "-iw", default=416, type=int,
-            help="[default: %(default)s] The width of image, 416 or 608",
+            "--image_w", "-iw", default=32, type=int,
+            help="[default: %(default)s] The width of image",
             metavar="<IW>",
         )
 

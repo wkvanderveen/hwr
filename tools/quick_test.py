@@ -18,10 +18,11 @@ from core import utils
 import os
 
 
-IMAGE_H, IMAGE_W = 416, 416
-classes = os.listdir('../../data/augmented/')
+IMAGE_H, IMAGE_W = 32, 32
+classes = os.listdir('../../data/augmented/letters/')
 num_classes = len(classes)
-image_path = "../../data/augmented/letters/Mem/Mem0-BLUR1.jpeg"  # 181,
+
+image_path = "../../data/augmented/letters/Dalet/Dalet21-ORIG.jpeg"
 img = Image.open(image_path)
 img_resized = np.array(img.resize(size=(IMAGE_W, IMAGE_H)), dtype=np.float32)
 img_resized = img_resized / 255.
