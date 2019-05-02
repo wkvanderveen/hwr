@@ -1,11 +1,11 @@
+from math import ceil
 import os
 import numpy
 import cv2
+import sys
 import datetime
+from tqdm import tqdm
 from imgaug import augmenters as iaa
-
-
-print(datetime.datetime.now().time())
 
 
 def data_augmenter():
@@ -43,7 +43,7 @@ def data_augmenter():
 
     max_h, max_w = 0, 0
 
-    for imagePath in imagePaths:
+    for imagePath in tqdm(imagePaths):
         # load the image, pre-process it, and store it in the data list
         image = cv2.imread(imagePath)
         if max_h < image.shape[0]: max_h = image.shape[0]
@@ -86,20 +86,22 @@ def generateTextLabels():
 
     def write_to_dataset(dataset_type, path, x1, y1, x2, y2, c):
         with open("../../data/dataset_{}.txt".format(dataset_type), "a") as filename:
-            print(f"{path} {x1} {y1} {x2} {y2} {c - 1}", file=filename)
-    idx = 0
+            print(f"{path} {x1} {y1} {x2-1} {y2-1} {c - 1}", file=filename)
+
     for dataset in datasets:
-        print("Processing {}".format(datasets))
+        print("\nNow writing labels for the {}ing set...".format(os.path.split(dataset)[1]))
         for root, dirs, files in os.walk(dataset):
             dataset_type = os.path.split(dataset)[1]
 
             if dirs:
+                idx = 0
                 num_letters = len(dirs)
                 continue
             idx += 1
 
             _, letter = os.path.split(root)
-            print("Processing letter {}-{} ({}/{})...".format(os.path.split(dataset)[1], letter, idx, num_letters*2))
+            print("\r\tProcessing letter {}-{} ({}/{})...".format(os.path.split(dataset)[1], letter, idx, num_letters), end=" "*20)
+            sys.stdout.flush()
 
             for name in files:
                 image = cv2.imread(os.path.join(root, name))
@@ -109,7 +111,9 @@ def generateTextLabels():
 
 max_w, max_h = data_augmenter()
 generateTextLabels()
-print(datetime.datetime.now().time())
+
+max_w = ceil(max_w/32.0)*32
+max_h = ceil(max_h/32.0)*32
 
 with open("../../data/max_dimensions.txt", "w+") as filename:
     print(f"{max_w} {max_h}", file=filename)

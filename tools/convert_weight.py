@@ -22,6 +22,9 @@ from core import yolov3, utils
 if not os.path.exists('../../data/checkpoint/'):
     os.makedirs('../../data/checkpoint/')
 
+if not os.path.exists('../../data/weights/'):
+    os.makedirs('../../data/weights/')
+
 with open("../../data/max_dimensions.txt", "r") as max_dimensions:
     dimensions_string = max_dimensions.read()
 
@@ -54,7 +57,7 @@ class parser(argparse.ArgumentParser):
         )
 
         self.add_argument(
-            "--weights_path", "-wp", default='../../data/checkpoint/yolov3.weights', type=str,
+            "--weights_path", "-wp", default='../../data/weights/yolov3.weights', type=str,
             help="[default: %(default)s] Download binary file with desired weights",
             metavar="<WP>",
         )
@@ -126,7 +129,7 @@ def main(argv):
                 url = 'https://github.com/YunYang1994/tensorflow-yolov3/releases/download/v1.0/yolov3.weights'
                 for i in range(3):
                     time.sleep(1)
-                    print("=> %s does not exists ! " %flags.weights_path)
+                    print("=> %s does not exist! " %flags.weights_path)
                 print("=> It will take a while to download it from %s" %url)
                 print('=> Downloading yolov3 weights ... ')
                 wget.download(url, flags.weights_path)
