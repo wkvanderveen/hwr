@@ -40,11 +40,15 @@ def data_augmenter():
 
     # loop over the input images
     j = 0
-    img_h, img_w = 32, 32
+
+    max_h, max_w = 0, 0
+
     for imagePath in imagePaths:
         # load the image, pre-process it, and store it in the data list
         image = cv2.imread(imagePath)
-        # image = cv2.resize(image, (img_w, img_h))
+        if max_h < image.shape[0]: max_h = image.shape[0]
+        if max_w < image.shape[1]: max_w = image.shape[1]
+
 
         while (True):
             if STATE == ORIGINAL_IMAGE:
@@ -74,33 +78,38 @@ def data_augmenter():
 
         j = j + 1
 
+    return max_w, max_h
+
 
 def generateTextLabels():
-    sets = ["../../data/test", "../../data/train"]
+    datasets = ["../../data/test", "../../data/train"]
 
-    def write_to_dataset(type, path, x1, y1, x2, y2, c):
-        with open("../../data/dataset_{}.txt".format(type), "a") as filename:
+    def write_to_dataset(dataset_type, path, x1, y1, x2, y2, c):
+        with open("../../data/dataset_{}.txt".format(dataset_type), "a") as filename:
             print(f"{path} {x1} {y1} {x2} {y2} {c - 1}", file=filename)
-
-    for set in sets:
-        for root, dirs, files in os.walk(set):
-            type = os.path.split(set)[1]
+    idx = 0
+    for dataset in datasets:
+        print("Processing {}".format(datasets))
+        for root, dirs, files in os.walk(dataset):
+            dataset_type = os.path.split(dataset)[1]
 
             if dirs:
-                idx = 0
                 num_letters = len(dirs)
                 continue
             idx += 1
 
             _, letter = os.path.split(root)
-            print("Processing letter {} ({}/{})...".format(letter, idx, num_letters))
+            print("Processing letter {}-{} ({}/{})...".format(os.path.split(dataset)[1], letter, idx, num_letters*2))
 
             for name in files:
                 image = cv2.imread(os.path.join(root, name))
                 height, width, channels = image.shape
-                write_to_dataset(type, os.path.join(root, name), 0, 0, width, height, idx)
+                write_to_dataset(dataset_type, os.path.join(root, name), 0, 0, width, height, idx)
 
 
-data_augmenter()
+max_w, max_h = data_augmenter()
 generateTextLabels()
 print(datetime.datetime.now().time())
+
+with open("../../data/max_dimensions.txt", "w+") as filename:
+    print(f"{max_w} {max_h}", file=filename)

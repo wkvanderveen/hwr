@@ -17,7 +17,7 @@ from core import utils, yolov3
 from core.dataset import dataset, Parser
 sess = tf.Session()
 
-IMAGE_H, IMAGE_W = 32, 32
+
 BATCH_SIZE       = 8
 STEPS            = 600
 LR               = 0.001 # if Nan, set 0.0005, 0.0001
@@ -25,11 +25,16 @@ DECAY_STEPS      = 100
 DECAY_RATE       = 0.9
 SHUFFLE_SIZE     = 200
 CLASSES          = os.listdir('../../data/train/')
-ANCHORS          = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
 NUM_CLASSES      = len(CLASSES)
 EVAL_INTERNAL    = 50
 SAVE_INTERNAL    = 100
 
+with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+    dimensions_string = max_dimensions.read()
+
+IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
+
+ANCHORS          = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
 train_tfrecord   = "../../data/dataset_train.tfrecords"
 test_tfrecord    = "../../data/dataset_test.tfrecords"
 

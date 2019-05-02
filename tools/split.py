@@ -20,7 +20,6 @@ for root, dirs, files in os.walk(dataset):
             imagePath = os.path.join(root, name)
             testdir = os.path.join(test, os.path.sep.join(imagePath.split(os.path.sep)[4:-1]))
             outputImagePath = os.path.join(testdir, imagePath.split(os.path.sep)[-1])
-            print("copying %s -> %s" % (imagePath, outputImagePath))
 
             if not os.path.exists(testdir):
                 os.makedirs(testdir)
