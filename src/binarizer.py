@@ -67,8 +67,21 @@ class Binarizer:
 		Works best with bw images (not binarized)
 		'''
 
-		mask = b.dilate(img, 20)
-		mask = b.erode(mask, 20)
+		mask = self.dilate(img, 40)
+		mask = self.erode(mask, 40)
+
+		### new stuff
+		# (cnts, _) = cv2.findContours(mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+		# c = max(cnts, key = cv2.contourArea)
+
+
+		# # mask = b.erode(mask, 20)
+		# # mask = b.dilate(img, 20)
+
+		# cv2.imshow('mask', c)
+		# cv2.waitKey(0)
+		### end
+
 		(y_max, x_max) = np.shape(img)
 		img_thres = mahotas.thresholding.otsu(img) #create otsu threshold
 		mask_thres = mahotas.thresholding.otsu(mask) #create otsu threshold
@@ -84,12 +97,30 @@ class Binarizer:
 		(y_max, x_max) = np.shape(bw_img)
 		for y in range(y_max):
 			for x in range(x_max):
-				if bw_img[y][x] == col_img[y][x][0] and \
-					bw_img[y][x] == col_img[y][x][1] and \
-					bw_img[y][x] == col_img[y][x][2]:
+				if self.are_equal(bw_img[y][x], col_img[y][x][0], 10) and \
+					self.are_equal(bw_img[y][x], col_img[y][x][1], 10) and \
+					self.are_equal(bw_img[y][x], col_img[y][x][2], 10):
 					img[y][x] = 255
 				else:
 					img[y][x] = bw_img[y][x]
+		return img
+
+	def compare_imgs_2(self, col_img, bw_img):
+		img = np.zeros(np.shape(bw_img)) #alloc memory
+		(y_max, x_max) = np.shape(bw_img)
+
+		low = 47
+		high = 55
+
+		for y in range(y_max):
+			for x in range(x_max):
+				if col_img[y][x][0] >= low and col_img[y][x][0] <= high  and \
+					col_img[y][x][1] >= low and col_img[y][x][1] <= high and \
+					col_img[y][x][2] >= low and col_img[y][x][2] <= high and \
+					bw_img[y][x] <= 5:
+					img[y][x] = 255
+				else:
+					img[y][x] = 0#bw_img[y][x]
 		return img
 
 	def get_hist_bin_img(self, img):
@@ -110,7 +141,7 @@ class Binarizer:
 		return (y_hist, x_hist)
 
 	def are_equal(self, x, y, range_):
-		return x + range_ > y and x - range_ < y
+		return x + range_ >= y and x - range_ <= y
 
 	def crop_img_hist(self, img):
 		'''
@@ -147,7 +178,7 @@ class Binarizer:
 		count = 0
 		val = x_hist[center_x]
 		for idx in range(center_x + 1, x_max, 1): #loop from center to right of image, step size = 1
-			if self.are_equal(x_hist[idx], val, 5):
+			if self.are_equal(x_hist[idx], val, 10):
 				count += 1
 			else:
 				count = 0
@@ -227,15 +258,15 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	img_name = 'P21-Fg006-R-C01-R01-fused.jpg';
+	img_name = 'P21-Fg006-R-C01-R01.jpg';
 	# col_img = cv2.imread(join(path, 'test_img.jpg'))
 	col_img = cv2.imread(join(join(path, 'image-data'), img_name))
-	# bw_img =  cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01-fused.jpg'))
+	bw_img =  cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01-fused.jpg'))
 	# print(np.shape(bw_img))
 	# print(np.shape(col_img))
 	
 
-	bw_img = cv2.cvtColor(col_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
+	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
 	# # img = b.compare_imgs(col_img, bw_img)
 
@@ -256,42 +287,59 @@ if __name__ == '__main__':
 
 	##convolve histograms with gaussian difference filter
 
-	img = b.binarize_otsu(bw_img)
-	(y_hist, x_hist) = b.get_hist_bin_img(img)
+	# img = b.binarize_otsu(bw_img.copy())
+	# (y_hist, x_hist) = b.get_hist_bin_img(img)
 
-	s, m = 3, 10
-	denom = np.sqrt(2*np.pi*s*s)
-	gauss = [np.exp(-z*z/(2*s*s))/denom for z in range(-m, m+1)] 
-	window = np.convolve(gauss, [1, -1])
-	y_hist_conv = np.convolve(y_hist, window)
+	# s, m = 3, 10
+	# denom = np.sqrt(2*np.pi*s*s)
+	# gauss = [np.exp(-z*z/(2*s*s))/denom for z in range(-m, m+1)] 
+	# window = np.convolve(gauss, [1, -1])
+	# y_hist_conv = np.convolve(y_hist, window)
 
-	x_hist_conv = np.convolve(x_hist, window)
+	# x_hist_conv = np.convolve(x_hist, window)
 
-	plt.figure(1)
-	plt.title(img_name)
-	plt.subplot(221)
-	plt.plot(y_hist)
-	plt.title('y_hist, '+ img_name)
-	plt.subplot(222)
-	plt.plot(y_hist_conv)
-	plt.title('y_hist_conv, '+ img_name)
+	# size = 200
+	# window = np.repeat(1.0/np.float(size), size)
+	# y_hist_conv = np.convolve(y_hist, window)
+	# x_hist_conv = np.convolve(x_hist, window)
 
-	plt.subplot(223)
-	plt.plot(x_hist)
-	plt.title('x_hist, '+ img_name)
-	plt.subplot(224)
-	plt.plot(x_hist_conv)
-	plt.title('x_hist_conv, '+ img_name)
+	# plt.figure(1)
+	# plt.title(img_name)
+	# plt.subplot(221)
+	# plt.plot(y_hist)
+	# plt.title('y_hist, '+ img_name)
+	# plt.subplot(222)
+	# plt.plot(y_hist_conv)
+	# plt.title('y_hist_conv, '+ img_name)
 
-	plt.show()
+	# plt.subplot(223)
+	# plt.plot(x_hist)
+	# plt.title('x_hist, '+ img_name)
+	# plt.subplot(224)
+	# plt.plot(x_hist_conv)
+	# plt.title('x_hist_conv, '+ img_name)
 
-	## end convolve test
+	# plt.show()
 
-	(l, r, b, t) = b.crop_img_hist(bw_img)
-	img = img[:, l:r]
+	# ## end convolve test
+
+	# (l, r, bot, top) = b.crop_img_hist(bw_img.copy())
+	# img = bw_img[:, l:r]
+
+	# img = b.apply_mask(img)
+	# img = b.dilate(img, 2)
+	# img = b.dilate(img, 2)
+	# img = b.erode(img, 2)
+
+	# img = b.erode(img, 4)
+	# img = b.dilate(img, 4)
+
+
 
 
 	# img_besides = np.concatenate((img, alt_img), axis=1)
+
+	img = b.compare_imgs_2(col_img, bw_img)
 
 	cv2.imshow('img', img)
 	cv2.waitKey(0)
