@@ -22,6 +22,14 @@ from core import yolov3, utils
 if not os.path.exists('../../data/checkpoint/'):
     os.makedirs('../../data/checkpoint/')
 
+with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+    dimensions_string = max_dimensions.read()
+
+IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
+
+CLASSES          = os.listdir('../../data/train/')
+NUM_CLASSES      = len(CLASSES)
+
 class parser(argparse.ArgumentParser):
 
     def __init__(self,description):
@@ -34,7 +42,7 @@ class parser(argparse.ArgumentParser):
         )
 
         self.add_argument(
-            "--num_classes", "-nc", default=27, type=int,
+            "--num_classes", "-nc", default=NUM_CLASSES, type=int,
             help="[default: %(default)s] The number of classes ...",
             metavar="<NC>",
         )
@@ -62,13 +70,13 @@ class parser(argparse.ArgumentParser):
         )
 
         self.add_argument(
-            "--image_h", "-ih", default=32, type=int,
+            "--image_h", "-ih", default=IMAGE_H, type=int,
             help="[default: %(default)s] The height of image",
             metavar="<IH>",
         )
 
         self.add_argument(
-            "--image_w", "-iw", default=32, type=int,
+            "--image_w", "-iw", default=IMAGE_W, type=int,
             help="[default: %(default)s] The width of image",
             metavar="<IW>",
         )

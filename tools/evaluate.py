@@ -22,14 +22,18 @@ import os
 sess = tf.Session()
 
 
-IMAGE_H, IMAGE_W = 32,32
-CLASSES          = os.listdir('../../data/augmented/letters/')
+CLASSES          = os.listdir('../../data/letters/')
 NUM_CLASSES      = len(CLASSES)
-ANCHORS          = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
-#CKPT_FILE        = "../../data/checkpoint/yolov3.ckpt-100"  # choose checkpoint manually
 CKPT_FILE        = tf.train.latest_checkpoint('../../data/checkpoint/')
 IOU_THRESH       = 0.5
 SCORE_THRESH     = 0.3
+
+with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+    dimensions_string = max_dimensions.read()
+
+IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
+ANCHORS          = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
+
 
 all_detections   = []
 all_annotations  = []
