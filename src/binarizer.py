@@ -2,8 +2,6 @@
 binarizer.py
 
 This file contains the code used for binarizing the input image
-
-
 '''
 import cv2
 import mahotas
@@ -42,6 +40,27 @@ class Binarizer:
 				img[y][x] = 255 if img[y][x] > thres else 0
 		return img
 
+	def binarize_image(self, img):
+		'''
+		This function contains the (currently) optimal binarization pipeline for the images
+		It expects a bw image 
+		'''
+		img = b.apply_mask(img)
+
+		#remove noise
+		img = b.dilate(img, 2)
+		img = b.dilate(img, 2)
+		img = b.erode(img, 2)
+
+		#restore characters
+		img = b.erode(img, 4)
+		img = b.dilate(img, 4)
+
+		img = b.erode(img, 4)
+		img = b.dilate(img, 4)
+
+		return img
+
 	def open(self, img, se_size = 5):
 		se = np.ones((se_size, se_size), np.uint8)
 		return cv2.morphologyEx(img, cv2.MORPH_OPEN, se, iterations = 1)
@@ -67,20 +86,8 @@ class Binarizer:
 		Works best with bw images (not binarized)
 		'''
 
-		mask = self.dilate(img, 40)
-		mask = self.erode(mask, 40)
-
-		### new stuff
-		# (cnts, _) = cv2.findContours(mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-		# c = max(cnts, key = cv2.contourArea)
-
-
-		# # mask = b.erode(mask, 20)
-		# # mask = b.dilate(img, 20)
-
-		# cv2.imshow('mask', c)
-		# cv2.waitKey(0)
-		### end
+		mask = self.dilate(img, 20)
+		mask = self.erode(mask, 20)
 
 		(y_max, x_max) = np.shape(img)
 		img_thres = mahotas.thresholding.otsu(img) #create otsu threshold
@@ -89,7 +96,7 @@ class Binarizer:
 
 		for y in range(y_max):
 			for x in range(x_max):
-				img_out[y][x] = 255 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 0
+				img_out[y][x] = 0 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 255
 		return img_out
 
 	def compare_imgs(self, col_img, bw_img):
@@ -164,7 +171,7 @@ class Binarizer:
 
 		count = 0
 		val = x_hist[center_x]
-		for idx in range(center_x - 1, 0, -1): #loop from center to right of image, step size = 1
+		for idx in range(center_x - 1, 0, -1): #loop from center to left of image, step size = 1
 			if self.are_equal(x_hist[idx], val, 10):
 				count += 1
 			else:
@@ -219,128 +226,58 @@ class Binarizer:
 		return (left, right, bot, top)
 
 
+	def create_and_show_histogram(self, img):
+		img = b.binarize_otsu(bw_img.copy())
+		(y_hist, x_hist) = b.get_hist_bin_img(img)
 
+		s, m = 3, 10
+		denom = np.sqrt(2*np.pi*s*s)
+		gauss = [np.exp(-z*z/(2*s*s))/denom for z in range(-m, m+1)] 
+		window = np.convolve(gauss, [1, -1])
+		y_hist_conv = np.convolve(y_hist, window)
 
+		x_hist_conv = np.convolve(x_hist, window)
 
+		# size = 200
+		# window = np.repeat(1.0/np.float(size), size)
+		# y_hist_conv = np.convolve(y_hist, window)
+		# x_hist_conv = np.convolve(x_hist, window)
 
-				
+		plt.figure(1)
+		plt.title(img_name)
+		plt.subplot(221)
+		plt.plot(y_hist)
+		plt.title('y_hist, '+ img_name)
+		plt.subplot(222)
+		plt.plot(y_hist_conv)
+		plt.title('y_hist_conv, '+ img_name)
 
+		plt.subplot(223)
+		plt.plot(x_hist)
+		plt.title('x_hist, '+ img_name)
+		plt.subplot(224)
+		plt.plot(x_hist_conv)
+		plt.title('x_hist_conv, '+ img_name)
 
-
-
+		plt.show()
 
 
 if __name__ == '__main__':
-	#look for files on path
-	
 
 	b = Binarizer()
 
-	# #binarize images. This code is just used to test if everything executes
-	# try:
-	# 	path = join(join(join(abspath('..'), 'data'), 'letters'), 'Alef')
-	# 	print("looking for files in " + path)
-	# 	imgs = [cv2.imread(join(path, file)) for file in os.listdir(path) if (file.endswith('.png') or file.endswith('.jpg'))]
-	# 	for img in imgs:
-	# 		img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY) #convert to grayscale
-
-	# 		#manipulate image
-	# 		alt_img = b.open_img(img)
-	# 		alt_img = b.close_img(alt_img)
-
-	# 		img_besides = np.concatenate((img, alt_img), axis=1)
-
-	# 		cv2.imshow('img', img_besides)
-	# 		cv2.waitKey(0)
-	# except KeyboardInterrupt:
-	# 	quit()
-
-
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	img_name = 'P21-Fg006-R-C01-R01.jpg';
-	# col_img = cv2.imread(join(path, 'test_img.jpg'))
-	col_img = cv2.imread(join(join(path, 'image-data'), img_name))
-	bw_img =  cv2.imread(join(join(path, 'image-data'), 'P21-Fg006-R-C01-R01-fused.jpg'))
-	# print(np.shape(bw_img))
-	# print(np.shape(col_img))
-	
+	img_name = 'P22-Fg008-R-C01-R01' #'P513-Fg001-R-C01-R01' 'P106-Fg002-R-C01-R01' 'P21-Fg006-R-C01-R01.jpg';
+	col_img = cv2.imread(join(join(path, 'image-data'), img_name + '.jpg'))
+	bw_img =  cv2.imread(join(join(path, 'image-data'), img_name + '-fused.jpg'))
+	print("converting image: " + img_name)
 
 	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
-	# # img = b.compare_imgs(col_img, bw_img)
-
-	# bw_img = b.binarize_otsu(bw_img)
-
-	# ### working example
-	# img = b.apply_mask(bw_img)
-	# img = b.dilate(img, 2)
-	# img = b.dilate(img, 2)
-	# img = b.erode(img, 2)
-
-	# img = b.erode(img, 4)
-	# img = b.dilate(img, 4)
-	# ### end example
-
-	
-
-
-	##convolve histograms with gaussian difference filter
-
-	# img = b.binarize_otsu(bw_img.copy())
-	# (y_hist, x_hist) = b.get_hist_bin_img(img)
-
-	# s, m = 3, 10
-	# denom = np.sqrt(2*np.pi*s*s)
-	# gauss = [np.exp(-z*z/(2*s*s))/denom for z in range(-m, m+1)] 
-	# window = np.convolve(gauss, [1, -1])
-	# y_hist_conv = np.convolve(y_hist, window)
-
-	# x_hist_conv = np.convolve(x_hist, window)
-
-	# size = 200
-	# window = np.repeat(1.0/np.float(size), size)
-	# y_hist_conv = np.convolve(y_hist, window)
-	# x_hist_conv = np.convolve(x_hist, window)
-
-	# plt.figure(1)
-	# plt.title(img_name)
-	# plt.subplot(221)
-	# plt.plot(y_hist)
-	# plt.title('y_hist, '+ img_name)
-	# plt.subplot(222)
-	# plt.plot(y_hist_conv)
-	# plt.title('y_hist_conv, '+ img_name)
-
-	# plt.subplot(223)
-	# plt.plot(x_hist)
-	# plt.title('x_hist, '+ img_name)
-	# plt.subplot(224)
-	# plt.plot(x_hist_conv)
-	# plt.title('x_hist_conv, '+ img_name)
-
-	# plt.show()
-
-	# ## end convolve test
-
-	# (l, r, bot, top) = b.crop_img_hist(bw_img.copy())
-	# img = bw_img[:, l:r]
-
-	# img = b.apply_mask(img)
-	# img = b.dilate(img, 2)
-	# img = b.dilate(img, 2)
-	# img = b.erode(img, 2)
-
-	# img = b.erode(img, 4)
-	# img = b.dilate(img, 4)
-
-
-
-
-	# img_besides = np.concatenate((img, alt_img), axis=1)
-
-	img = b.compare_imgs_2(col_img, bw_img)
+	img = b.binarize_image(bw_img)
 
 	cv2.imshow('img', img)
 	cv2.waitKey(0)
-	# cv2.imwrite(join(path, 'img_out.png'), img)
+	cv2.imwrite(join(path, 'img_out.png'), img)
+	print("saved converted image \"" + img_name + "\" to \"" + join(path, 'img_out.png') + "\"")
