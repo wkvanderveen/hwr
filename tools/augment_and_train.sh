@@ -1,12 +1,14 @@
 # Before running, ensure that the data folder only contains the "letters" data (with subfolders for each letter)
 
-# Create augmented dataset from original data, and anchors and labels
-python3 split.py
-python3 data_augmenter.py
+# # Create augmented dataset from original data, and anchors and labels
+# python3 split.py
+# python3 data_augmenter.py
+
+python3 construct_train_images.py
 
 # Convert augmented data into large .tfrecord files. Creates train and test folders.
-python3 core/convert_tfrecord.py --dataset_txt ../../data/dataset_train.txt --tfrecord_path_prefix ../../data/dataset_train
-python3 core/convert_tfrecord.py --dataset_txt ../../data/dataset_test.txt  --tfrecord_path_prefix ../../data/dataset_test
+python3 core/convert_tfrecord.py --dataset_txt ../../data/linedata.txt --tfrecord_path_prefix ../../data/linedata
+python3 core/convert_tfrecord.py --dataset_txt ../../data/linedata.txt  --tfrecord_path_prefix ../../data/linedata_test
 
 # (Optional) Show an input image (in the code you can define which one)
 # python3 show_input_image.py
