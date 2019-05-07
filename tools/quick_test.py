@@ -21,7 +21,7 @@ import os
 classes = os.listdir('../../data/test/')
 num_classes = len(classes)
 
-image_path = "../../data/train/Alef/navis-QIrug-Qumran_extr09_0709-line-006-y1=602-y2=818-zone-HUMAN-x=0527-y=0119-w=0037-h=0050-ybas=0148-nink=855-segm=COCOS5cocos.jpg"
+image_path = "../../data/lines/12.jpeg"
 img = Image.open(image_path)
 cpu_nms_graph = tf.Graph()
 

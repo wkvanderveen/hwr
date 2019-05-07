@@ -20,14 +20,18 @@ from PIL import Image
 from core.dataset import Parser, dataset
 sess = tf.Session()
 
-IMAGE_H, IMAGE_W = 32,32
 BATCH_SIZE = 1
 SHUFFLE_SIZE = 1
 N_EXAMPLES = 1
 
-train_tfrecord = "../../data/dataset_train.tfrecords"
+with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+    dimensions_string = max_dimensions.read()
+
+IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
+
+train_tfrecord = "../../data/linedata.tfrecords"
 anchors        = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
-classes = os.listdir('../../data/augmented/')
+classes = os.listdir('../../data/lines/')
 num_classes = len(classes)
 
 parser   = Parser(IMAGE_H, IMAGE_W, anchors, num_classes, debug=True)

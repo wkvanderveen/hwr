@@ -26,7 +26,7 @@ def see(img):
     cv2.imshow("", img)
     cv2.waitKey(0)
 
-for line_idx in range(n_lines):
+for line_idx in tqdm(range(n_lines)):
 
     # Loop over random letters and put them in order in this image.
     line_length = rand.randint(line_length_bounds[0], line_length_bounds[1])
@@ -93,7 +93,7 @@ for line_idx in range(n_lines):
         with open("../../data/linedata.txt", "a") as file:
             label = (f"{positions['x1'][char_idx]} 0 " +
                      f"{positions['x2'][char_idx]} " +
-                     f"{positions['y2'][char_idx]} {classes.index(labels[char_idx])}")
+                     f"{positions['y2'][char_idx]} {classes.index(labels[char_idx])} ")
             file.write(str(label).rstrip('\n'))
 
     with open("../../data/linedata.txt", "a") as file:
