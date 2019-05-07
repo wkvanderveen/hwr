@@ -45,19 +45,19 @@ class Binarizer:
 		This function contains the (currently) optimal binarization pipeline for the images
 		It expects a bw image 
 		'''
-		img = b.apply_mask(img)
+		img = self.apply_mask(img)
 
 		#remove noise
-		img = b.dilate(img, 2)
-		img = b.dilate(img, 2)
-		img = b.erode(img, 2)
+		img = self.dilate(img, 2)
+		img = self.dilate(img, 2)
+		img = self.erode(img, 2)
 
 		#restore characters
-		img = b.erode(img, 4)
-		img = b.dilate(img, 4)
+		img = self.erode(img, 4)
+		img = self.dilate(img, 4)
 
-		img = b.erode(img, 4)
-		img = b.dilate(img, 4)
+		img = self.erode(img, 4)
+		img = self.dilate(img, 4)
 
 		return img
 
