@@ -8,105 +8,87 @@ from tqdm import tqdm
 from imgaug import augmenters as iaa
 
 
-def data_augmenter():
-    dataset = "../../data/letters-train/"
+class Augmenter(object):
+    """docstring for Augmenter"""
+    def __init__(self, source_dir, shear=0, coarse_dropout=(0, 0)):
+        super(Augmenter, self).__init__()
+        self.source_dir = source_dir
+        self.shear = shear
+        self.coarse_dropout = coarse_dropout
 
-    imagePaths = []
-    for root, dirs, files in os.walk(dataset):
-        for name in files:
-            imagePaths.append(os.path.join(root, name))
 
-    # ----------------------------------
-    # State indices
-    DAMAGE = 0
-    SHEAR = 1
+        self.DAMAGE = 0
+        self.SHEAR = 1
 
-    MIN_STATE = [0, -10]
-    INTERVAL = [0.05, 5]
-    MAX_STATE = [0.20, 10]
+        self.MIN_STATE = [0, -10]
+        self.INTERVAL = [0.05, 5]
+        self.MAX_STATE = [0.20, 10]
 
-    STATE = list(MIN_STATE)
-    ORIGINAL_IMAGE = [0] * len(MIN_STATE)
+        self.STATE = list(self.MIN_STATE)
+        self.ORIGINAL_IMAGE = [0] * len(self.MIN_STATE)
 
-    def increment_state():
+
+    def increment_state(self):
         i = 0
-        while i < len(STATE):
-            if round(STATE[i], 2) == MAX_STATE[i]:
-                STATE[i] = MIN_STATE[i]
+        while i < len(self.STATE):
+            if round(self.STATE[i], 2) == self.MAX_STATE[i]:
+                self.STATE[i] = self.MIN_STATE[i]
             else:
-                STATE[i] = STATE[i] + INTERVAL[i]
+                self.STATE[i] = self.STATE[i] + self.INTERVAL[i]
                 break
             i = i + 1
 
-    # loop over the input images
-    j = 0
+    def augment(self):
+        image_paths = []
+        for root, dirs, files in os.walk(self.source_dir):
+            for name in files:
+                image_paths.append(os.path.join(root, name))
 
-    for imagePath in tqdm(imagePaths):
-        # load the image, pre-process it, and store it in the data list
-        image = cv2.imread(imagePath)
+        # loop over the input images
+        j = 0
 
-        while (True):
-            if STATE == ORIGINAL_IMAGE:
-                cv2.imwrite(imagePath, image)
-                increment_state()
-                continue
+        for image_path in tqdm(image_paths):
+            # load the image, pre-process it, and store it in the data list
+            image = cv2.imread(image_path)
 
-            seq = iaa.Sequential([
-                iaa.Affine(shear=(STATE[SHEAR]), cval=(255)),
-                iaa.Invert(1),
-                iaa.CoarseDropout(STATE[DAMAGE], size_percent=(0.02, 0.50)),
-                iaa.Invert(1),
-            ])
+            while (True):
+                if self.STATE == self.ORIGINAL_IMAGE:
+                    cv2.imwrite(image_path, image)
+                    self.increment_state()
+                    continue
 
-            images_aug = seq.augment_image(image)
+                # aug_seq = []
+                # if self.shear:
+                #     aug_seq.append(iaa.Affine(STATE[SHEAR], cval=(255)))
 
-            cv2.imwrite(os.path.split(imagePath)[0] + "/Augmented" + str(j) + "-S" + str(STATE[SHEAR]) +
-                        "-D" + str(STATE[DAMAGE]) + ".jpeg", images_aug)
+                # if not self.coarse_dropout == (0, 0):
+                #     aug_seq.append(iaa.Invert(1))
+                #     aug_seq.append(iaa.CoarseDropout(STATE[DAMAGE], size_percent=self.coarse_dropout))
+                #     aug_seq.append(iaa.Invert(1))
 
-            state = numpy.around(STATE, decimals=2)
-            STATE = [state[0], state[1]]
-            if (STATE == MAX_STATE):
-                STATE = list(MIN_STATE)
-                break
-            else:
-                increment_state()
+                seq = iaa.Sequential([
+                    iaa.Affine(shear=self.STATE[self.SHEAR], cval=(255)),
+                    iaa.Invert(1),
+                    iaa.CoarseDropout(self.STATE[self.DAMAGE], size_percent=self.coarse_dropout),
+                    iaa.Invert(1)
+                ])
 
-        j = j + 1
+                images_aug = seq.augment_image(image)
 
+                cv2.imwrite(os.path.split(image_path)[0] + "/Augmented" + str(j) + "-S" + str(self.STATE[self.SHEAR]) +
+                            "-D" + str(self.STATE[self.DAMAGE]) + ".jpeg", images_aug)
 
-# def generateTextLabels():
-#     datasets = ["../../data/test", "../../data/train"]
+                state = numpy.around(self.STATE, decimals=2)
+                self.STATE = [state[0], state[1]]
+                if (self.STATE == self.MAX_STATE):
+                    self.STATE = list(self.MIN_STATE)
+                    break
+                else:
+                    self.increment_state()
 
-#     def write_to_dataset(dataset_type, path, x1, y1, x2, y2, c):
-#         with open("../../data/dataset_{}.txt".format(dataset_type), "a") as filename:
-#             print(f"{path} {x1} {y1} {x2-1} {y2-1} {c - 1}", file=filename)
-
-#     for dataset in datasets:
-#         print("\nNow writing labels for the {}ing set...".format(os.path.split(dataset)[1]))
-#         for root, dirs, files in os.walk(dataset):
-#             dataset_type = os.path.split(dataset)[1]
-
-#             if dirs:
-#                 idx = 0
-#                 num_letters = len(dirs)
-#                 continue
-#             idx += 1
-
-#             _, letter = os.path.split(root)
-#             print("\r\tProcessing letter {}-{} ({}/{})...".format(os.path.split(dataset)[1], letter, idx, num_letters), end=" "*20)
-#             sys.stdout.flush()
-
-#             for name in files:
-#                 image = cv2.imread(os.path.join(root, name))
-#                 height, width, channels = image.shape
-#                 write_to_dataset(dataset_type, os.path.join(root, name), 0, 0, width, height, idx)
+            j = j + 1
 
 
-data_augmenter()
-# generateTextLabels()
-
-# max_w = ceil(max_w/32.0)*32
-# max_h = ceil(max_h/32.0)*32
-
-# with open("../../data/max_dimensions.txt", "w+") as filename:
-#     print(f"{max_w} {max_h}", file=filename)
+if __name__ == "__main__":
+    augmenter = Augmenter(source_dir="../../data/letters-train", shear=True, coarse_dropout=(0.02, 0.5))
+    augmenter.augment()

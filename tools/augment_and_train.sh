@@ -1,13 +1,16 @@
 # Before running, ensure that the data folder contains the "letters" data (with subfolders for each letter)
 
-# Split the data into a training and testing letter dataset
-python3 split.py
+# # Split the data into a training and testing letter dataset
+# python3 split.py
 
-# Augment the training letters
-python3 data_augmenter.py
+# # Augment the training letters
+# python3 data_augmenter.py
 
-# Make training and testing lines from the respective letter sets. Also make labels.
-python3 construct_train_images.py
+# # Make training and testing lines from the respective letter sets. Also make labels.
+# python3 construct_train_images.py
+
+# OR do all previous steps using main
+python3 main.py
 
 # Convert the lines into large .tfrecord files.
 python3 core/convert_tfrecord.py --dataset_txt ../../data/labels-train.txt --tfrecord_path_prefix ../../data/lines-train
