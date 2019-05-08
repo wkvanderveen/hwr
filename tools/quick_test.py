@@ -18,11 +18,16 @@ from core import utils
 import os
 
 
-classes = os.listdir('../../data/test/')
+classes = os.listdir('../../data/letters-test/')
 num_classes = len(classes)
+with open("../../data/max_wh.txt", "r") as max_dimensions:
+    dimensions_string = max_dimensions.read()
+IMAGE_W, IMAGE_H = [int(x) for x in dimensions_string.split()]
 
-image_path = "../../data/lines/12.jpeg"
+image_path = "../../data/lines-test/50.jpeg"
 img = Image.open(image_path)
+img = img.resize((IMAGE_W, IMAGE_H), Image.BILINEAR)
+
 cpu_nms_graph = tf.Graph()
 
 input_tensor, output_tensors = utils.read_pb_return_tensors(cpu_nms_graph, "../../data/checkpoint/yolov3_cpu_nms.pb",

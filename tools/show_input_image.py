@@ -24,14 +24,14 @@ BATCH_SIZE = 1
 SHUFFLE_SIZE = 1
 N_EXAMPLES = 1
 
-with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+with open("../../data/max_wh.txt", "r") as max_dimensions:
     dimensions_string = max_dimensions.read()
 
-IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
+IMAGE_W, IMAGE_H = [int(x) for x in dimensions_string.split()]
 
-train_tfrecord = "../../data/linedata.tfrecords"
+train_tfrecord = "../../data/lines-train.tfrecords"
 anchors        = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
-classes = os.listdir('../../data/lines/')
+classes = os.listdir('../../data/lines-train/')
 num_classes = len(classes)
 
 parser   = Parser(IMAGE_H, IMAGE_W, anchors, num_classes, debug=True)
