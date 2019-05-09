@@ -18,41 +18,48 @@ import tensorflow as tf
 from core import utils
 from PIL import Image
 from core.dataset import Parser, dataset
-sess = tf.Session()
 
-BATCH_SIZE = 1
-SHUFFLE_SIZE = 1
-N_EXAMPLES = 1
+class ExampleDisplayer(object):
+    """docstring for ExampleDisplayer"""
+    def __init__(self, source_dir, img_dims, anchor_dir, num_classes):
+        super(ExampleDisplayer, self).__init__()
+        self.source_dir = source_dir
+        self.anchor_dir = anchor_dir
+        self.num_classes = num_classes
+        self.img_h = img_dims[0]
+        self.img_w = img_dims[1]
 
-with open("../../data/max_wh.txt", "r") as max_dimensions:
-    dimensions_string = max_dimensions.read()
+    def show_example(self):
+        sess = tf.Session()
+        classes = os.listdir(self.source_dir[:-len(".tfrecords") or None])
 
-IMAGE_W, IMAGE_H = [int(x) for x in dimensions_string.split()]
+        train_tfrecord = self.source_dir
+        anchors        = utils.get_anchors(self.anchor_dir, self.img_h, self.img_w)
 
-train_tfrecord = "../../data/lines-train.tfrecords"
-anchors        = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
-classes = os.listdir('../../data/lines-train/')
-num_classes = len(classes)
+        parser   = Parser(self.img_h, self.img_w, anchors, self.num_classes, debug=True)
+        trainset = dataset(parser, train_tfrecord, 1, shuffle=1)
 
-parser   = Parser(IMAGE_H, IMAGE_W, anchors, num_classes, debug=True)
-trainset = dataset(parser, train_tfrecord, BATCH_SIZE, shuffle=SHUFFLE_SIZE)
+        is_training = tf.placeholder(tf.bool)
+        example = trainset.get_next()
 
-is_training = tf.placeholder(tf.bool)
-example = trainset.get_next()
+        image, boxes = sess.run(example)
+        image, boxes = image[0], boxes[0]
 
-for l in range(N_EXAMPLES):
-    image, boxes = sess.run(example)
-    image, boxes = image[0], boxes[0]
+        n_box = len(boxes)
+        for i in range(n_box):
+            image = cv2.rectangle(image,(int(float(boxes[i][0])),
+                                         int(float(boxes[i][1]))),
+                                        (int(float(boxes[i][2])),
+                                         int(float(boxes[i][3]))), (255,0,0), 1)
+            label = classes[int(float(boxes[i][4]))]
+            image = cv2.putText(image, label, (int(float(boxes[i][0])),int(float(boxes[i][1]))),
+                                cv2.FONT_HERSHEY_SIMPLEX,  .6, (0, 255, 0), 1, 2)
 
-    n_box = len(boxes)
-    for i in range(n_box):
-        image = cv2.rectangle(image,(int(float(boxes[i][0])),
-                                     int(float(boxes[i][1]))),
-                                    (int(float(boxes[i][2])),
-                                     int(float(boxes[i][3]))), (255,0,0), 1)
-        label = classes[int(float(boxes[i][4]))]
-        image = cv2.putText(image, label, (int(float(boxes[i][0])),int(float(boxes[i][1]))),
-                            cv2.FONT_HERSHEY_SIMPLEX,  .6, (0, 255, 0), 1, 2)
+        image = Image.fromarray(np.uint8(image))
+        image.show()
 
-    image = Image.fromarray(np.uint8(image))
-    image.show()
+
+if __name__ == "__main__":
+    displayer = ExampleDisplayer(source_dir="../../data/lines-train.tfrecords",
+                                 dims_dir="../../data/max_wh.txt")
+    displayer.show_example()
