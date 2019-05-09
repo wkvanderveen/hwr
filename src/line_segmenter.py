@@ -12,9 +12,9 @@ import skimage
 import matplotlib.pyplot as plt
 from binarizer import Binarizer
 
-STROKE_WIDTH = 100 #line width per vertical stroke in image
-THRESH_RATIO = 0.01#Every histogram peak above this ratio is considered a line
-LINE_WIDTH = 20 #expected line width
+STROKE_WIDTH = 30 #line width per vertical stroke in image
+THRESH_RATIO = 0.1#Every histogram peak above this ratio is considered a line
+LINE_WIDTH = 5 #expected line width
 
 
 class Line_segmenter:
@@ -39,9 +39,8 @@ class Line_segmenter:
 
 	def histogram(self, img):
 		(y_max, x_max) = np.shape(img)
-
-		numlines = y_max // STROKE_WIDTH
-
+		STROKE_WIDTH = x_max
+		numlines = x_max // STROKE_WIDTH
 		peaks_arr = []
 		segmented_images = []
 
@@ -89,12 +88,18 @@ class Line_segmenter:
 			# line_begin_coords = np.array(line_begin_coords)
 			# line_end_coords = np.array(line_end_coords)
 			stroke = cv2.cvtColor(stroke.astype(np.uint8),cv2.COLOR_GRAY2RGB)
+			color = (0,255,0)
 			for idx in range(0, len(line_begin_coords)):
 				#print(line_begin_coords[idx], line_end_coords[idx], stroke.shape)
 				(x_start, y_start) = line_begin_coords[idx]
 				(x_end, y_end) = line_end_coords[idx]
 				#print(x_start, y_start, x_end, y_end)
-				cv2.line(stroke, (x_start,y_start), (x_end,y_end),(0,255,0),2)
+				
+				if color == (0,255,0):
+					color = (0,0,255)
+				else:
+					color = (0,255,0)
+					cv2.line(stroke, (x_start,y_start), (x_end,y_end),color,2)
 			# cv2.imshow('stroke',stroke)
 			# cv2.waitKey(0)
 			# cv2.destroyAllWindows()
@@ -135,7 +140,7 @@ class Line_segmenter:
 		return segmented_images
 
 	def show_segm_img(self, img_arr):
-		full_image = np.array(img_arr[1])
+		full_image = np.array(img_arr[0])
 		img_arr = np.array(img_arr)
 
 		for image in img_arr[1:]:
@@ -166,7 +171,6 @@ if __name__ == '__main__':
 		bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
 		img = b.binarize_image(bw_img)
-
 		l = Line_segmenter()
 		seg_images = l.histogram(img)
 		l.show_segm_img(seg_images)
