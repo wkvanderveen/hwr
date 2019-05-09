@@ -25,12 +25,12 @@ if not os.path.exists('../../data/checkpoint/'):
 if not os.path.exists('../../data/weights/'):
     os.makedirs('../../data/weights/')
 
-with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+with open("../../data/max_wh.txt", "r") as max_dimensions:
     dimensions_string = max_dimensions.read()
 
-IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
+IMAGE_W, IMAGE_H = [int(x) for x in dimensions_string.split()]
 
-CLASSES          = os.listdir('../../data/train/')
+CLASSES          = os.listdir('../../data/letters-train/')
 NUM_CLASSES      = len(CLASSES)
 
 class parser(argparse.ArgumentParser):

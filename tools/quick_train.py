@@ -19,24 +19,24 @@ sess = tf.Session()
 
 
 BATCH_SIZE       = 8
-STEPS            = 600
+STEPS            = 100
 LR               = 0.001 # if Nan, set 0.0005, 0.0001
 DECAY_STEPS      = 100
 DECAY_RATE       = 0.9
 SHUFFLE_SIZE     = 200
-CLASSES          = os.listdir('../../data/train/')
+CLASSES          = os.listdir('../../data/letters-train/')
 NUM_CLASSES      = len(CLASSES)
 EVAL_INTERNAL    = 50
 SAVE_INTERNAL    = 100
 
-with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+with open("../../data/max_wh.txt", "r") as max_dimensions:
     dimensions_string = max_dimensions.read()
 
-IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
+IMAGE_W, IMAGE_H = [int(x) for x in dimensions_string.split()]
 
 ANCHORS          = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
-train_tfrecord   = "../../data/dataset_train.tfrecords"
-test_tfrecord    = "../../data/dataset_test.tfrecords"
+train_tfrecord   = "../../data/lines-train.tfrecords"
+test_tfrecord    = "../../data/lines-test.tfrecords"
 
 parser   = Parser(IMAGE_H, IMAGE_W, ANCHORS, NUM_CLASSES)
 trainset = dataset(parser, train_tfrecord, BATCH_SIZE, shuffle=SHUFFLE_SIZE)
