@@ -4,12 +4,10 @@ binarizer.py
 This file contains the code used for binarizing the input image
 '''
 import cv2
-import mahotas
 from os.path import join, abspath
-import os
 import numpy as np
-import skimage
 import matplotlib.pyplot as plt
+from skimage.filters import threshold_otsu
 
 class Binarizer:
 	def __init__(self):
@@ -24,7 +22,7 @@ class Binarizer:
 		return img
 
 	def binarize_otsu(self, img):
-		thres = mahotas.thresholding.otsu(img) #create otsu threshold
+		thres = threshold_otsu(img) #create otsu threshold
 		(y_max, x_max) = np.shape(img)
 
 		for y in range(y_max):
@@ -45,7 +43,16 @@ class Binarizer:
 		This function contains the (currently) optimal binarization pipeline for the images
 		It expects a bw image 
 		'''
-		img = self.apply_mask(img)
+		mask = self.get_mask(img)
+
+		#give the mask here, as the mask over te text is the biggest connected component.
+		rects = self.get_connected_components(mask)
+		(x, y, w, h) = rects[0]
+
+		img = img[y:y+h, x:x+w]
+		mask = mask[y:y+h, x:x+w]
+
+		img = self.apply_mask(img, mask)
 
 		#remove noise
 		img = self.dilate(img, 2)
@@ -78,7 +85,22 @@ class Binarizer:
 		se = np.ones((se_size, se_size), np.uint8)
 		return cv2.dilate(img, se, iterations = 1)
 
-	def apply_mask(self, img):
+
+	def get_connected_components(self, img):
+		contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		sorted_ctrs = sorted(contours, key = cv2.contourArea, reverse = True)
+
+		return [cv2.boundingRect(ctr) for ctr in sorted_ctrs]
+
+
+	def get_mask(self, img):
+		mask = self.dilate(img, 20)
+		mask = self.erode(mask, 20)
+
+		mask = self.binarize_otsu(mask)
+		return mask
+
+	def apply_mask(self, img, mask):
 		'''
 		Creates a mask from the image to segement out the backgroud. 
 		Uses Otsu to create thresholds to use when the mask is applied.
@@ -86,12 +108,9 @@ class Binarizer:
 		Works best with bw images (not binarized)
 		'''
 
-		mask = self.dilate(img, 20)
-		mask = self.erode(mask, 20)
-
 		(y_max, x_max) = np.shape(img)
-		img_thres = mahotas.thresholding.otsu(img) #create otsu threshold
-		mask_thres = mahotas.thresholding.otsu(mask) #create otsu threshold
+		img_thres = threshold_otsu(img) #create otsu threshold
+		mask_thres = threshold_otsu(mask) #create otsu threshold (mask is already binarized, so an arbitrary number would also work)
 		img_out = np.zeros((y_max, x_max)) #alloc memory
 
 		for y in range(y_max):
@@ -154,7 +173,7 @@ class Binarizer:
 		'''
 		Uses histograms to crop the image
 		Assumes the scroll is centered (it often is)
-		Assumes the image is ot yet binarized
+		Assumes the image is not yet binarized
 		'''
 		img = self.binarize_otsu(img)
 		(y_max, x_max) = np.shape(img)
@@ -238,11 +257,6 @@ class Binarizer:
 
 		x_hist_conv = np.convolve(x_hist, window)
 
-		# size = 200
-		# window = np.repeat(1.0/np.float(size), size)
-		# y_hist_conv = np.convolve(y_hist, window)
-		# x_hist_conv = np.convolve(x_hist, window)
-
 		plt.figure(1)
 		plt.title(img_name)
 		plt.subplot(221)
@@ -268,7 +282,7 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	img_name = 'P22-Fg008-R-C01-R01' #'P513-Fg001-R-C01-R01' 'P106-Fg002-R-C01-R01' 'P21-Fg006-R-C01-R01.jpg';
+	img_name = 'P583-Fg006-R-C01-R01'#'P22-Fg008-R-C01-R01' #'P513-Fg001-R-C01-R01' 'P106-Fg002-R-C01-R01' 'P21-Fg006-R-C01-R01.jpg';
 	col_img = cv2.imread(join(join(path, 'image-data'), img_name + '.jpg'))
 	bw_img =  cv2.imread(join(join(path, 'image-data'), img_name + '-fused.jpg'))
 	print("converting image: " + img_name)
