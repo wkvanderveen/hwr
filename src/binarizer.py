@@ -66,6 +66,7 @@ class Binarizer:
 		img = self.erode(img, 4)
 		img = self.dilate(img, 4)
 
+		img = np.array(img, dtype=np.uint8)
 		return img
 
 	def open(self, img, se_size = 5):

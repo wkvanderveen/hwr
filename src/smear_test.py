@@ -1,3 +1,10 @@
+'''
+The only function from this file that is needed in the complete pipeline is the function crop_image. 
+All other functions are helper functions for this function and don't need to be called explicitly in the pipeline. 
+
+'''
+
+
 import cv2
 from os.path import join, abspath
 import numpy as np
@@ -12,7 +19,7 @@ AREA_THRESHOLD_2 = 10000 #pixel threshold
 
 class Smear:
 	def __init__(self):
-		pass
+		self.b = Binarizer()
 
 	def smear(self, img):
 		(y_max, x_max) = np.shape(img)
@@ -71,31 +78,33 @@ class Smear:
 			(x, y, w, h) = rects[idx]
 			out = out[y:(y+h), x:(x+w)]
 			if w * h > AREA_THRESHOLD_2:
-				#quick hack for double lines, improve later edit:doesnt work
-				# if h > 180:
-				# 	print('splitting cropping')
-
-				# 	cut = h // 2
-				# 	croppings.append(out[:cut, :])
-				# 	croppings.append(out[cut:, :])
-				# 	cv2.imshow('kept', out[:cut, :])
-				# 	cv2.waitKey(0)
-				# 	cv2.imshow('kept', out[cut:, :])
-				# 	cv2.waitKey(0)
-				# else:
 				croppings.append(out)
 				print("keeping item of size " + str(w*h) + "h: " + str(h))
-				cv2.imshow('kept', out)
-				cv2.waitKey(0)
+				# cv2.imshow('kept', out)
+				# cv2.waitKey(0)
 			else:
 				print("removing item of size " + str(w*h))
-				# cv2.imshow('removed', out)
-				# cv2.waitKey(0)
+
+		return croppings
+
+	def crop_image(self, img):
+		img_smear = np.array(img, dtype=np.uint8) #copy image
+		img_smear = self.b.get_negative(img_smear)
+		print('start smearing')
+		img_smear = s.smear(img_smear)
+		print('finished smearing')
+		img_smear = self.b.get_negative(img_smear)
+
+		croppings = s.get_croppings(img, img_smear)
 
 		return croppings
 
 
 if __name__ == '__main__':
+	'''
+	The main of this file is solely used for unit testing the Smear class above
+	
+	'''
 
 	b = Binarizer()
 	s = Smear()
@@ -106,7 +115,6 @@ if __name__ == '__main__':
 	bad_img_name = 'P21-Fg006-R-C01-R01'
 	img_name = nice_img_name
 
-	col_img = cv2.imread(join(join(path, 'image-data'), img_name + '.jpg'))
 	bw_img =  cv2.imread(join(join(path, 'image-data'), img_name + '-fused.jpg'))
 	print("converting image: " + img_name)
 
@@ -115,35 +123,9 @@ if __name__ == '__main__':
 	img = b.binarize_image(bw_img)
 
 	print("done binarizing")
-
-	# #remove noise
-	# img = np.array(img, dtype=np.uint8)
-	# rects = b.get_connected_components(img)
-	# for (x, y, w, h) in rects:
-	# 	if w * h < SIZE_THRESHOLD:
-	# 		print('removing item of size ' + str(w * h))
-	# 		# cv2.imshow('item ' +  str(w*h),  img[y:(y+h), x:(x+w)])
-	# 		cv2.waitKey(0)
-	# 		for yidx in range(y, y+h, 1):
-	# 			for xidx in range(x, x+w, 1):
-	# 				img[y][x] = 255
-	# print("done removing noise")
-
-
-	#image has to be flipped in order for the smearing to work
-	img_smear = np.array(img, dtype=np.uint8)
-	img_original = np.array(img, dtype=np.uint8)
-	img_smear = b.get_negative(img_smear)
-	print('start smearing')
-	img_smear = s.smear(img_smear)
-	print('finished smearing')
-	img_smear = b.get_negative(img_smear)
-
-	croppings = s.get_croppings(img_original, img_smear)
+	
+	croppings = s.crop_image(img)
 
 	for c in croppings:
 		cv2.imshow('crop', c)
 		cv2.waitKey(0)
-		
-	cv2.imwrite(join(path, 'img_smear2.png'), img)
-	print("saved converted image \"" + img_name + "\" to \"" + join(path, 'img_smear2.png') + "\"")
