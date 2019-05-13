@@ -7,7 +7,7 @@ import cv2
 from os.path import join, abspath
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage.filters import threshold_otsu
+from skimage.filters import threshold_otsu, threshold_sauvola
 
 class Binarizer:
 	def __init__(self):
@@ -109,8 +109,8 @@ class Binarizer:
 		'''
 
 		(y_max, x_max) = np.shape(img)
-		img_thres = threshold_otsu(img) #create otsu threshold
-		mask_thres = threshold_otsu(mask) #create otsu threshold (mask is already binarized, so an arbitrary number would also work)
+		img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
+		mask_thres = 100 # (mask is already binarized, so an arbitrary number works as a threshold)
 		img_out = np.zeros((y_max, x_max)) #alloc memory
 
 		for y in range(y_max):
@@ -282,7 +282,7 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	img_name = 'P583-Fg006-R-C01-R01'#'P22-Fg008-R-C01-R01' #'P513-Fg001-R-C01-R01' 'P106-Fg002-R-C01-R01' 'P21-Fg006-R-C01-R01.jpg';
+	img_name = 'P21-Fg006-R-C01-R01'#'P583-Fg006-R-C01-R01'#'P22-Fg008-R-C01-R01' #'P513-Fg001-R-C01-R01' 'P106-Fg002-R-C01-R01' 'P21-Fg006-R-C01-R01.jpg';
 	col_img = cv2.imread(join(join(path, 'image-data'), img_name + '.jpg'))
 	bw_img =  cv2.imread(join(join(path, 'image-data'), img_name + '-fused.jpg'))
 	print("converting image: " + img_name)
@@ -290,6 +290,10 @@ if __name__ == '__main__':
 	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
 	img = b.binarize_image(bw_img)
+	# img = np.array(img, dtype=np.uint8)
+	# rects = b.get_connected_components(img)
+	# for (x, y, w, h) in rects:
+	# 	cv2.rectangle(img,(x,y),( x + w, y + h ),(90,0,255),2)
 
 	cv2.imshow('img', img)
 	cv2.waitKey(0)
