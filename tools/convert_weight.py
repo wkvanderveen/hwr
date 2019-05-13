@@ -1,16 +1,3 @@
-#! /usr/bin/env python
-# coding=utf-8
-#================================================================
-#   Copyright (C) 2018 * Ltd. All rights reserved.
-#
-#   Editor      : VIM
-#   File name   : convert_weight.py
-#   Author      : YunYang1994
-#   Created date: 2018-11-27 12:37:22
-#   Description :
-#
-#================================================================
-
 import os
 import sys
 import wget
@@ -19,131 +6,77 @@ import argparse
 import tensorflow as tf
 from core import yolov3, utils
 
-if not os.path.exists('../../data/checkpoint/'):
-    os.makedirs('../../data/checkpoint/')
+class WeightConverter(object):
+    """docstring for WeightConverter"""
+    def __init__(self, freeze, convert, num_classes, img_dims, checkpoint_dir, weights_dir, anchors_path, score_threshold, iou_threshold, checkpoint_step=None):
+        super(WeightConverter, self).__init__()
+        self.freeze = freeze
+        self.convert = convert
+        self.num_classes = num_classes
+        self.anchors_path = anchors_path
+        self.score_threshold = score_threshold
+        self.iou_threshold = iou_threshold
+        self.img_h = img_dims[0]
+        self.img_w = img_dims[1]
+        self.checkpoint_step = checkpoint_step
 
-if not os.path.exists('../../data/weights/'):
-    os.makedirs('../../data/weights/')
+        if not os.path.exists(checkpoint_dir):
+            os.makedirs(checkpoint_dir)
+        self.checkpoint_dir = os.path.join(checkpoint_dir, "yolov3.ckpt")
 
-with open("../../data/max_wh.txt", "r") as max_dimensions:
-    dimensions_string = max_dimensions.read()
+        if not os.path.exists(weights_dir):
+            os.makedirs(weights_dir)
+        self.weights_dir = os.path.join(weights_dir, "yolov3.weights")
 
-IMAGE_W, IMAGE_H = [int(x) for x in dimensions_string.split()]
+    def convert_weights(self):
+        # flags = parser(description="freeze yolov3 graph from checkpoint file").parse_args()
+        print(f"=> the input image size is [{self.img_h}, {self.img_w}]")
+        anchors = utils.get_anchors(self.anchors_path, self.img_h, self.img_w)
+        model = yolov3.yolov3(self.num_classes, anchors)
 
-CLASSES          = os.listdir('../../data/letters-train/')
-NUM_CLASSES      = len(CLASSES)
+        with tf.Graph().as_default() as graph:
+            sess = tf.Session(graph=graph)
+            inputs = tf.placeholder(tf.float32, [1, self.img_h, self.img_w, 3]) # placeholder for detector inputs
+            print("=>", inputs)
 
-class parser(argparse.ArgumentParser):
+            with tf.variable_scope('yolov3'):
+                feature_map = model.forward(inputs, is_training=False)
 
-    def __init__(self,description):
-        super(parser, self).__init__(description)
+            boxes, confs, probs = model.predict(feature_map)
+            scores = confs * probs
+            print("=>", boxes.name[:-2], scores.name[:-2])
+            cpu_out_node_names = [boxes.name[:-2], scores.name[:-2]]
+            boxes, scores, labels = utils.gpu_nms(boxes, scores, self.num_classes,
+                                                  score_thresh=self.score_threshold,
+                                                  iou_thresh=self.iou_threshold)
+            print("=>", boxes.name[:-2], scores.name[:-2], labels.name[:-2])
+            gpu_out_node_names = [boxes.name[:-2], scores.name[:-2], labels.name[:-2]]
+            feature_map_1, feature_map_2, feature_map_3 = feature_map
+            saver = tf.train.Saver(var_list=tf.global_variables(scope='yolov3'))
 
-        self.add_argument(
-            "--ckpt_file", "-cf", default='../../data/checkpoint/yolov3.ckpt', type=str,
-            help="[default: %(default)s] The checkpoint file ...",
-            metavar="<CF>",
-        )
+            if self.convert:
+                if not os.path.exists(self.weights_dir):
+                    url = 'https://github.com/YunYang1994/tensorflow-yolov3/releases/download/v1.0/yolov3.weights'
+                    print(f"=> {self.weights_dir} does not exist!")
+                    print(f"=> It will take a while to download it from {url}")
+                    print('=> Downloading yolov3 weights ... ')
+                    wget.download(url, self.weights_dir)
 
-        self.add_argument(
-            "--num_classes", "-nc", default=NUM_CLASSES, type=int,
-            help="[default: %(default)s] The number of classes ...",
-            metavar="<NC>",
-        )
+                load_ops = utils.load_weights(tf.global_variables(scope='yolov3'), self.weights_dir)
+                sess.run(load_ops)
+                save_path = saver.save(sess, save_path=self.checkpoint_dir)
+                print(f'=> model saved in path: {save_path}')
 
-        self.add_argument(
-            "--anchors_path", "-ap", default="../../data/anchors.txt", type=str,
-            help="[default: %(default)s] The path of anchors ...",
-            metavar="<AP>",
-        )
+            if self.freeze:
+                ckpt_idx = self.checkpoint_dir + '-' + str(self.checkpoint_step)
+                saver.restore(sess, ckpt_idx)
+                print('=> checkpoint file restored from ', ckpt_idx)
+                utils.freeze_graph(sess, '../../data/checkpoint/yolov3_cpu_nms.pb', cpu_out_node_names)
+                utils.freeze_graph(sess, '../../data/checkpoint/yolov3_gpu_nms.pb', gpu_out_node_names)
 
-        self.add_argument(
-            "--weights_path", "-wp", default='../../data/weights/yolov3.weights', type=str,
-            help="[default: %(default)s] Download binary file with desired weights",
-            metavar="<WP>",
-        )
-
-        self.add_argument(
-            "--convert", "-cv", action='store_true',
-            help="[default: %(default)s] Downloading yolov3 weights and convert them",
-        )
-
-        self.add_argument(
-            "--freeze", "-fz", action='store_true',
-            help="[default: %(default)s] freeze the yolov3 graph to pb ...",
-        )
-
-        self.add_argument(
-            "--image_h", "-ih", default=IMAGE_H, type=int,
-            help="[default: %(default)s] The height of image",
-            metavar="<IH>",
-        )
-
-        self.add_argument(
-            "--image_w", "-iw", default=IMAGE_W, type=int,
-            help="[default: %(default)s] The width of image",
-            metavar="<IW>",
-        )
-
-        self.add_argument(
-            "--iou_threshold", "-it", default=0.5, type=float,
-            help="[default: %(default)s] The iou_threshold for gpu nms",
-            metavar="<IT>",
-        )
-
-        self.add_argument(
-            "--score_threshold", "-st", default=0.5, type=float,
-            help="[default: %(default)s] The score_threshold for gpu nms",
-            metavar="<ST>",
-        )
-
-
-def main(argv):
-
-    flags = parser(description="freeze yolov3 graph from checkpoint file").parse_args()
-    print("=> the input image size is [%d, %d]" %(flags.image_h, flags.image_w))
-    anchors = utils.get_anchors(flags.anchors_path, flags.image_h, flags.image_w)
-    model = yolov3.yolov3(flags.num_classes, anchors)
-
-    with tf.Graph().as_default() as graph:
-        sess = tf.Session(graph=graph)
-        inputs = tf.placeholder(tf.float32, [1, flags.image_h, flags.image_w, 3]) # placeholder for detector inputs
-        print("=>", inputs)
-
-        with tf.variable_scope('yolov3'):
-            feature_map = model.forward(inputs, is_training=False)
-
-        boxes, confs, probs = model.predict(feature_map)
-        scores = confs * probs
-        print("=>", boxes.name[:-2], scores.name[:-2])
-        cpu_out_node_names = [boxes.name[:-2], scores.name[:-2]]
-        boxes, scores, labels = utils.gpu_nms(boxes, scores, flags.num_classes,
-                                              score_thresh=flags.score_threshold,
-                                              iou_thresh=flags.iou_threshold)
-        print("=>", boxes.name[:-2], scores.name[:-2], labels.name[:-2])
-        gpu_out_node_names = [boxes.name[:-2], scores.name[:-2], labels.name[:-2]]
-        feature_map_1, feature_map_2, feature_map_3 = feature_map
-        saver = tf.train.Saver(var_list=tf.global_variables(scope='yolov3'))
-
-        if flags.convert:
-            if not os.path.exists(flags.weights_path):
-                url = 'https://github.com/YunYang1994/tensorflow-yolov3/releases/download/v1.0/yolov3.weights'
-                for i in range(3):
-                    time.sleep(1)
-                    print("=> %s does not exist! " %flags.weights_path)
-                print("=> It will take a while to download it from %s" %url)
-                print('=> Downloading yolov3 weights ... ')
-                wget.download(url, flags.weights_path)
-
-            load_ops = utils.load_weights(tf.global_variables(scope='yolov3'), flags.weights_path)
-            sess.run(load_ops)
-            save_path = saver.save(sess, save_path=flags.ckpt_file)
-            print('=> model saved in path: {}'.format(save_path))
-
-        if flags.freeze:
-            saver.restore(sess, flags.ckpt_file)
-            print('=> checkpoint file restored from ', flags.ckpt_file)
-            utils.freeze_graph(sess, '../../data/checkpoint/yolov3_cpu_nms.pb', cpu_out_node_names)
-            utils.freeze_graph(sess, '../../data/checkpoint/yolov3_gpu_nms.pb', gpu_out_node_names)
-
-
-if __name__ == "__main__": main(sys.argv)
+if __name__ == "__main__":
+    weightconverter = WeightConverter(freeze=True,
+                                      num_classes=27,
+                                      dimensions_path="../../data/max_wh.txt",
+                                      checkpoint_dir="../../data/checkpoint/",
+                                      weights_dir="../../data/weights")

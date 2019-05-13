@@ -9,15 +9,15 @@
 # # Make training and testing lines from the respective letter sets. Also make labels.
 # python3 construct_train_images.py
 
+# # Convert the lines into large .tfrecord files.
+# python3 core/convert_tfrecord.py --dataset_txt ../../data/labels-train.txt --tfrecord_path_prefix ../../data/lines-train
+# python3 core/convert_tfrecord.py --dataset_txt ../../data/labels-test.txt  --tfrecord_path_prefix ../../data/lines-test
+
+# # Get prior anchors and rescale the values to the range [0,1]
+# python3 kmeans.py
+
 # OR do all previous steps using main
 python3 main.py
-
-# Convert the lines into large .tfrecord files.
-python3 core/convert_tfrecord.py --dataset_txt ../../data/labels-train.txt --tfrecord_path_prefix ../../data/lines-train
-python3 core/convert_tfrecord.py --dataset_txt ../../data/labels-test.txt  --tfrecord_path_prefix ../../data/lines-test
-
-# Get prior anchors and rescale the values to the range [0,1]
-python3 kmeans.py
 
 # (Optional) Show an input image (in the code you can define which one)
 # python3 show_input_image.py
