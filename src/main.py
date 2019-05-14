@@ -13,7 +13,7 @@ from quick_test import Tester
 
 ## PARAMETERS ##
 
-# File structure parameters
+# File structure parameters...
 orig_letters_dir = "../../data/original_letters/"
 letters_train_dir = "../../data/letters-train/"
 letters_test_dir = "../../data/letters-test/"
