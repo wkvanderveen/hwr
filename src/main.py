@@ -173,8 +173,8 @@ if not network_exists or retrain:
                       save_internal=save_internal,
                       img_dims=img_dims,
                       anchors_path=anchor_file,
-                      train_records=os.path.basename(lines_train_dir) + ".tfrecords",
-                      test_records=os.path.basename(lines_test_dir) + ".tfrecords",
+                      train_records=os.path.normpath(lines_train_dir) + ".tfrecords",
+                      test_records=os.path.normpath(lines_test_dir) + ".tfrecords",
                       checkpoint_path=checkpoint_dir)
     print("Training network...")
     trainer.train()
