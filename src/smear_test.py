@@ -87,15 +87,15 @@ class Smear:
 
 		return croppings
 
-	def crop_image(self, img):
+	def split_into_lines(self, img):
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
 		print('start smearing')
-		img_smear = s.smear(img_smear)
+		img_smear = self.smear(img_smear)
 		print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
-		croppings = s.get_croppings(img, img_smear)
+		croppings = self.get_croppings(img, img_smear)
 
 		return croppings
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
 	print("done binarizing")
 	
-	croppings = s.crop_image(img)
+	croppings = s.split_into_lines(img)
 
 	for c in croppings:
 		cv2.imshow('crop', c)
