@@ -55,13 +55,6 @@ class WeightConverter(object):
             saver = tf.train.Saver(var_list=tf.global_variables(scope='yolov3'))
 
             if self.convert:
-                if not os.path.exists(self.weights_dir):
-                    url = 'https://github.com/YunYang1994/tensorflow-yolov3/releases/download/v1.0/yolov3.weights'
-                    print(f"=> {self.weights_dir} does not exist!")
-                    print(f"=> It will take a while to download it from {url}")
-                    print('=> Downloading yolov3 weights ... ')
-                    wget.download(url, self.weights_dir)
-
                 load_ops = utils.load_weights(tf.global_variables(scope='yolov3'), self.weights_dir)
                 sess.run(load_ops)
                 save_path = saver.save(sess, save_path=self.checkpoint_dir)

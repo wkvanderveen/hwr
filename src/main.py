@@ -55,20 +55,14 @@ test_example = False
 evaluate_network = False # TBA
 
 
-# PREPARE NETWORK IF NOT READY
 # READ INPUT
 
 # BINARIZE INPUT
 
 # SEGMENT LINES FROM INPUT
 
-# FOR LINE IN LINES:
-    # FEED LINE TO NETWORK, GET RESULT
 
-    # POSTPROCESS CHARACTER LIKELIHOODS
-
-    # PRINT PREDICTION
-
+# PREPARE NETWORK IF NOT READY
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
 
 if not network_exists or retrain:
@@ -150,6 +144,10 @@ if not network_exists or retrain:
         print("Not creating anchors file because it already exists!")
         sleep(1)
 
+    if not os.path.exists(weights_dir):
+        print("Error: no weights detected! You need the pretrained " +
+              f"weights in the {weights_dir} directory.")
+
     weightconverter = WeightConverter(freeze=False,
                                       convert=True,
                                       num_classes=num_classes,
@@ -173,8 +171,8 @@ if not network_exists or retrain:
                       save_internal=save_internal,
                       img_dims=img_dims,
                       anchors_path=anchor_file,
-                      train_records=os.path.basename(lines_train_dir) + ".tfrecords",
-                      test_records=os.path.basename(lines_test_dir) + ".tfrecords",
+                      train_records=os.path.normpath(lines_train_dir) + ".tfrecords",
+                      test_records=os.path.normpath(lines_test_dir) + ".tfrecords",
                       checkpoint_path=checkpoint_dir)
     print("Training network...")
     trainer.train()
@@ -225,6 +223,14 @@ if network_exists and evaluate_network:
     pass
     # evaluater = Evaluater()
     # evaluater.eval()
+
+
+# FOR LINE IN LINES:
+    # FEED LINE TO NETWORK, GET RESULT
+
+    # POSTPROCESS CHARACTER LIKELIHOODS
+
+    # PRINT PREDICTION
 
 
 """
