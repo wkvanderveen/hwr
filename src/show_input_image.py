@@ -60,6 +60,15 @@ class ExampleDisplayer(object):
 
 
 if __name__ == "__main__":
+
+    with open("../../data/dimensions.txt", "r") as max_dimensions:
+        img_h, img_w = [int(x) for x in max_dimensions.read().split()]
+    img_dims = (img_h, img_w)
+
+    num_classes = len(os.listdir("../../data/letters-train/"))
+
     displayer = ExampleDisplayer(source_dir="../../data/lines-train.tfrecords",
-                                 dims_dir="../../data/max_wh.txt")
+                                 anchor_dir="../../data/anchors.txt",
+                                 num_classes=num_classes,
+                                 img_dims=img_dims)
     displayer.show_example()
