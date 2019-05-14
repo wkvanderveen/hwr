@@ -13,7 +13,7 @@ from quick_test import Tester
 
 ## PARAMETERS ##
 
-# File structure parameters
+# File structure parameters...
 orig_letters_dir = "../../data/original_letters/"
 letters_train_dir = "../../data/letters-train/"
 letters_test_dir = "../../data/letters-test/"
@@ -27,13 +27,13 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 5  # not too few
+num_classes = 1  # not too few
 split_percentage = 20
-line_length_bounds = (20,50)
-n_training_lines = 50
-n_testing_lines = 50
-max_overlap_train = 20
-max_overlap_test = 20
+line_length_bounds = (5,15)
+n_training_lines = 80
+n_testing_lines = 80
+max_overlap_train = 10
+max_overlap_test = 10
 
 # Network parameters
 cluster_num = 9
@@ -44,7 +44,7 @@ steps = 10
 learning_rate = 1e-3
 decay_steps = 100
 decay_rate = 0.9
-shuffle_size = 200
+shuffle_size = 200  # ?
 eval_internal = 5
 save_internal = 3
 
@@ -55,20 +55,14 @@ test_example = False
 evaluate_network = False # TBA
 
 
-# PREPARE NETWORK IF NOT READY
 # READ INPUT
 
 # BINARIZE INPUT
 
 # SEGMENT LINES FROM INPUT
 
-# FOR LINE IN LINES:
-    # FEED LINE TO NETWORK, GET RESULT
 
-    # POSTPROCESS CHARACTER LIKELIHOODS
-
-    # PRINT PREDICTION
-
+# PREPARE NETWORK IF NOT READY
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
 
 if not network_exists or retrain:
@@ -150,6 +144,10 @@ if not network_exists or retrain:
         print("Not creating anchors file because it already exists!")
         sleep(1)
 
+    if not os.path.exists(weights_dir):
+        print("Error: no weights detected! You need the pretrained " +
+              f"weights in the {weights_dir} directory.")
+
     weightconverter = WeightConverter(freeze=False,
                                       convert=True,
                                       num_classes=num_classes,
@@ -225,6 +223,14 @@ if network_exists and evaluate_network:
     pass
     # evaluater = Evaluater()
     # evaluater.eval()
+
+
+# FOR LINE IN LINES:
+    # FEED LINE TO NETWORK, GET RESULT
+
+    # POSTPROCESS CHARACTER LIKELIHOODS
+
+    # PRINT PREDICTION
 
 
 """
