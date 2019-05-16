@@ -40,13 +40,13 @@ cluster_num = 9
 iou_threshold = 0.1
 score_threshold = 0.1
 batch_size = 8
-steps = 10
+steps = 100
 learning_rate = 1e-3
 decay_steps = 100
 decay_rate = 0.9
 shuffle_size = 200
-eval_internal = 5
-save_internal = 3
+eval_internal = 10
+save_internal = 50
 
 # Other parameters
 retrain = False

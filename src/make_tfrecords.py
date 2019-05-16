@@ -4,22 +4,31 @@ import os
 
 class TfRecordMaker(object):
     """docstring for TfRecordMaker"""
-    def __init__(self, label_path, imgs_dir):
+    def __init__(self, label_path, imgs_dir, colab=False):
         super(TfRecordMaker, self).__init__()
         self.label_path = label_path
         self.imgs_dir = imgs_dir
+        self.colab = colab
 
     def make_records(self):
 
         dataset = {}
         with open(self.label_path,'r') as f:
+            if self.colab == True: 
+                increase=1 
+            else: 
+                increase=0
+
             for line in f.readlines():
                 example = line.split(' ')
-                image_path = example[0]
-                boxes_num = len(example[1:]) // 5
+                if increase == 0:
+                    image_path = example[0]
+                else:
+                    image_path = str(example[0]+" "+example[increase])
+                boxes_num = len(example[(increase+1):]) // 5
                 boxes = np.zeros([boxes_num, 5], dtype=np.float32)
                 for i in range(boxes_num):
-                    boxes[i] = example[1+i*5:6+i*5]
+                    boxes[i] = example[increase+(1+i*5):increase+(6+i*5)]
                 dataset[image_path] = boxes
 
         image_paths = list(dataset.keys())
