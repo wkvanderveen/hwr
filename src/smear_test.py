@@ -51,12 +51,12 @@ class Smear:
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
 
-		img_smear = b.dilate(img_smear, 25)
-		img_smear = b.erode(img_smear, 20)
+		# img_smear = b.dilate(img_smear, 25)
+		# img_smear = b.erode(img_smear, 20)
 
-		img_smear = b.binarize_simple(img_smear, 10)
+		img_smear = self.b.binarize_simple(img_smear, 10)
 
-		cv2.imwrite("dilated.png", img_smear)
+		# cv2.imwrite("dilated.png", img_smear)
 
 		(approx, rects) = self.get_contour_approximations(img_smear)
 		img_copy = deepcopy(img_original)
@@ -68,7 +68,7 @@ class Smear:
 
 	def get_contour_approximations(self, img):
 		img = np.array(img, dtype=np.uint8)
-		contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+		contours, hierarchy = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 		areas = [cv2.contourArea(cnt) for cnt in contours]
 		areas.remove(max(areas)) #remove biggest blob; the entire image is always parsed as a blob
 		thres =  AREA_THRESHOLD * max(areas)
@@ -94,10 +94,10 @@ class Smear:
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
 
-		img_smear = b.dilate(img_smear, 25)
-		img_smear = b.erode(img_smear, 20)
+		# img_smear = self.b.dilate(img_smear, 25)
+		# img_smear = self.b.erode(img_smear, 20)
 
-		img_smear = b.binarize_simple(img_smear, 10)
+		# img_smear = self.b.binarize_simple(img_smear, 10)
 
 		cv2.imwrite("dilated.png", img_smear)
 
@@ -109,7 +109,7 @@ class Smear:
 			for a in approx:
 				cv2.drawContours(img_copy,[a],0,(90,0,255),2)
 
-			cv2.imwrite("contoured.png", img_copy)
+			# cv2.imwrite("contoured.png", img_copy)
 
 		croppings = []
 		for idx in range(len(approx)):
@@ -124,15 +124,15 @@ class Smear:
 				(h_img, w_img) = np.shape(img_original)
 				if w * h < h_img * w_img:
 					croppings.append(out)
-					print("keeping item of size " + str(w*h) + "h: " + str(h))
+					# print("keeping item of size " + str(w*h) + "h: " + str(h))
 					# cv2.imshow('kept', out)
 					# cv2.waitKey(0)
-				else:
-					print("cropping was of size equal to image.. skipping")
-			else:
-				print("removing item of size " + str(w*h))
-				cv2.imshow('removed', out)
-				cv2.waitKey(0)
+			# 	else:
+			# 		print("cropping was of size equal to image.. skipping")
+			# else:
+			# 	print("removing item of size " + str(w*h))
+			# 	cv2.imshow('removed', out)
+			# 	cv2.waitKey(0)
 
 		return croppings
 
@@ -162,9 +162,9 @@ class Smear:
 		img_smear = self.b.get_negative(img_smear)
 
 		croppings = self.get_croppings(img, img_smear)
-		img = self.get_contoured_image(img_smear, img)
+		img_contoured = self.get_contoured_image(img_smear, img)
 
-		return croppings
+		return (img_contoured, img_smear, croppings)
 
 
 
@@ -206,3 +206,4 @@ if __name__ == '__main__':
 		# cv2.imshow('crop', c)
 		cv2.imwrite("cropping_%d.png" % (idx), c)
 		# cv2.waitKey(0)
+		
