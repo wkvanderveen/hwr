@@ -41,8 +41,15 @@ class Binarizer:
 	def binarize_image(self, img):
 		'''
 		This function contains the (currently) optimal binarization pipeline for the images
-		It expects a bw image 
+		Can handle both bw and color images
 		'''
+		s = np.shape(img)
+		if len(s) > 2:
+			if s[2] > 1: #check if the image is in RGB or grayscale
+				img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY) #convert to grayscale
+
+
+
 		mask = self.get_mask(img)
 
 		#give the mask here, as the mask over te text is the biggest connected component.
@@ -53,6 +60,7 @@ class Binarizer:
 		mask = mask[y:y+h, x:x+w]
 
 		img = self.apply_mask(img, mask)
+
 
 		#remove noise
 		img = self.dilate(img, 2)
@@ -67,6 +75,7 @@ class Binarizer:
 		img = self.dilate(img, 4)
 
 		img = np.array(img, dtype=np.uint8)
+
 		return img
 
 	def open(self, img, se_size = 5):
