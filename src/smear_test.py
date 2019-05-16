@@ -10,12 +10,15 @@ from os.path import join, abspath
 import numpy as np
 from binarizer import Binarizer
 
+from copy import deepcopy
+
 SMEAR_DENSITY = 0.90
 NR_SMEARS = 4
 SIZE_THRESHOLD = 900 #in pixels
 AREA_THRESHOLD = 0.01 #area the blob has to be at least in order to get added to the set lines (percentage of the biggest blob)
-EPSILON_DELTA = 0.001 #modifier for the epsilon value used for determining how tightly the contour must fit 
-AREA_THRESHOLD_2 = 10000 #pixel threshold
+EPSILON_DELTA = 0.0001 #modifier for the epsilon value used for determining how tightly the contour must fit 
+AREA_THRESHOLD_2 = 8000 #pixel threshold
+PADDING = 100 #padding around the smeared image in pixels
 
 class Smear:
 	def __init__(self):
@@ -41,9 +44,31 @@ class Smear:
 
 		return img
 
+	def get_contoured_image(self, img_smear, img_original):
+		'''
+		Used for extracting the contoured image.. Mostly for testing
+		'''
+		img_original = self.padd_image(img_original, PADDING)
+		img_smear = self.padd_image(img_smear, PADDING)
+
+		img_smear = b.dilate(img_smear, 25)
+		img_smear = b.erode(img_smear, 20)
+
+		img_smear = b.binarize_simple(img_smear, 10)
+
+		cv2.imwrite("dilated.png", img_smear)
+
+		(approx, rects) = self.get_contour_approximations(img_smear)
+		img_copy = deepcopy(img_original)
+
+		for a in approx:
+			cv2.drawContours(img_copy,[a],0,(90,0,255),2)
+
+		return img_copy
+
 	def get_contour_approximations(self, img):
 		img = np.array(img, dtype=np.uint8)
-		contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 		areas = [cv2.contourArea(cnt) for cnt in contours]
 		areas.remove(max(areas)) #remove biggest blob; the entire image is always parsed as a blob
 		thres =  AREA_THRESHOLD * max(areas)
@@ -62,11 +87,29 @@ class Smear:
 
 		return (approx, rects)
 
+	def padd_image(self, img, padding):
+		return cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[255,255,255])
+
 	def get_croppings(self, img_original, img_smear):
-		padding  = 40 #pad n pixels in all directions
-		img_original = cv2.copyMakeBorder(img_original, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[255,255,255])
-		img_smear = cv2.copyMakeBorder(img_smear, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[255,255,255])
+		img_original = self.padd_image(img_original, PADDING)
+		img_smear = self.padd_image(img_smear, PADDING)
+
+		img_smear = b.dilate(img_smear, 25)
+		img_smear = b.erode(img_smear, 20)
+
+		img_smear = b.binarize_simple(img_smear, 10)
+
+		cv2.imwrite("dilated.png", img_smear)
+
 		(approx, rects) = self.get_contour_approximations(img_smear)
+
+		if True: ### USED FOR TESTING
+			img_copy = deepcopy(img_original)
+
+			for a in approx:
+				cv2.drawContours(img_copy,[a],0,(90,0,255),2)
+
+			cv2.imwrite("contoured.png", img_copy)
 
 		croppings = []
 		for idx in range(len(approx)):
@@ -78,12 +121,18 @@ class Smear:
 			(x, y, w, h) = rects[idx]
 			out = out[y:(y+h), x:(x+w)]
 			if w * h > AREA_THRESHOLD_2:
-				croppings.append(out)
-				print("keeping item of size " + str(w*h) + "h: " + str(h))
-				# cv2.imshow('kept', out)
-				# cv2.waitKey(0)
+				(h_img, w_img) = np.shape(img_original)
+				if w * h < h_img * w_img:
+					croppings.append(out)
+					print("keeping item of size " + str(w*h) + "h: " + str(h))
+					# cv2.imshow('kept', out)
+					# cv2.waitKey(0)
+				else:
+					print("cropping was of size equal to image.. skipping")
 			else:
 				print("removing item of size " + str(w*h))
+				cv2.imshow('removed', out)
+				cv2.waitKey(0)
 
 		return croppings
 
@@ -99,6 +148,26 @@ class Smear:
 
 		return croppings
 
+	def split_into_lines_and_contour(self, img):
+		'''
+		Extended split_into_lines.
+		Also returns the contoured image
+		For testing
+		'''
+		img_smear = np.array(img, dtype=np.uint8) #copy image
+		img_smear = self.b.get_negative(img_smear)
+		print('start smearing')
+		img_smear = self.smear(img_smear)
+		print('finished smearing')
+		img_smear = self.b.get_negative(img_smear)
+
+		croppings = self.get_croppings(img, img_smear)
+		img = self.get_contoured_image(img_smear, img)
+
+		return croppings
+
+
+
 
 if __name__ == '__main__':
 	'''
@@ -111,7 +180,7 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	nice_img_name = 'P583-Fg006-R-C01-R01'
+	nice_img_name = 'P632-Fg002-R-C01-R01'#'P583-Fg006-R-C01-R01' 
 	bad_img_name = 'P21-Fg006-R-C01-R01'
 	img_name = nice_img_name
 
@@ -121,11 +190,19 @@ if __name__ == '__main__':
 	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
 	img = b.binarize_image(bw_img)
+	# img2 = deepcopy(img)
+	# img = b.get_negative(img)
+	# smeared = s.smear(img)
+	# smeared = b.get_negative(smeared)
+	# cv2.imwrite("smeared.png", smeared)
+	# cv2.imshow('smeared', smeared)
+	# cv2.waitKey(0)
 
-	print("done binarizing")
+	# print("done binarizing")
 	
 	croppings = s.split_into_lines(img)
 
-	for c in croppings:
-		cv2.imshow('crop', c)
-		cv2.waitKey(0)
+	for idx, c in enumerate(croppings):
+		# cv2.imshow('crop', c)
+		cv2.imwrite("cropping_%d.png" % (idx), c)
+		# cv2.waitKey(0)

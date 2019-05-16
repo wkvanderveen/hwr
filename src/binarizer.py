@@ -43,10 +43,10 @@ class Binarizer:
 		This function contains the (currently) optimal binarization pipeline for the images
 		Can handle both bw and color images
 		'''
-		(_, _, channels) = np.shape(img)
-
-		if channels == 3:
-			img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY) #convert to grayscale
+		s = np.shape(img)
+		if len(s) > 2:
+			if s[2] > 1: #check if the image is in RGB or grayscale
+				img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
 
 
@@ -61,6 +61,7 @@ class Binarizer:
 
 		img = self.apply_mask(img, mask)
 
+
 		#remove noise
 		img = self.dilate(img, 2)
 		img = self.dilate(img, 2)
@@ -74,6 +75,7 @@ class Binarizer:
 		img = self.dilate(img, 4)
 
 		img = np.array(img, dtype=np.uint8)
+
 		return img
 
 	def open(self, img, se_size = 5):
