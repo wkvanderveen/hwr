@@ -1,7 +1,7 @@
 import os
 import shutil
 
-folder = '../../data/'
+folder = '../data/'
 for the_file in os.listdir(folder):
     file_path = os.path.join(folder, the_file)
     try:

@@ -65,10 +65,10 @@ if __name__ == "__main__":
         img_h, img_w = [int(x) for x in max_dimensions.read().split()]
     img_dims = (img_h, img_w)
 
-    num_classes = len(os.listdir("../../data/letters-train/"))
+    num_classes = len(os.listdir("../data/letters-train/"))
 
-    displayer = ExampleDisplayer(source_dir="../../data/lines-train.tfrecords",
-                                 anchor_dir="../../data/anchors.txt",
+    displayer = ExampleDisplayer(source_dir="../data/lines-train.tfrecords",
+                                 anchor_dir="../data/anchors.txt",
                                  num_classes=num_classes,
                                  img_dims=img_dims)
     displayer.show_example()

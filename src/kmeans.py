@@ -102,7 +102,7 @@ class AnchorMaker(object):
                 f.writelines(str(width) + " " + str(height) + " ")
 
 if __name__ == '__main__':
-    anchormaker = AnchorMaker(target_file="../../data/anchors.txt",
-                              label_path="../../data/labels-train.txt",
+    anchormaker = AnchorMaker(target_file="../data/anchors.txt",
+                              label_path="../data/labels-train.txt",
                               cluster_num=9)
     anchormaker.make_anchors()

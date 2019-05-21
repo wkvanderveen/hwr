@@ -22,24 +22,24 @@ import os
 sess = tf.Session()
 
 
-CLASSES          = os.listdir('../../data/letters/')
+CLASSES          = os.listdir('../data/letters/')
 NUM_CLASSES      = len(CLASSES)
-CKPT_FILE        = tf.train.latest_checkpoint('../../data/checkpoint/')
+CKPT_FILE        = tf.train.latest_checkpoint('../data/checkpoint/')
 IOU_THRESH       = 0.5
 SCORE_THRESH     = 0.3
 
-with open("../../data/max_dimensions.txt", "r") as max_dimensions:
+with open("../data/max_dimensions.txt", "r") as max_dimensions:
     dimensions_string = max_dimensions.read()
 
 IMAGE_H, IMAGE_W = [int(x) for x in dimensions_string.split()]
-ANCHORS          = utils.get_anchors('../../data/anchors.txt', IMAGE_H, IMAGE_W)
+ANCHORS          = utils.get_anchors('../data/anchors.txt', IMAGE_H, IMAGE_W)
 
 
 all_detections   = []
 all_annotations  = []
 all_aver_precs   = {CLASSES[i]:0. for i in range(NUM_CLASSES)}
 
-test_tfrecord    = "../../data/dataset_test.tfrecords"
+test_tfrecord    = "../data/dataset_test.tfrecords"
 parser           = Parser(IMAGE_H, IMAGE_W, ANCHORS, NUM_CLASSES)
 testset          = dataset(parser, test_tfrecord , batch_size=1, shuffle=None, repeat=False)
 

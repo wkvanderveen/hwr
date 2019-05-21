@@ -9,8 +9,8 @@ np.set_printoptions(threshold=sys.maxsize)
 class DataReader:
 	def __init__(self):
 		self.data = []
-		self.path = '../../data/letters/' #define path of example letter images
-		self.save_path = '../../data/'
+		self.path = '../data/letters/' #define path of example letter images
+		self.save_path = '../data/'
 		self.save_file = self.save_path + "letters"
 		self.threshold = 200
 

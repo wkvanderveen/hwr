@@ -65,8 +65,8 @@ class Trainer(object):
 
         global_step = tf.Variable(0, trainable=False, collections=[tf.GraphKeys.LOCAL_VARIABLES])
         write_op = tf.summary.merge_all()
-        writer_train = tf.summary.FileWriter("../../data/train_summary")
-        writer_test  = tf.summary.FileWriter("../../data/test_summary")
+        writer_train = tf.summary.FileWriter("../data/train_summary")
+        writer_test  = tf.summary.FileWriter("../data/test_summary")
 
         saver_to_restore = tf.train.Saver(var_list=tf.contrib.framework.get_variables_to_restore(include=["yolov3/darknet-53"]))
         update_vars = tf.contrib.framework.get_variables_to_restore(include=["yolov3/yolo-v3"])

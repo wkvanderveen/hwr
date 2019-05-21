@@ -90,5 +90,5 @@ class Augmenter(object):
 
 
 if __name__ == "__main__":
-    augmenter = Augmenter(source_dir="../../data/letters-train", shear=True, coarse_dropout=(0.02, 0.5))
+    augmenter = Augmenter(source_dir="../data/letters-train", shear=True, coarse_dropout=(0.02, 0.5))
     augmenter.augment()

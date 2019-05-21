@@ -14,17 +14,17 @@ from quick_test import Tester
 ## PARAMETERS ##
 
 # File structure parameters
-orig_letters_dir = "../../data/original_letters/"
-letters_train_dir = "../../data/letters-train/"
-letters_test_dir = "../../data/letters-test/"
-lines_train_dir = "../../data/lines-train/"
-lines_test_dir = "../../data/lines-test/"
-label_train_path = "../../data/labels-train.txt"
-label_test_dir = "../../data/labels-test.txt"
-checkpoint_dir = "../../data/checkpoint/"
-dimensions_file = "../../data/dimensions.txt"
-weights_dir = "../../data/weights/"
-anchor_file = "../../data/anchors.txt"
+orig_letters_dir = "../data/original_letters/"
+letters_train_dir = "../data/letters-train/"
+letters_test_dir = "../data/letters-test/"
+lines_train_dir = "../data/lines-train/"
+lines_test_dir = "../data/lines-test/"
+label_train_path = "../data/labels-train.txt"
+label_test_dir = "../data/labels-test.txt"
+checkpoint_dir = "../data/checkpoint/"
+dimensions_file = "../data/dimensions.txt"
+weights_dir = "../data/weights/"
+anchor_file = "../data/anchors.txt"
 
 # Data parameters
 num_classes = 5  # not too few
@@ -63,7 +63,7 @@ evaluate_network = False # TBA
 
 
 # PREPARE NETWORK IF NOT READY
-network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
+network_exists = bool(os.path.isfile("../data/checkpoint/checkpoint"))
 
 if not network_exists or retrain:
 
@@ -73,11 +73,11 @@ if not network_exists or retrain:
                             train_dir=letters_train_dir,
                             test_dir=letters_test_dir,
                             percentage=split_percentage)
-        print(f"Splitting {splitter.percentage}% of the data found in {splitter.source_dir}...")
+        print("Splitting {}% of the data found in {}...".format(splitter.percentage,splitter.source_dir))
         sleep(1)
         num_classes = splitter.split()
 
-        print(f"Augmenting training letters...")
+        print("Augmenting training letters...")
         augmenter = Augmenter(source_dir=letters_train_dir, shear=True, coarse_dropout=(0.02, 0.5))
         augmenter.augment()
     else:
@@ -110,7 +110,7 @@ if not network_exists or retrain:
         img_dims = (max_h, max_w)
 
         with open(dimensions_file, "w+") as filename:
-            print(f"{max_h} {max_w}", file=filename)
+            print("{} {}".format(max_h,max_w), file=filename)
         img_dims = (max_h, max_w)
 
 
@@ -146,7 +146,7 @@ if not network_exists or retrain:
 
     if not os.path.exists(weights_dir):
         print("Error: no weights detected! You need the pretrained " +
-              f"weights in the {weights_dir} directory.")
+              "weights in the {} directory.".format(weights_dir))
 
     weightconverter = WeightConverter(freeze=False,
                                       convert=True,

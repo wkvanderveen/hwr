@@ -30,7 +30,7 @@ class Linemaker(object):
         if not os.path.isdir(self.target_dir):
             os.mkdir(self.target_dir)
 
-        print(f"Making lines from the {self.set_type}ing letters...")
+        print("Making lines from the {}ing letters...".format(self.set_type))
         for line_idx in tqdm(range(self.n_lines)):
 
             # Loop over random letters and put them in order in this image.
@@ -39,7 +39,7 @@ class Linemaker(object):
 
             linepath = os.path.join(self.target_dir, str(line_idx) + ".jpeg")
             with open(self.label_dir, "a") as file:
-                label = f"{linepath} "
+                label = "{} ".format(linepath)
                 file.write(str(label).rstrip('\n'))
 
             chars = []
@@ -100,11 +100,11 @@ class Linemaker(object):
 
             for char_idx, char in enumerate(chars):
                 with open(self.label_dir, "a") as file:
-                    label = (f"{positions['x1'][char_idx]} " +
-                             f"{positions['y1'][char_idx]} " +
-                             f"{positions['x2'][char_idx]} " +
-                             f"{positions['y2'][char_idx]} " +
-                             f"{classes.index(labels[char_idx])} ")
+                    label = ("{} ".format(positions['x1'][char_idx]) +
+                             "{} ".format(positions['y1'][char_idx]) +
+                             "{} ".format(positions['x2'][char_idx]) +
+                             "{} ".format(positions['y2'][char_idx]) +
+                             "{} ".format(classes.index(labels[char_idx])))
                     file.write(str(label).rstrip('\n'))
 
             with open(self.label_dir, "a") as file:
@@ -119,18 +119,18 @@ class Linemaker(object):
 
 if __name__ == "__main__":
     linemaker = Linemaker(set_type="train",
-                          source_dir="../../data/letters-train",
-                          target_dir="../../data/lines-train",
-                          label_dir="../../data/labels-train.txt",
+                          source_dir="../data/letters-train",
+                          target_dir="../data/lines-train",
+                          label_dir="../data/labels-train.txt",
                           line_length_bounds=(10,20),
                           n_lines=20,
                           max_overlap=10)
     max_h1, max_w1 = linemaker.make_lines()
 
     linemaker = Linemaker(set_type="test",
-                          source_dir="../../data/letters-test",
-                          target_dir="../../data/lines-test",
-                          label_dir="../../data/labels-test.txt",
+                          source_dir="../data/letters-test",
+                          target_dir="../data/lines-test",
+                          label_dir="../data/labels-test.txt",
                           line_length_bounds=(10,20),
                           n_lines=20,
                           max_overlap=10)
@@ -140,4 +140,4 @@ if __name__ == "__main__":
     max_w = ceil(max(max_w1, max_w2)/32.0)*32
 
     with open(dimensions_dir, "w+") as filename:
-        print(f"{max_w} {max_h}", file=filename)
+        print("{} {}".format(max_w,max_h), file=filename)

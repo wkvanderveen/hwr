@@ -47,9 +47,9 @@ class Splitter(object):
         return len(selected_classes)
 
 if __name__ == "__main__":
-    splitter = Splitter(source_dir="../../data/letters",
+    splitter = Splitter(source_dir="../data/letters",
                         num_classes=27,
-                        train_dir="../../data/letters-train",
-                        test_dir="../../data/letters-test",
+                        train_dir="../data/letters-train",
+                        test_dir="../data/letters-test",
                         percentage=20)
     splitter.split()

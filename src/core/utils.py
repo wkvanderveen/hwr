@@ -165,7 +165,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     """
 
     if boxes is None: return image
-    print(f"HAS BOXES:\n{boxes}")
+    print("HAS BOXES:\n{}".format(boxes))
     draw = ImageDraw.Draw(image)
     # draw settings
     font = ImageFont.truetype(font = font, size = np.floor(2e-2 * image.size[1]).astype('int32'))
@@ -173,7 +173,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
     for i in range(len(labels)): # for each bounding box, do:
-        print(f"FOR BOUNDING BOX {i}:\n")
+        print("FOR BOUNDING BOX {}:\n".format(i))
         bbox, score, label = boxes[i], scores[i], classes[labels[i]]
         bbox_text = "%s %.2f" %(label, score)
         text_size = draw.textsize(bbox_text, font)
@@ -184,7 +184,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
 
         draw.rectangle(bbox, outline=colors[labels[i]], width=3)
         text_origin = bbox[:2]-np.array([0, text_size[1]])
-        print(f"bbox: {bbox[:2]}   and   arr: {np.array([0, text_size[1]])}")
+        print("bbox: {}   and   arr: {}".format(bbox[:2],np.array([0, text_size[1]])))
         draw.rectangle([tuple(text_origin), tuple(text_origin+text_size)], fill=colors[labels[i]])
         # # draw bbox
         draw.text(tuple(text_origin), bbox_text, fill=(0,0,0), font=font)

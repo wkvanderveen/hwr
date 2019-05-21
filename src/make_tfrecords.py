@@ -33,7 +33,7 @@ class TfRecordMaker(object):
 
         image_paths = list(dataset.keys())
         images_num = len(image_paths)
-        print(f">> Processing {images_num} images")
+        print(">> Processing {images_num} images")
 
         tfrecord_file = os.path.normpath(self.imgs_dir)+".tfrecords"
         print(tfrecord_file)
@@ -51,11 +51,11 @@ class TfRecordMaker(object):
                 ))
 
                 record_writer.write(example.SerializeToString())
-            print(f">> Saving {images_num} images in {tfrecord_file}")
+            print(">> Saving {} images in {}".format(images_num,tfrecord_file))
 
 
 if __name__ == "__main__":
-    recordmaker = TfRecordMaker(imgs_dir="../../data/lines-train/", label_path="../../data/labels-train.txt")
+    recordmaker = TfRecordMaker(imgs_dir="../data/lines-train/", label_path="../data/labels-train.txt")
     recordmaker.make_records()
-    recordmaker = TfRecordMaker(imgs_dir="../../data/lines-test/", label_path="../../data/labels-test.txt")
+    recordmaker = TfRecordMaker(imgs_dir="../data/lines-test/", label_path="../data/labels-test.txt")
     recordmaker.make_records()

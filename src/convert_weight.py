@@ -30,7 +30,7 @@ class WeightConverter(object):
 
     def convert_weights(self):
         # flags = parser(description="freeze yolov3 graph from checkpoint file").parse_args()
-        print(f"=> the input image size is [{self.img_h}, {self.img_w}]")
+        print("=> the input image size is [{}, {}]".format(self.img_h,self.img_w))
         anchors = utils.get_anchors(self.anchors_path, self.img_h, self.img_w)
         model = yolov3.yolov3(self.num_classes, anchors)
 
@@ -58,18 +58,18 @@ class WeightConverter(object):
                 load_ops = utils.load_weights(tf.global_variables(scope='yolov3'), self.weights_dir)
                 sess.run(load_ops)
                 save_path = saver.save(sess, save_path=self.checkpoint_dir)
-                print(f'=> model saved in path: {save_path}')
+                print('=> model saved in path: {}'.format(save_path))
 
             if self.freeze:
                 ckpt_idx = self.checkpoint_dir + '-' + str(self.checkpoint_step)
                 saver.restore(sess, ckpt_idx)
                 print('=> checkpoint file restored from ', ckpt_idx)
-                utils.freeze_graph(sess, '../../data/checkpoint/yolov3_cpu_nms.pb', cpu_out_node_names)
-                utils.freeze_graph(sess, '../../data/checkpoint/yolov3_gpu_nms.pb', gpu_out_node_names)
+                utils.freeze_graph(sess, '../data/checkpoint/yolov3_cpu_nms.pb', cpu_out_node_names)
+                utils.freeze_graph(sess, '../data/checkpoint/yolov3_gpu_nms.pb', gpu_out_node_names)
 
 if __name__ == "__main__":
     weightconverter = WeightConverter(freeze=True,
                                       num_classes=27,
-                                      dimensions_path="../../data/max_wh.txt",
-                                      checkpoint_dir="../../data/checkpoint/",
-                                      weights_dir="../../data/weights")
+                                      dimensions_path="../data/max_wh.txt",
+                                      checkpoint_dir="../data/checkpoint/",
+                                      weights_dir="../data/weights")
