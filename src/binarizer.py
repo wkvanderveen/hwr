@@ -38,7 +38,7 @@ class Binarizer:
 				img[y][x] = 255 if img[y][x] > thres else 0
 		return img
 
-	def binarize_image(self, img):
+	def binarize_image(self, img, bin_type='otsu'):
 		'''
 		This function contains the (currently) optimal binarization pipeline for the images
 		Can handle both bw and color images
@@ -59,23 +59,15 @@ class Binarizer:
 		img = img[y:y+h, x:x+w]
 		mask = mask[y:y+h, x:x+w]
 
-		img = self.apply_mask(img, mask)
+		#mask image
+		img = self.apply_mask(img, mask, bin_type)
 
 
 		#remove noise
-		img = self.dilate(img, 2)
-		img = self.dilate(img, 2)
-		img = self.erode(img, 2)
-
-		#restore characters
-		img = self.erode(img, 4)
-		img = self.dilate(img, 4)
-
-		img = self.erode(img, 4)
-		img = self.dilate(img, 4)
+		img = np.array(img, dtype=np.uint8)
+		img = cv2.medianBlur(img, 7)
 
 		img = np.array(img, dtype=np.uint8)
-
 		return img
 
 	def open(self, img, se_size = 5):
@@ -110,7 +102,7 @@ class Binarizer:
 		mask = self.binarize_otsu(mask)
 		return mask
 
-	def apply_mask(self, img, mask):
+	def apply_mask(self, img, mask, thres='otsu'):
 		'''
 		Creates a mask from the image to segement out the backgroud. 
 		Uses Otsu to create thresholds to use when the mask is applied.
@@ -119,13 +111,22 @@ class Binarizer:
 		'''
 
 		(y_max, x_max) = np.shape(img)
-		img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
+		
 		mask_thres = 100 # (mask is already binarized, so an arbitrary number works as a threshold)
 		img_out = np.zeros((y_max, x_max)) #alloc memory
 
-		for y in range(y_max):
-			for x in range(x_max):
-				img_out[y][x] = 0 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 255
+		if thres == 'otsu':
+			img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
+			for y in range(y_max):
+				for x in range(x_max):
+					img_out[y][x] = 0 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 255
+
+		if thres == 'sauvola':
+			img_thres = threshold_sauvola(img) #create global otsu threshold (sauvola was tried, but gave worse results)
+			for y in range(y_max):
+				for x in range(x_max):
+					img_out[y][x] = 0 if (img[y][x] < img_thres[y][x] and mask[y][x] > mask_thres) else 255
+
 		return img_out
 
 	def compare_imgs(self, col_img, bw_img):

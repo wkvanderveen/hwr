@@ -200,10 +200,13 @@ if __name__ == '__main__':
 
 	# print("done binarizing")
 	
-	croppings = s.split_into_lines(img)
+	(contoured_img, smear_img, croppings) = s.split_into_lines_and_contour(img)
+	cv2.imwrite("contoured.jpg", contoured_img)
+	cv2.imwrite("smeared.jpg", smear_img)
 
 	for idx, c in enumerate(croppings):
 		# cv2.imshow('crop', c)
 		cv2.imwrite("cropping_%d.png" % (idx), c)
 		# cv2.waitKey(0)
-		
+
+	print("saved %d croppings" % (len(croppings)))
