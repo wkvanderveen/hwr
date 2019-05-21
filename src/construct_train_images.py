@@ -140,4 +140,4 @@ if __name__ == "__main__":
     max_w = ceil(max(max_w1, max_w2)/32.0)*32
 
     with open(dimensions_dir, "w+") as filename:
-        print("{} {}".format(max_w,max_h), file=filename)
+        print("{} {}".format(max_w,max_h))

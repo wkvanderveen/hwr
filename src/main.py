@@ -27,7 +27,7 @@ weights_dir = "../data/weights/"
 anchor_file = "../data/anchors.txt"
 
 # Data parameters
-num_classes = 5  # not too few
+num_classes = 27  # not too few
 split_percentage = 20
 line_length_bounds = (20,50)
 n_training_lines = 50
@@ -40,13 +40,13 @@ cluster_num = 9
 iou_threshold = 0.1
 score_threshold = 0.1
 batch_size = 8
-steps = 100
+steps = 50000
 learning_rate = 1e-3
-decay_steps = 100
+decay_steps = 10000
 decay_rate = 0.9
 shuffle_size = 200
-eval_internal = 10
-save_internal = 50
+eval_internal = 1000
+save_internal = 5000
 
 # Other parameters
 retrain = False
@@ -64,8 +64,10 @@ evaluate_network = False # TBA
 
 # PREPARE NETWORK IF NOT READY
 network_exists = bool(os.path.isfile("../data/checkpoint/checkpoint"))
+print("network does {} exist".format(network_exists))
 
 if not network_exists or retrain:
+    print("network does not exist")
 
     if not os.path.exists(letters_train_dir):
         splitter = Splitter(source_dir=orig_letters_dir,
@@ -110,7 +112,7 @@ if not network_exists or retrain:
         img_dims = (max_h, max_w)
 
         with open(dimensions_file, "w+") as filename:
-            print("{} {}".format(max_h,max_w), file=filename)
+            print("{} {}".format(max_h,max_w))
         img_dims = (max_h, max_w)
 
 
