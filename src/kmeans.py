@@ -3,22 +3,30 @@ import numpy as np
 
 class AnchorMaker(object):
     """docstring for AnchorMaker"""
-    def __init__(self, target_file, label_path, cluster_num):
+    def __init__(self, target_file, label_path, cluster_num, colab=False):
         super(AnchorMaker, self).__init__()
         self.target_file = target_file
         self.label_path = label_path
         self.cluster_num = cluster_num
         self.seed = 1
         self.dist = np.median
+        self.colab = colab
 
     def parse_anno(self):
         anno = open(self.label_path, 'r')
         result = []
         for line in anno:
             s = line.strip().split(' ')
-            image = cv2.imread(s[0])
+            if self.colab:
+                image = cv2.imread(str(s[0]+" "+s[1]))
+            else:   
+                image = cv2.imread(s[0])
             image_h, image_w = image.shape[:2]
-            s = s[1:]
+            
+            if self.colab:
+                s = s[2:]
+            else:   
+                s = s[1:]
             box_cnt = len(s) // 5
             for i in range(box_cnt):
                 x_min, y_min, x_max, y_max = float(s[i*5+0]), float(s[i*5+1]), float(s[i*5+2]), float(s[i*5+3])

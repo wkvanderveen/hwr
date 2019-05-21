@@ -26,7 +26,7 @@ class Splitter(object):
 
                 if i % split == 0:
                     image_path = os.path.join(root, name)
-                    temp_dir = os.path.join(self.test_dir, os.path.sep.join(image_path.split(os.path.sep)[4:-1]))
+                    temp_dir = os.path.join(self.test_dir, os.path.sep.join(image_path.split(os.path.sep)[-2:-1]))
                     path_out = os.path.join(temp_dir, image_path.split(os.path.sep)[-1])
 
                     if not os.path.exists(temp_dir):
@@ -36,7 +36,7 @@ class Splitter(object):
                     copyfile(image_path, path_out)
                 else:
                     image_path = os.path.join(root, name)
-                    temp_dir = os.path.join(self.train_dir, os.path.sep.join(image_path.split(os.path.sep)[4:-1]))
+                    temp_dir = os.path.join(self.train_dir, os.path.sep.join(image_path.split(os.path.sep)[-2:-1]))
                     path_out = os.path.join(temp_dir, image_path.split(os.path.sep)[-1])
 
                     if not os.path.exists(temp_dir):
