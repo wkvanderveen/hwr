@@ -153,7 +153,7 @@ class Line_segmenter:
 
 if __name__ == '__main__':
 	b = Binarizer()
-	image_arr = ['P123-Fg002-R-C01-R01', 'P21-Fg006-R-C01-R01', 'P22-Fg008-R-C01-R01', 'P513-Fg001-R-C01-R01', 'P106-Fg002-R-C01-R01', 'P21-Fg006-R-C01-R01']
+	image_arr = ['124-Fg004', 'P123-Fg002-R-C01-R01', 'P21-Fg006-R-C01-R01', 'P22-Fg008-R-C01-R01', 'P513-Fg001-R-C01-R01', 'P106-Fg002-R-C01-R01', 'P21-Fg006-R-C01-R01']
 	# Test on actual dead sea scroll image
 	for img_name in image_arr:
 		path = join(abspath('..'), 'data')

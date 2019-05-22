@@ -27,7 +27,7 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 5  # not too few
+num_classes = 2  # not too few
 split_percentage = 20
 line_length_bounds = (20,50)
 n_training_lines = 50
@@ -78,7 +78,7 @@ if not network_exists or retrain:
         num_classes = splitter.split()
 
         print(f"Augmenting training letters...")
-        augmenter = Augmenter(source_dir=letters_train_dir, shear=True, coarse_dropout=(0.02, 0.5))
+        augmenter = Augmenter(source_dir=letters_train_dir, shear=True, coarse_dropout=(0.10, 0.5))
         augmenter.augment()
     else:
         print("Training dataset detected! Skipping splitting & augmenting.")

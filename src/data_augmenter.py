@@ -21,8 +21,8 @@ class Augmenter(object):
         self.SHEAR = 1
 
         self.MIN_STATE = [0, -10]
-        self.INTERVAL = [0.05, 5]
-        self.MAX_STATE = [0.20, 10]
+        self.INTERVAL = [0.01, 5]
+        self.MAX_STATE = [0.05, 10]
 
         self.STATE = list(self.MIN_STATE)
         self.ORIGINAL_IMAGE = [0] * len(self.MIN_STATE)
@@ -67,10 +67,12 @@ class Augmenter(object):
                 #     aug_seq.append(iaa.Invert(1))
 
                 seq = iaa.Sequential([
-                    iaa.Affine(shear=self.STATE[self.SHEAR], cval=(255)),
+                    iaa.Affine(shear=self.STATE[self.SHEAR], cval=(255)), #Good
                     iaa.Invert(1),
-                    iaa.CoarseDropout(self.STATE[self.DAMAGE], size_percent=self.coarse_dropout),
-                    iaa.Invert(1)
+                    iaa.CoarseDropout(self.STATE[self.DAMAGE], size_percent=self.coarse_dropout), #Good
+                    iaa.Invert(1),
+                    #iaa.Sometimes(0.5, iaa.GaussianBlur(sigma=2.0)), #Good
+                    #iaa.Resize({"width": (0.5, 0.75), "height": [24, 32, 40]}) #Good
                 ])
 
                 images_aug = seq.augment_image(image)
@@ -90,5 +92,5 @@ class Augmenter(object):
 
 
 if __name__ == "__main__":
-    augmenter = Augmenter(source_dir="../../data/letters-train", shear=True, coarse_dropout=(0.02, 0.5))
+    augmenter = Augmenter(source_dir="../../data/letters-train", shear=True, coarse_dropout=(0.4, 0.5))
     augmenter.augment()
