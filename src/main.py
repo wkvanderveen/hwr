@@ -40,9 +40,9 @@ cluster_num = 9
 iou_threshold = 0.1
 score_threshold = 0.1
 batch_size = 8
-steps = 50000
-learning_rate = 1e-3
-decay_steps = 10000
+steps = 15000
+learning_rate = 1e-5
+decay_steps = 1000
 decay_rate = 0.9
 shuffle_size = 200
 eval_internal = 1000
@@ -63,12 +63,9 @@ evaluate_network = False # TBA
 
 
 # PREPARE NETWORK IF NOT READY
-network_exists = bool(os.path.isfile("../data/checkpoint/checkpoint"))
-print("network does {} exist".format(network_exists))
+network_exists = bool(os.path.isfile("../data/checkpoint/"))
 
 if not network_exists or retrain:
-    print("network does not exist")
-
     if not os.path.exists(letters_train_dir):
         splitter = Splitter(source_dir=orig_letters_dir,
                             num_classes=num_classes,
@@ -112,7 +109,7 @@ if not network_exists or retrain:
         img_dims = (max_h, max_w)
 
         with open(dimensions_file, "w+") as filename:
-            print("{} {}".format(max_h,max_w))
+            print("{} {}".format(max_h,max_w), file=filename)
         img_dims = (max_h, max_w)
 
 
@@ -147,8 +144,7 @@ if not network_exists or retrain:
         sleep(1)
 
     if not os.path.exists(weights_dir):
-        print("Error: no weights detected! You need the pretrained " +
-              "weights in the {} directory.".format(weights_dir))
+        print("Error: no weights detected! You need the pretrained weights in the {} directory.".format(weights_dir))
 
     weightconverter = WeightConverter(freeze=False,
                                       convert=True,
