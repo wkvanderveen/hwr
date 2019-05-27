@@ -16,8 +16,8 @@ SMEAR_DENSITY = 0.90
 NR_SMEARS = 4
 SIZE_THRESHOLD = 900 #in pixels
 AREA_THRESHOLD = 0.01 #area the blob has to be at least in order to get added to the set lines (percentage of the biggest blob)
-EPSILON_DELTA = 0.0001 #modifier for the epsilon value used for determining how tightly the contour must fit 
 AREA_THRESHOLD_2 = 8000 #pixel threshold
+EPSILON_DELTA = 0.0001 #modifier for the epsilon value used for determining how tightly the contour must fit 
 PADDING = 100 #padding around the smeared image in pixels
 
 class Smear:
@@ -182,7 +182,8 @@ if __name__ == '__main__':
 	path = join(abspath('..'), 'data')
 	nice_img_name = 'P632-Fg002-R-C01-R01'#'P583-Fg006-R-C01-R01' 
 	bad_img_name = 'P21-Fg006-R-C01-R01'
-	img_name = nice_img_name
+	ground_truth_test_name = '124-Fg004'
+	img_name = ground_truth_test_name
 
 	bw_img =  cv2.imread(join(join(path, 'image-data'), img_name + '-fused.jpg'))
 	print("converting image: " + img_name)

@@ -4,7 +4,6 @@ line_segmenter.py
 This file includes code for the line segmentation part of the pipeline
 '''
 import cv2
-import mahotas
 from os.path import join, abspath
 import os
 import numpy as np
@@ -137,7 +136,7 @@ class Line_segmenter:
 
 		# cv2.imshow(img2)
 		# cv2.waitKey(0)
-		return segmented_images
+		return segmented_images, hist
 
 	def show_segm_img(self, img_arr):
 		full_image = np.array(img_arr[0])
@@ -150,6 +149,37 @@ class Line_segmenter:
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 
+	def get_segm_img(self, img_arr):
+		full_image = np.array(img_arr[0])
+		img_arr = np.array(img_arr)
+
+		for image in img_arr[1:]:
+			full_image = np.concatenate((full_image, image), axis=1)
+		return full_image
+
+	def get_minima(self, hist, min_dist = 30, smooth=101, stride=21):
+		temp_minima = []
+		minima = []
+		hist = self.smooth_hist(hist, smooth)
+		mean = np.mean(hist)
+		#add all minima to a list
+		for idx in range(stride, len(hist) - stride, 1):
+			if hist[idx] < hist[idx-stride] and hist[idx] < hist[idx+stride] and hist[idx] < mean:
+				temp_minima.append(idx)
+
+		#refine list
+		for idx in range(len(temp_minima) - 1):
+			if np.abs(temp_minima[idx] - temp_minima[idx+1]) > min_dist: #there is enough distance between the two minima
+				minima.append(temp_minima[idx])
+
+		if len(minima) == 0 and len(temp_minima) > 0: #append last minima
+			minima.append(temp_minima[-1])
+		elif temp_minima[-1] - minima[-1] > min_dist: 
+			minima.append(temp_minima[-1])
+
+		print("kept %d out of %d minima." % (len(minima), len(temp_minima)) )
+		return minima
+		
 
 if __name__ == '__main__':
 	b = Binarizer()
