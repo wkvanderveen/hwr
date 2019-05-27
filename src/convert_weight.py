@@ -51,7 +51,7 @@ class WeightConverter(object):
                                                   iou_thresh=self.iou_threshold)
             print("=>", boxes.name[:-2], scores.name[:-2], labels.name[:-2])
             gpu_out_node_names = [boxes.name[:-2], scores.name[:-2], labels.name[:-2]]
-            feature_map_1, feature_map_2, feature_map_3 = feature_map
+
             saver = tf.train.Saver(var_list=tf.global_variables(scope='yolov3'))
 
             if self.convert:

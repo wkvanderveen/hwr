@@ -29,17 +29,17 @@ anchor_file = "../../data/anchors.txt"
 # Data parameters
 num_classes = 2  # not too few
 split_percentage = 20
-line_length_bounds = (20,50)
-n_training_lines = 50
-n_testing_lines = 50
-max_overlap_train = 20
-max_overlap_test = 20
+line_length_bounds = (2,3)
+n_training_lines = 4
+n_testing_lines = 4
+max_overlap_train = 1
+max_overlap_test = 1
 
 # Network parameters
-cluster_num = 9
+cluster_num = 4
 iou_threshold = 0.1
 score_threshold = 0.1
-batch_size = 8
+batch_size = 11
 steps = 100
 learning_rate = 1e-3
 decay_steps = 100

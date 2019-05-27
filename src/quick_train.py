@@ -55,7 +55,9 @@ class Trainer(object):
 
         with tf.variable_scope('yolov3'):
             pred_feature_map = model.forward(images, is_training=is_training)
+            print(f"FMAP IN QT: pred_feature_map shape = {pred_feature_map.shape}")
             loss             = model.compute_loss(pred_feature_map, y_true)
+            print(f"LOSS IN QT: loss = {loss}")
             y_pred           = model.predict(pred_feature_map)
 
         tf.summary.scalar("loss/coord_loss",   loss[1])
