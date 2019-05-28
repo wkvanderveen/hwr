@@ -27,24 +27,24 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 10
+num_classes = 1
 split_percentage = 20
 line_length_bounds = (10,30)
-n_training_lines = 2000
-n_testing_lines = 500
-max_overlap_train = 0
-max_overlap_test = 0
+n_training_lines = 20
+n_testing_lines = 20
+max_overlap_train = 10
+max_overlap_test = 10
 max_boxes = 20
 
 # Network parameters
-n_filters_dn = (64,32)
-n_filt_yolo = 32
+n_filters_dn = (16,16)
+n_filt_yolo = 8
 cluster_num = 4
 iou_threshold = 0.5
 score_threshold = 0.5
 ignore_threshold = 0.5
 batch_size = 8
-steps = 5000
+steps = 50
 learning_rate = 1e-4
 decay_steps = 100
 decay_rate = 0.7
