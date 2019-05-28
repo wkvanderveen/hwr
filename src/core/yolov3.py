@@ -21,13 +21,11 @@ class darknet53(object):
     def __init__(self, inputs):
         self.outputs = self.forward(inputs)
 
-    def _darknet53_block(self, inputs, filters):
-        return common._conv2d_fixed_padding(inputs, filters=filters * 1, kernel_size=1)
-
 
     def forward(self, inputs):
-        return common._conv2d_fixed_padding(inputs, filters=32,  kernel_size=3, strides=1)
-
+        inputs = common._conv2d_fixed_padding(inputs, filters=32,  kernel_size=1, strides=8)
+        inputs = common._conv2d_fixed_padding(inputs, filters=32,  kernel_size=1, strides=4)
+        return inputs
 
 
 class yolov3(object):
@@ -35,35 +33,31 @@ class yolov3(object):
     def __init__(self, num_classes, anchors,
                  batch_norm_decay=0.9, leaky_relu=0.1):
 
-        # self._ANCHORS = [[10 ,13], [16 , 30], [33 , 23],
-                         # [30 ,61], [62 , 45], [59 ,119],
-                         # [116,90], [156,198], [373,326]]
         self._ANCHORS = anchors
         self._BATCH_NORM_DECAY = batch_norm_decay
         self._LEAKY_RELU = leaky_relu
         self._NUM_CLASSES = num_classes
-        self.feature_maps = [] # [[None, 13, 13, 255], [None, 26, 26, 255], [None, 52, 52, 255]]
-        print(f"C={num_classes}, A={anchors}")
+        self.feature_maps = []
 
     def _yolo_block(self, inputs, filters):
-        print(f"YBLOCK BEFORE: {inputs.shape}")
         inputs = common._conv2d_fixed_padding(inputs, filters=filters * 1, kernel_size=1)
-        print(f"YBLOCK AFTER: {inputs.shape}")
         return inputs
 
     def _detection_layer(self, inputs, anchors):
         num_anchors = len(anchors)
-        print(f"DET BEFORE: {inputs.shape}")
-        feature_map = slim.conv2d(inputs, num_anchors * (5 + self._NUM_CLASSES), 1,
-                                stride=1, normalizer_fn=None,
+
+        feature_map = slim.conv2d(inputs, num_anchors * (5 + self._NUM_CLASSES),
+                                kernel_size=1,
+                                stride=1,
+                                normalizer_fn=None,
                                 activation_fn=None,
                                 biases_initializer=tf.zeros_initializer())
-        print(f"DET AFTER: {feature_map.shape}")
+
         return feature_map
 
     def _reorg_layer(self, feature_map, anchors):
 
-        num_anchors = len(anchors) # num_anchors=3
+        num_anchors = len(anchors)
         grid_size = feature_map.shape.as_list()[1:3]
         # the downscale image in height and weight
         stride = tf.cast(self.img_size // grid_size, tf.float32) # [h,w] -> [y,x]
@@ -91,40 +85,9 @@ class yolov3(object):
         boxes = tf.concat([box_centers, box_sizes], axis=-1)
         return x_y_offset, boxes, conf_logits, prob_logits
 
-    # @staticmethod
-    # def _upsample(inputs, out_shape):
-
-    #     new_height, new_width = out_shape[1], out_shape[2]
-    #     inputs = tf.image.resize_nearest_neighbor(inputs, (new_height, new_width))
-    #     inputs = tf.identity(inputs, name='upsampled')
-
-    #     return inputs
-
-    # # @staticmethod
-    # # def _upsample(inputs, out_shape):
-    #     # """
-    #     # replace resize_nearest_neighbor with conv2d_transpose To support TensorRT 5 optimization
-    #     # """
-    #     # new_height, new_width = out_shape[1], out_shape[2]
-    #     # filters = 256 if (new_height == 26 and new_width==26) else 128
-    #     # inputs = tf.layers.conv2d_transpose(inputs, filters, kernel_size=3, padding='same',
-    #                                         # strides=(2,2), kernel_initializer=tf.ones_initializer())
-    #     # return inputs
-
     def forward(self, inputs, is_training=False, reuse=False):
-        """
-        Creates YOLO v3 model.
-
-        :param inputs: a 4-D tensor of size [batch_size, height, width, channels].
-               Dimension batch_size may be undefined. The channel order is RGB.
-        :param is_training: whether is training or not.
-        :param reuse: whether or not the network and its variables should be reused.
-        :return:
-        """
-        print(f"FORWARD: input shape = {inputs.shape}")
-        # it will be needed later on
         self.img_size = tf.shape(inputs)[1:3]
-        # set batch norm params
+
         batch_norm_params = {
             'decay': self._BATCH_NORM_DECAY,
             'epsilon': 1e-05,
@@ -141,7 +104,6 @@ class yolov3(object):
                                 activation_fn=lambda x: tf.nn.leaky_relu(x, alpha=self._LEAKY_RELU)):
                 with tf.variable_scope('darknet-53'):
                     inputs = darknet53(inputs).outputs
-                    print(f"Input after DN: {inputs.shape}")
 
                 with tf.variable_scope('yolo-v3'):
                     inputs = self._yolo_block(inputs, filters=8)
@@ -154,9 +116,9 @@ class yolov3(object):
 
         grid_size = x_y_offset.shape.as_list()[:2]
 
-        boxes = tf.reshape(boxes, [-1, grid_size[0]*grid_size[1]*4, 4])
-        confs = tf.reshape(confs, [-1, grid_size[0]*grid_size[1]*4, 1])
-        probs = tf.reshape(probs, [-1, grid_size[0]*grid_size[1]*4, self._NUM_CLASSES])
+        boxes = tf.reshape(boxes, [-1, grid_size[0]*grid_size[1]*len(self._ANCHORS), 4])
+        confs = tf.reshape(confs, [-1, grid_size[0]*grid_size[1]*len(self._ANCHORS), 1])
+        probs = tf.reshape(probs, [-1, grid_size[0]*grid_size[1]*len(self._ANCHORS), self._NUM_CLASSES])
 
         return boxes, confs, probs
 
@@ -199,11 +161,12 @@ class yolov3(object):
         Arguments: y_pred, list -> [feature_map_1, feature_map_2, feature_map_3]
                                         the shape of [None, 13, 13, 3*85]. etc
         """
+
         loss_xy, loss_wh, loss_conf, loss_class = 0., 0., 0., 0.
         total_loss = 0.
-        # total_loss, rec_50, rec_75,  avg_iou    = 0., 0., 0., 0.
 
         result = self.loss_layer(pred_feature_map, y_true, self._ANCHORS)
+
         loss_xy    += result[0]
         loss_wh    += result[1]
         loss_conf  += result[2]
@@ -215,12 +178,11 @@ class yolov3(object):
 
     def loss_layer(self, feature_map, y_true, anchors):
         # size in [h, w] format! don't get messed up!
-        print(f"fmap shape = {feature_map.shape}")
+
         grid_size = tf.shape(feature_map)[1:3]
         grid_size_ = feature_map.shape.as_list()[1:3]
 
-        print(f"gridsize = {grid_size_}")
-        y_true = tf.reshape(y_true, [-1, grid_size_[0], grid_size_[1], 4, 5+self._NUM_CLASSES])
+        y_true = tf.reshape(y_true, [-1, grid_size_[0], grid_size_[1], len(self._ANCHORS), 5+self._NUM_CLASSES])
 
         # the downscale ratio in height and weight
         ratio = tf.cast(self.img_size / grid_size, tf.float32)
@@ -235,7 +197,6 @@ class yolov3(object):
         # V: num of true gt box
         valid_true_boxes = tf.boolean_mask(y_true[..., 0:4], tf.cast(object_mask[..., 0], 'bool'))
 
-        print(f"ytrue before = {y_true.shape}")
         # shape: [V, 2]
         valid_true_box_xy = valid_true_boxes[:, 0:2]
         valid_true_box_wh = valid_true_boxes[:, 2:4]
@@ -247,7 +208,6 @@ class yolov3(object):
         # shape: [N, 13, 13, 3, V]
         iou = self._broadcast_iou(valid_true_box_xy, valid_true_box_wh, pred_box_xy, pred_box_wh)
 
-        print(f"ytrue after = {y_true.shape}")
         # shape: [N, 13, 13, 3]
         best_iou = tf.reduce_max(iou, axis=-1)
         # get_ignore_mask
@@ -293,7 +253,6 @@ class yolov3(object):
         class_loss = object_mask * tf.nn.sigmoid_cross_entropy_with_logits(labels=y_true[..., 5:], logits=pred_prob_logits)
         class_loss = tf.reduce_sum(class_loss) / N
 
-        print("FINISH  COMPUTE LOSS")
 
         return xy_loss, wh_loss, conf_loss, class_loss
 

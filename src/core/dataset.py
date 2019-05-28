@@ -96,11 +96,11 @@ class Parser(object):
 
         if self.debug: return image, gt_boxes
 
-        y_true_13, y_true_26, y_true_52 = tf.py_func(self.preprocess_true_boxes, inp=[gt_boxes],
-                            Tout = [tf.float32, tf.float32, tf.float32])
+        y_true_13 = tf.py_func(self.preprocess_true_boxes, inp=[gt_boxes],
+                            Tout = [tf.float32])
         image = image / 255.
 
-        return image, y_true_13, y_true_26, y_true_52
+        return image, y_true_13
 
     def preprocess_true_boxes(self, gt_boxes):
         """
@@ -120,9 +120,8 @@ class Parser(object):
                             13:cell size, 3:number of anchors
                             85: box_centers, box_sizes, confidence, probability
         """
-        num_layers = len(self.anchors) // 3
-        anchor_mask = [[6,7,8], [3,4,5], [0,1,2]] if num_layers==3 else [[3,4,5], [1,2,3]]
-        grid_sizes = [[self.image_h//x, self.image_w//x] for x in (32, 16, 8)]
+        anchor_mask = list(range(0,len(self.anchors)))
+        grid_sizes = [self.image_h//32, self.image_w//32]
 
         box_centers = (gt_boxes[:, 0:2] + gt_boxes[:, 2:4]) / 2 # the center of box
         box_sizes =    gt_boxes[:, 2:4] - gt_boxes[:, 0:2] # the height and width of box
@@ -130,11 +129,9 @@ class Parser(object):
         gt_boxes[:, 0:2] = box_centers
         gt_boxes[:, 2:4] = box_sizes
 
-        y_true_13 = np.zeros(shape=[grid_sizes[0][0], grid_sizes[0][1], 3, 5+self.num_classes], dtype=np.float32)
-        y_true_26 = np.zeros(shape=[grid_sizes[1][0], grid_sizes[1][1], 3, 5+self.num_classes], dtype=np.float32)
-        y_true_52 = np.zeros(shape=[grid_sizes[2][0], grid_sizes[2][1], 3, 5+self.num_classes], dtype=np.float32)
+        y_true_13 = np.zeros(shape=[grid_sizes[0], grid_sizes[1], len(self.anchors), 5+self.num_classes], dtype=np.float32)
 
-        y_true = [y_true_13, y_true_26, y_true_52]
+        y_true = y_true_13
         anchors_max =  self.anchors / 2.
         anchors_min = -anchors_max
         valid_mask = box_sizes[:, 0] > 0
@@ -159,20 +156,19 @@ class Parser(object):
         best_anchor = np.argmax(iou, axis=-1)
 
         for t, n in enumerate(best_anchor):
-            for l in range(num_layers):
-                if n not in anchor_mask[l]: continue
+            if n not in anchor_mask: continue
 
-                i = np.floor(gt_boxes[t,0]/self.image_w*grid_sizes[l][1]).astype('int32')
-                j = np.floor(gt_boxes[t,1]/self.image_h*grid_sizes[l][0]).astype('int32')
+            i = np.floor(gt_boxes[t,0]/self.image_w*grid_sizes[1]).astype('int32')
+            j = np.floor(gt_boxes[t,1]/self.image_h*grid_sizes[0]).astype('int32')
 
-                k = anchor_mask[l].index(n)
-                c = gt_boxes[t, 4].astype('int32')
+            k = anchor_mask.index(n)
+            c = gt_boxes[t, 4].astype('int32')
 
-                y_true[l][j, i, k, 0:4] = gt_boxes[t, 0:4]
-                y_true[l][j, i, k,   4] = 1.
-                y_true[l][j, i, k, 5+c] = 1.
+            y_true[j, i, k, 0:4] = gt_boxes[t, 0:4]
+            y_true[j, i, k,   4] = 1.
+            y_true[j, i, k, 5+c] = 1.
 
-        return y_true_13, y_true_26, y_true_52
+        return y_true_13
 
     def parser_example(self, serialized_example):
 

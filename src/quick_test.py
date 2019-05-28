@@ -43,10 +43,9 @@ class Tester(object):
         cpu_nms_graph = tf.Graph()
 
         input_tensor, output_tensors = utils.read_pb_return_tensors(cpu_nms_graph, os.path.join(self.checkpoint_dir, "yolov3_cpu_nms.pb"),
-                                                   ["Placeholder:0", "concat_9:0", "mul_6:0"])
+                                                   ["Placeholder:0", "concat_5:0", "mul_2:0"])
         with tf.Session(graph=cpu_nms_graph) as sess:
             boxes, scores = sess.run(output_tensors, feed_dict={input_tensor: np.expand_dims(img, axis=0)})
-            boxes, scores, labels = utils.cpu_nms(boxes, scores, self.num_classes, score_thresh=0.01, iou_thresh=0.01)
+            boxes, scores, labels = utils.cpu_nms(boxes, scores, self.num_classes, score_thresh=score_threshold, iou_thresh=iou_threshold)
             image = utils.draw_boxes(img, boxes, scores, labels, classes, [self.img_h, self.img_w], show=True)
         print("(If nothing is plotted, no characters were detected)")
-

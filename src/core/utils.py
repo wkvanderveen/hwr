@@ -326,7 +326,7 @@ def evaluate(y_pred, y_true, iou_thresh=0.5, score_thresh=0.3):
 
     for i in range(num_images):
         true_labels_list, true_boxes_list = [], []
-        for j in range(3): # three feature maps
+        for j in range(1): # one feature map
             true_probs_temp = y_true[j][i][...,5: ]
             true_boxes_temp = y_true[j][i][...,0:4]
 
