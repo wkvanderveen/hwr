@@ -52,6 +52,11 @@ class Smear:
 		'''
 		Used for extracting the contoured image.. Mostly for testing
 		'''
+		# typedefs
+		cdef list approx, rects
+		cdef np.ndarray a
+		cdef np.ndarray[np.uint8_t, ndim=2] img_copy
+
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
 
@@ -90,7 +95,7 @@ class Smear:
 		return cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[255,255,255])
 
 	def get_croppings(self, np.ndarray[np.uint8_t, ndim=2] img_original, np.ndarray[np.uint8_t, ndim=2] img_smear):
-		cdef int x, y, w, h, idx
+		cdef int x, y, w, h, idx, h_img, w_img
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
 
@@ -104,7 +109,7 @@ class Smear:
 			for a in approx:
 				cv2.drawContours(img_copy,[a],0,(90,0,255),2)
 
-		croppings = []
+		cdef list croppings = []
 		for idx in range(len(approx)):
 			mask = np.zeros_like(img_smear) # Create mask where white is what we want, black otherwise
 			cv2.drawContours(mask, approx, idx, 255, -1) # Draw filled contour in mask
@@ -138,6 +143,10 @@ class Smear:
 		Also returns the contoured image
 		For testing
 		'''
+
+		cdef np.ndarray[np.uint8_t, ndim=2] img_contoured, img_smear
+		cdef list croppings
+
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
 		print('start smearing')

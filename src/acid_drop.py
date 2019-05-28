@@ -144,7 +144,7 @@ if __name__ == '__main__':
 		t2 = time.time()
 
 		(_, smear, _) = s.split_into_lines_and_contour(img)
-		segments, hist = l.histogram(smear)
+		hist = l.create_v_histogram(smear)
 		print("time passed in smear: ", time.time() - t2)
 		print("time passed in prepro: ", time.time() - t)
 
