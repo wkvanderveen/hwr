@@ -4,29 +4,36 @@ All other functions are helper functions for this function and don't need to be 
 
 '''
 
-
+import cython
 import cv2
 from os.path import join, abspath
 import numpy as np
 from binarizer import Binarizer
-
 from copy import deepcopy
 
-SMEAR_DENSITY = 0.90
-NR_SMEARS = 4
-SIZE_THRESHOLD = 900 #in pixels
-AREA_THRESHOLD = 0.01 #area the blob has to be at least in order to get added to the set lines (percentage of the biggest blob)
-AREA_THRESHOLD_2 = 8000 #pixel threshold
-EPSILON_DELTA = 0.0001 #modifier for the epsilon value used for determining how tightly the contour must fit 
-PADDING = 100 #padding around the smeared image in pixels
+# cimport cv2
+cimport numpy as np
+# from libcpp.vector cimport vector
+
+cdef float SMEAR_DENSITY = 0.90
+cdef int NR_SMEARS = 4
+cdef int SIZE_THRESHOLD = 900 #in pixels
+cdef float AREA_THRESHOLD = 0.01 #area the blob has to be at least in order to get added to the set lines (percentage of the biggest blob)
+cdef int AREA_THRESHOLD_2 = 8000 #pixel threshold
+cdef double EPSILON_DELTA = 0.0001 #modifier for the epsilon value used for determining how tightly the contour must fit 
+cdef int PADDING = 100 #padding around the smeared image in pixels
 
 class Smear:
 	def __init__(self):
 		self.b = Binarizer()
 
 	def smear(self, img):
+		cdef int idx, y_max, x_max, x, y, val
+		# cdef int img[] = _img
 		(y_max, x_max) = np.shape(img)
 
+
+		
 		for idx in range(NR_SMEARS):
 			if idx % 2 == 0: #smear from left to right
 				for y in range(y_max):
@@ -91,6 +98,7 @@ class Smear:
 		return cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[255,255,255])
 
 	def get_croppings(self, img_original, img_smear):
+		cdef int x, y, w, h, idx
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
 
