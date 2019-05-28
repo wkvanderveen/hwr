@@ -20,11 +20,13 @@ nice_img_name = 'P632-Fg002-R-C01-R01'#'P583-Fg006-R-C01-R01'
 bad_img_name = 'P21-Fg006-R-C01-R01'
 ground_truth_img_name = '124-Fg004'
 
-BURNCOST = 20.0 	#penalty to burn through a single black pixel (this is added to other possible penalties)
+BURNCOST = 4.5 		#penalty to burn through a single black pixel (this is added to other possible penalties)
 VCOST1 = 2.0 		#penalty to move in the vertical direction away from the target y
 VCOST2 = 0.5		#penalty to move in the vertical direction toward the target y
-LCOST = 2.0			#penalty to move to the left (back)
+LCOST = 1.5			#penalty to move to the left (back)
 RCOST = 1.0			#penalty to move right (forward; this is the preferred action)
+
+# VCOST = 1.0 		#multiplication penalty (test)
 
 
 def acid_drop(img, x, y, tx, ty, max_len):
@@ -74,6 +76,7 @@ def acid_drop(img, x, y, tx, ty, max_len):
 					udist = dist + VCOST1
 				else:	#coming towards the target y
 					udist = dist + VCOST2
+				# udist = dist + VCOST * np.abs((y+1) - ty) / 20.0
 				if img[y+1, x] != 255:
 					udist += BURNCOST
 				heappush(heap, (udist, x, y+1))
@@ -87,6 +90,7 @@ def acid_drop(img, x, y, tx, ty, max_len):
 					ddist = dist + VCOST1
 				else:	#coming towards the target y
 					ddist = dist + VCOST2
+				# ddist = dist + VCOST * np.abs((y-1) - ty) / 20.0
 				if img[y-1, x] != 255:
 					ddist += BURNCOST
 				heappush(heap, (ddist, x, y-1))
@@ -116,34 +120,42 @@ if __name__ == '__main__':
 	s = Smear()
 	l = Line_segmenter()
 
+
+
 	img_name = ground_truth_img_name
 
-	bw_img =  cv2.imread(join(join(PATH, 'image-data'), img_name + '-fused.jpg'))
-	print("converting image: " + img_name)
+	files =  [join(join(PATH, 'image-data'), f) for f in os.listdir(join(PATH, 'image-data')) if os.path.isfile(join(join(PATH, 'image-data'),  f)) and f.endswith('-fused.jpg')]
 
-	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
+	idx = 0
+	# bw_img =  cv2.imread(join(join(PATH, 'image-data'), img_name + '-fused.jpg'))
+	for f in files:
+		bw_img =  cv2.imread(f)
+		print("converting image: " + f)
 
-	img = b.binarize_image(bw_img)
+		bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
-	(_, smear, _) = s.split_into_lines_and_contour(img)
-	segments, hist = l.histogram(smear)
+		img = b.binarize_image(bw_img)
 
-	minima = l.get_minima(hist)
+		(_, smear, _) = s.split_into_lines_and_contour(img)
+		segments, hist = l.histogram(smear)
 
-	## actually apply acid drop
-	(_, maxx) = np.shape(img)
+		minima = l.get_minima(hist)
 
-	for m in minima:
-		print("working on minima.. %d" % (m))
-		sys.stdout.flush()
-		# line = find_path(img, m)
-		line = acid_drop(img, 0, m, maxx-1, m, 9000)
-		# for (x, y) in line:
-		# 	print("(%d,%d)" % (x, y))
-		line = np.array(line)
-		# pts = line.reshape((-1,1,2))
-		img = cv2.polylines(img,[line],False,(125))
+		## actually apply acid drop
+		(_, maxx) = np.shape(img)
+
+		for m in minima:
+			print("working on minima.. %d" % (m))
+			sys.stdout.flush()
+			# line = find_path(img, m)
+			line = acid_drop(img, 0, m, maxx-1, m, 9000)
+			# for (x, y) in line:
+			# 	print("(%d,%d)" % (x, y))
+			line = np.array(line)
+			# pts = line.reshape((-1,1,2))
+			img = cv2.polylines(img,[line],False,(125))
 
 
-	cv2.imwrite('a-star.png', img)
-	print("saved image to a-star.png")
+		cv2.imwrite('a-star%d.png' % (idx), img)
+		print("saved image to a-star.png")
+		idx += 1
