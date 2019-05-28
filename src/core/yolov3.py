@@ -18,13 +18,13 @@ slim = tf.contrib.slim
 class darknet53(object):
     """network for performing feature extraction"""
 
-    def __init__(self, inputs):
-        self.outputs = self.forward(inputs)
+    def __init__(self, inputs, n_filters):
+        self.outputs = self.forward(inputs, n_filters)
 
 
-    def forward(self, inputs):
-        inputs = common._conv2d_fixed_padding(inputs, filters=32,  kernel_size=1, strides=8)
-        inputs = common._conv2d_fixed_padding(inputs, filters=32,  kernel_size=1, strides=4)
+    def forward(self, inputs, n_filters):
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=1, strides=8)
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[1],  kernel_size=1, strides=4)
         return inputs
 
 
@@ -85,7 +85,7 @@ class yolov3(object):
         boxes = tf.concat([box_centers, box_sizes], axis=-1)
         return x_y_offset, boxes, conf_logits, prob_logits
 
-    def forward(self, inputs, is_training=False, reuse=False):
+    def forward(self, inputs, n_filters_dn, n_filt_yolo, is_training=False, reuse=False):
         self.img_size = tf.shape(inputs)[1:3]
 
         batch_norm_params = {
@@ -103,10 +103,10 @@ class yolov3(object):
                                 biases_initializer=None,
                                 activation_fn=lambda x: tf.nn.leaky_relu(x, alpha=self._LEAKY_RELU)):
                 with tf.variable_scope('darknet-53'):
-                    inputs = darknet53(inputs).outputs
+                    inputs = darknet53(inputs, n_filters=n_filters_dn).outputs
 
                 with tf.variable_scope('yolo-v3'):
-                    inputs = self._yolo_block(inputs, filters=8)
+                    inputs = self._yolo_block(inputs, filters=n_filt_yolo)
                     feature_map = self._detection_layer(inputs, self._ANCHORS)
                     feature_map = tf.identity(feature_map, name='feature_map')
 

@@ -19,7 +19,7 @@ sess = tf.Session()
 
 class Trainer(object):
     """docstring for Trainer"""
-    def __init__(self, num_classes, batch_size, ignore_thresh, steps, img_dims, learning_rate, decay_steps, decay_rate, shuffle_size, eval_internal, save_internal, anchors_path, train_records, test_records, checkpoint_path):
+    def __init__(self, num_classes, batch_size, n_filters_dn, cell_size, n_filt_yolo, ignore_threshold, steps, img_dims, learning_rate, decay_steps, decay_rate, shuffle_size, eval_internal, save_internal, anchors_path, train_records, test_records, checkpoint_path):
         super(Trainer, self).__init__()
         self.num_classes = num_classes
         self.batch_size = batch_size
@@ -27,12 +27,15 @@ class Trainer(object):
         self.learning_rate = learning_rate
         self.decay_steps = decay_steps
         self.decay_rate = decay_rate
-        self.ignore_thresh = ignore_thresh
+        self.ignore_thresh = ignore_threshold
         self.shuffle_size = shuffle_size
         self.eval_internal = eval_internal
         self.save_internal = save_internal
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
+        self.n_filt_yolo = n_filt_yolo
+        self.n_filters_dn = n_filters_dn
+        self.cell_size = cell_size
         self.anchors_path = anchors_path
         self.train_records = train_records
         self.test_records = test_records
@@ -43,7 +46,11 @@ class Trainer(object):
     def train(self):
         ANCHORS = utils.get_anchors(self.anchors_path, self.img_h, self.img_w)
 
-        parser   = Parser(self.img_h, self.img_w, ANCHORS, self.num_classes)
+        parser   = Parser(image_h=self.img_h,
+                          image_w=self.img_w,
+                          anchors=ANCHORS,
+                          num_classes=self.num_classes,
+                          cell_size=self.cell_size)
 
         trainset = dataset(parser, self.train_records, self.batch_size, shuffle=self.shuffle_size)
         testset  = dataset(parser, self.test_records , self.batch_size, shuffle=None)
@@ -56,7 +63,11 @@ class Trainer(object):
         model = yolov3.yolov3(self.num_classes, ANCHORS)
 
         with tf.variable_scope('yolov3'):
-            pred_feature_map = model.forward(images, is_training=is_training)
+            pred_feature_map = model.forward(images,
+                                             is_training=is_training,
+                                             n_filters_dn=self.n_filters_dn,
+                                             n_filt_yolo=self.n_filt_yolo)
+
             loss             = model.compute_loss(pred_feature_map, y_true, ignore_thresh=self.ignore_thresh)
             y_pred           = model.predict(pred_feature_map)
 
@@ -107,7 +118,6 @@ class Trainer(object):
 
             writer_test.add_summary(run_items[0], global_step=step)
             writer_test.flush() # Flushes the event file to disk
-        print(sorted([n.name for n in tf.get_default_graph().as_graph_def().node]))
 
 
 if __name__ == '__main__':

@@ -20,7 +20,9 @@ from random import choice
 
 class Tester(object):
     """docstring for Tester"""
-    def __init__(self, img_dims, num_classes, source_dir, score_threshold, iou_threshold, checkpoint_dir, letters_test_dir):
+    def __init__(self, img_dims, num_classes, source_dir, score_threshold,
+        iou_threshold, checkpoint_dir, letters_test_dir, max_boxes):
+
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
@@ -30,6 +32,7 @@ class Tester(object):
         self.iou_threshold = iou_threshold
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
+        self.max_boxes = max_boxes
 
     def test(self):
         image_name = choice(os.listdir(self.source_dir))
@@ -42,10 +45,32 @@ class Tester(object):
 
         cpu_nms_graph = tf.Graph()
 
-        input_tensor, output_tensors = utils.read_pb_return_tensors(cpu_nms_graph, os.path.join(self.checkpoint_dir, "yolov3_cpu_nms.pb"),
-                                                   ["Placeholder:0", "concat_5:0", "mul_2:0"])
+        input_tensor, output_tensors = utils.read_pb_return_tensors(
+            cpu_nms_graph,
+            os.path.join(self.checkpoint_dir, "yolov3_cpu_nms.pb"),
+            ["Placeholder:0", "concat_5:0", "mul_2:0"])
+
         with tf.Session(graph=cpu_nms_graph) as sess:
-            boxes, scores = sess.run(output_tensors, feed_dict={input_tensor: np.expand_dims(img, axis=0)})
-            boxes, scores, labels = utils.cpu_nms(boxes, scores, self.num_classes, score_thresh=score_threshold, iou_thresh=iou_threshold)
-            image = utils.draw_boxes(img, boxes, scores, labels, classes, [self.img_h, self.img_w], show=True)
-        print("(If nothing is plotted, no characters were detected)")
+            boxes, scores = sess.run(
+                output_tensors,
+                feed_dict={input_tensor: np.expand_dims(img, axis=0)})
+
+            boxes, scores, labels = utils.cpu_nms(
+                boxes,
+                scores,
+                self.num_classes,
+                score_thresh=self.score_threshold,
+                iou_thresh=self.iou_threshold,
+                max_boxes=self.max_boxes)
+
+            image = utils.draw_boxes(
+                img,
+                boxes,
+                scores,
+                labels,
+                classes,
+                [self.img_h, self.img_w],
+                show=True)
+
+        print("\n\t(If nothing is plotted, no characters were " +
+              "detected with the current thresholds)")

@@ -8,7 +8,7 @@ from core import yolov3, utils
 
 class WeightConverter(object):
     """docstring for WeightConverter"""
-    def __init__(self, freeze, convert, num_classes, img_dims, checkpoint_dir, weights_dir, anchors_path, score_threshold, iou_threshold, checkpoint_step=None):
+    def __init__(self, freeze, convert, num_classes, n_filters_dn, n_filt_yolo, img_dims, checkpoint_dir, weights_dir, anchors_path, score_threshold, iou_threshold, checkpoint_step=None):
         super(WeightConverter, self).__init__()
         self.freeze = freeze
         self.convert = convert
@@ -18,6 +18,8 @@ class WeightConverter(object):
         self.iou_threshold = iou_threshold
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
+        self.n_filt_yolo = n_filt_yolo
+        self.n_filters_dn = n_filters_dn
         self.checkpoint_step = checkpoint_step
 
         if not os.path.exists(checkpoint_dir):
@@ -40,7 +42,10 @@ class WeightConverter(object):
             print("=>", inputs)
 
             with tf.variable_scope('yolov3'):
-                feature_map = model.forward(inputs, is_training=False)
+                feature_map = model.forward(inputs,
+                                            n_filters_dn=self.n_filters_dn,
+                                            n_filt_yolo=self.n_filt_yolo,
+                                            is_training=False)
 
             boxes, confs, probs = model.predict(feature_map)
             scores = confs * probs
