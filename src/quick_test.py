@@ -13,7 +13,7 @@
 
 import numpy as np
 import tensorflow as tf
-from PIL import Image
+import cv2
 from core import utils
 import os
 from random import choice
@@ -38,8 +38,8 @@ class Tester(object):
         image_name = choice(os.listdir(self.source_dir))
         image_path = os.path.join(self.source_dir, image_name)
 
-        img = Image.open(image_path)
-        img = img.resize((self.img_w, self.img_h), Image.BILINEAR)
+        img = cv2.imread(image_path)
+        img = cv2.resize(img, (self.img_w, self.img_h))
 
         classes = os.listdir(self.letters_test_dir)
 
