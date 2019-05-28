@@ -5,6 +5,7 @@ Applies acid drop to a binarized image with a histogram
 import cv2
 from os.path import join, abspath
 import os
+import sys
 import numpy as np
 import skimage
 import matplotlib.pyplot as plt
@@ -18,6 +19,13 @@ PATH = join(abspath('..'), 'data')
 nice_img_name = 'P632-Fg002-R-C01-R01'#'P583-Fg006-R-C01-R01' 
 bad_img_name = 'P21-Fg006-R-C01-R01'
 ground_truth_img_name = '124-Fg004'
+
+BURNCOST = 20.0 	#penalty to burn through a single black pixel (this is added to other possible penalties)
+VCOST1 = 2.0 		#penalty to move in the vertical direction away from the target y
+VCOST2 = 0.5		#penalty to move in the vertical direction toward the target y
+LCOST = 2.0			#penalty to move to the left (back)
+RCOST = 1.0			#penalty to move right (forward; this is the preferred action)
+
 
 def acid_drop(img, x, y, tx, ty, max_len):
 	(maxy, maxx) = np.shape(img)
@@ -35,7 +43,6 @@ def acid_drop(img, x, y, tx, ty, max_len):
 	while not target_found and len(heap) > 0:
 		dist, x, y = heappop(heap)
 		
-		# print("(%d, %d)" % (x, y))
 		if x == tx and y == ty:
 			target_found = True
 		elif dist == max_len:
@@ -43,50 +50,63 @@ def acid_drop(img, x, y, tx, ty, max_len):
 			return []
 		else:
 			#enqueue all directions
-			if x+1 < maxx and img[y, x+1] == 255 and visitedmap[y, x+1] == 0:
-				dist = np.linalg.norm(np.array((x+1, y)) - startv)
-				heappush(heap, (dist, x+1, y))
+			if x+1 < maxx and visitedmap[y, x+1] == 0:
+				# dist = np.linalg.norm(np.array((x+1, y)) - startv)
+				rdist = dist + RCOST
+				if img[y, x+1] != 255:
+					rdist += BURNCOST
+				heappush(heap, (rdist, x+1, y))
 				visitedmap[y, x+1] = 1
 				navmap[y, x+1, 0] = x
 				navmap[y, x+1, 1] = y
-			if x-1 > -1 and img[y, x-1] == 255 and visitedmap[y, x-1] == 0:
-				dist = np.linalg.norm(np.array((x-1, y)) - startv)
-				heappush(heap, (dist, x-1, y))
+			if x-1 > -1 and visitedmap[y, x-1] == 0:
+				# dist = np.linalg.norm(np.array((x-1, y)) - startv)
+				ldist = dist + LCOST
+				if img[y, x-1] != 255:
+					ldist += BURNCOST
+				heappush(heap, (ldist, x-1, y))
 				visitedmap[y,x-1] = 1
 				navmap[y, x-1, 0] = x
 				navmap[y, x-1, 1] = y
-			if y+1 < maxy and img[y+1, x] == 255 and visitedmap[y+1, x] == 0:
-				dist = np.linalg.norm(np.array((x, y+1)) - startv)
-				heappush(heap, (dist, x, y+1))
+			if y+1 < maxy and visitedmap[y+1, x] == 0:
+				# dist = np.linalg.norm(np.array((x, y+1)) - startv)
+				if ((y+1) - ty)*((y+1) - ty) > (y - ty)*(y - ty): #diverging from the target y
+					udist = dist + VCOST1
+				else:	#coming towards the target y
+					udist = dist + VCOST2
+				if img[y+1, x] != 255:
+					udist += BURNCOST
+				heappush(heap, (udist, x, y+1))
 				visitedmap[y+1, x] = 1
 				navmap[y+1, x, 0] = x
 				navmap[y+1, x, 1] = y
 
-			if y-1 > -1 and img[y-1, x] == 255 and visitedmap[y-1, x] == 0:
-				dist = np.linalg.norm(np.array((x, y-1)) - startv)
-				heappush(heap, (dist, x, y-1))
+			if y-1 > -1 and visitedmap[y-1, x] == 0:
+				# dist = np.linalg.norm(np.array((x, y-1)) - startv)
+				if ((y-1) - ty)*((y-1) - ty) > (y - ty)*(y - ty): #diverging from the target y
+					ddist = dist + VCOST1
+				else:	#coming towards the target y
+					ddist = dist + VCOST2
+				if img[y-1, x] != 255:
+					ddist += BURNCOST
+				heappush(heap, (ddist, x, y-1))
 				visitedmap[y-1, x] = 1
 				navmap[y-1, x, 0] = x
 				navmap[y-1, x, 1] = y
 
 	if target_found:
 		print("target found!")
-		# print(navmap)
-		# print(visitedmap)
 		line = []
-		print(np.shape(navmap))
 		while x != sx or y != sy:
-			# print("adding to line", x, y)
 			line.append((x, y))
 			oldx = x
 			oldy = y
 			x = navmap[oldy, oldx, 0]
 			y = navmap[oldy, oldx, 1]
 		line.append((sx, sy))
-		# print("returning line")
-		return line#np.array(reversed(line))
+		return line
 
-	print("could not construct a path..")
+	print("could not construct a path.. (heap empty")
 	return []
 
 
@@ -115,13 +135,15 @@ if __name__ == '__main__':
 
 	for m in minima:
 		print("working on minima.. %d" % (m))
+		sys.stdout.flush()
 		# line = find_path(img, m)
 		line = acid_drop(img, 0, m, maxx-1, m, 9000)
-		for (x, y) in line:
-			print("(%d,%d)" % (x, y))
+		# for (x, y) in line:
+		# 	print("(%d,%d)" % (x, y))
 		line = np.array(line)
 		# pts = line.reshape((-1,1,2))
 		img = cv2.polylines(img,[line],False,(125))
 
 
 	cv2.imwrite('a-star.png', img)
+	print("saved image to a-star.png")
