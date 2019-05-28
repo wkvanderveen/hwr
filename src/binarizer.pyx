@@ -15,6 +15,7 @@ class Binarizer:
 		pass
 
 	def get_negative(self, np.ndarray[np.uint8_t, ndim=2] img):
+		cdef int x, y, x_max, y_max
 		(y_max, x_max) = np.shape(img)
 
 		for y in range(y_max):
@@ -23,7 +24,8 @@ class Binarizer:
 		return img
 
 	def binarize_otsu(self, np.ndarray[np.uint8_t, ndim=2] img):
-		thres = threshold_otsu(img) #create otsu threshold
+		cdef int x, y, x_max, y_max
+		cdef double thres = threshold_otsu(img) #create otsu threshold
 		(y_max, x_max) = np.shape(img)
 
 		for y in range(y_max):
@@ -32,6 +34,7 @@ class Binarizer:
 		return img
 
 	def binarize_simple(self, np.ndarray[np.uint8_t, ndim=2] img, thres = 100):
+		cdef int x, y, x_max, y_max
 		(y_max, x_max) = np.shape(img)
 
 		for y in range(y_max):
@@ -39,7 +42,8 @@ class Binarizer:
 				img[y][x] = 255 if img[y][x] > thres else 0
 		return img
 
-	def binarize_image(self, img, bin_type='otsu'):
+	def binarize_image(self, img):
+		cdef int x, y, w, h
 		'''
 		This function contains the (currently) optimal binarization pipeline for the images
 		Can handle both bw and color images
@@ -51,6 +55,8 @@ class Binarizer:
 
 
 
+		 
+
 		mask = self.get_mask(img)
 
 		#give the mask here, as the mask over the text is the biggest connected component.
@@ -61,7 +67,8 @@ class Binarizer:
 		mask = mask[y:y+h, x:x+w]
 
 		#mask image
-		img = self.apply_mask(img, mask, bin_type)
+		cv2.imwrite('img_in.png', img)
+		img = self.apply_mask(img, mask)
 		cv2.imwrite('masked_new.png', img)
 		cv2.imwrite('mask.png', mask)
 
@@ -82,21 +89,22 @@ class Binarizer:
 		return cv2.dilate(img, se, iterations = 1)
 
 
-	def get_connected_components(self, img):
+	def get_connected_components(self, np.ndarray[np.uint8_t, ndim=2] img):
 		contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		sorted_ctrs = sorted(contours, key = cv2.contourArea, reverse = True)
 
 		return [cv2.boundingRect(ctr) for ctr in sorted_ctrs]
 
 
-	def get_mask(self, img):
+	def get_mask(self, np.ndarray[np.uint8_t, ndim=2] img):
 		mask = self.dilate(img, 20)
 		mask = self.erode(mask, 20)
 
 		mask = self.binarize_otsu(mask)
 		return mask
 
-	def apply_mask(self, img, mask, thres='otsu'):
+	def apply_mask(self, img, mask):
+		cdef int x, y, x_max, y_max, mask_thres, img_thres
 		'''
 		Creates a mask from the image to segement out the backgroud. 
 		Uses Otsu to create thresholds to use when the mask is applied.
@@ -107,19 +115,12 @@ class Binarizer:
 		(y_max, x_max) = np.shape(img)
 		
 		mask_thres = 100 # (mask is already binarized, so an arbitrary number works as a threshold)
-		img_out = np.zeros((y_max, x_max)) #alloc memory
+		img_out = np.zeros((y_max, x_max), dtype=np.uint8) #alloc memory
 
-		if thres == 'otsu':
-			img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
-			for y in range(y_max):
-				for x in range(x_max):
-					img_out[y][x] = 0 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 255
-
-		if thres == 'sauvola':
-			img_thres = threshold_sauvola(img) #create global threshold using sauvola (not recommended)
-			for y in range(y_max):
-				for x in range(x_max):
-					img_out[y][x] = 0 if (img[y][x] < img_thres[y][x] and mask[y][x] > mask_thres) else 255
+		img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
+		for y in range(y_max):
+			for x in range(x_max):
+				img_out[y][x] = 0 if (img[y][x] < img_thres and mask[y][x] > mask_thres) else 255
 
 		return img_out
 
