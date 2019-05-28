@@ -167,7 +167,7 @@ if not network_exists or retrain:
                       learning_rate=learning_rate,
                       decay_steps=decay_steps,
                       decay_rate=decay_rate,
-                      ignore_threshold=ignore_threshold,
+                      ignore_thresh=ignore_threshold,
                       shuffle_size=shuffle_size,
                       eval_internal=eval_internal,
                       save_internal=save_internal,
