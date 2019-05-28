@@ -62,6 +62,8 @@ class Trainer(object):
 
         model = yolov3.yolov3(self.num_classes, ANCHORS)
 
+        print(f"{images.shape}")
+
         with tf.variable_scope('yolov3'):
             pred_feature_map = model.forward(images,
                                              is_training=is_training,
@@ -81,7 +83,7 @@ class Trainer(object):
         writer_train = tf.summary.FileWriter("../../data/train_summary", sess.graph)
         writer_test  = tf.summary.FileWriter("../../data/test_summary")
 
-        saver_to_restore = tf.train.Saver(var_list=tf.contrib.framework.get_variables_to_restore(include=["yolov3/darknet-53"]))
+        #saver_to_restore = tf.train.Saver(var_list=tf.contrib.framework.get_variables_to_restore(include=["yolov3/darknet-53"]))
         update_vars = tf.contrib.framework.get_variables_to_restore(include=["yolov3/yolo-v3"])
         lr = tf.train.exponential_decay(self.learning_rate, global_step, decay_steps=self.decay_steps, decay_rate=self.decay_rate, staircase=True)
         optimizer = tf.train.AdamOptimizer(lr)
@@ -92,7 +94,7 @@ class Trainer(object):
             train_op = optimizer.minimize(loss[0], var_list=update_vars, global_step=global_step)
 
         sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
-        saver_to_restore.restore(sess, self.checkpoint_path)
+        #saver_to_restore.restore(sess, self.checkpoint_path)
         saver = tf.train.Saver(max_to_keep=2)
 
         for step in range(self.steps):

@@ -37,14 +37,14 @@ max_overlap_test = 10
 max_boxes = 20
 
 # Network parameters
-n_filters_dn = (16,16)
+n_filters_dn = (16,32,64)
 n_filt_yolo = 8
 cluster_num = 4
 iou_threshold = 0.5
 score_threshold = 0.5
 ignore_threshold = 0.5
 batch_size = 8
-steps = 50
+steps = 10000
 learning_rate = 1e-4
 decay_steps = 100
 decay_rate = 0.7
@@ -163,7 +163,7 @@ if not network_exists or retrain:
               f"weights in the {weights_dir} directory.")
 
     weightconverter = WeightConverter(freeze=False,
-                                      convert=True,
+                                      convert=False,
                                       num_classes=num_classes,
                                       img_dims=img_dims,
                                       checkpoint_dir=checkpoint_dir,

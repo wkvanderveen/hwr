@@ -23,8 +23,12 @@ class darknet53(object):
 
 
     def forward(self, inputs, n_filters):
-        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=1, strides=8)
-        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[1],  kernel_size=1, strides=4)
+        #TODO: look at the amount of filters
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=1, strides=1)
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[1],  kernel_size=3, strides=2)
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[2],  kernel_size=3, strides=2)
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[2],  kernel_size=3, strides=2)
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=1, strides=4)
         return inputs
 
 

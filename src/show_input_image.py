@@ -52,12 +52,15 @@ class ExampleDisplayer(object):
         image, boxes = image[0], boxes[0]
 
         n_box = len(boxes)
+        print(boxes)
+        
         for i in range(n_box):
             image = cv2.rectangle(image,(int(float(boxes[i][0])),
                                          int(float(boxes[i][1]))),
                                         (int(float(boxes[i][2])),
                                          int(float(boxes[i][3]))), (255,0,0), 1)
-            label = classes[int(float(boxes[i][4]))]
+            label = str(int(float(boxes[i][4])))
+            #label = classes[int(float(boxes[i][4]))]
             image = cv2.putText(image, label, (int(float(boxes[i][0])),int(float(boxes[i][1]))),
                                 cv2.FONT_HERSHEY_SIMPLEX,  .6, (0, 255, 0), 1, 2)
 

@@ -15,7 +15,7 @@ import colorsys
 import numpy as np
 import tensorflow as tf
 from collections import Counter
-from PIL import ImageFont, ImageDraw
+from PIL import ImageFont, ImageDraw, Image
 
 # Discard all boxes with low scores and high IOU
 def gpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thresh=0.5):
@@ -166,6 +166,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
 
     if boxes is None: return image
     print(f"HAS BOXES:\n{boxes}")
+    image = Image.fromarray(np.uint8((image)*255))
     draw = ImageDraw.Draw(image)
     # draw settings
     font = ImageFont.truetype(font = font, size = np.floor(2e-2 * image.size[1]).astype('int32'))
