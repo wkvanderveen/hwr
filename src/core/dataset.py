@@ -17,13 +17,14 @@ from core import utils
 import tensorflow as tf
 
 class Parser(object):
-    def __init__(self, image_h, image_w, anchors, num_classes, debug=False):
+    def __init__(self, image_h, image_w, anchors, cell_size, num_classes, debug=False):
 
         self.anchors     = anchors
         self.num_classes = num_classes
         self.image_h     = image_h
         self.image_w     = image_w
         self.debug       = debug
+        self.cell_size   = cell_size
 
     def flip_left_right(self, image, gt_boxes):
 
@@ -121,7 +122,7 @@ class Parser(object):
                             85: box_centers, box_sizes, confidence, probability
         """
         anchor_mask = list(range(0,len(self.anchors)))
-        grid_sizes = [self.image_h//32, self.image_w//32]
+        grid_sizes = [self.image_h//self.cell_size, self.image_w//self.cell_size]
 
         box_centers = (gt_boxes[:, 0:2] + gt_boxes[:, 2:4]) / 2 # the center of box
         box_sizes =    gt_boxes[:, 2:4] - gt_boxes[:, 0:2] # the height and width of box

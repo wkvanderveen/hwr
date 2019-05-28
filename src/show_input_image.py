@@ -21,13 +21,14 @@ from core.dataset import Parser, dataset
 
 class ExampleDisplayer(object):
     """docstring for ExampleDisplayer"""
-    def __init__(self, source_dir, img_dims, anchor_dir, num_classes):
+    def __init__(self, source_dir, img_dims, anchor_dir, num_classes, cell_size):
         super(ExampleDisplayer, self).__init__()
         self.source_dir = source_dir
         self.anchor_dir = anchor_dir
         self.num_classes = num_classes
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
+        self.cell_size = cell_size
 
     def show_example(self):
         sess = tf.Session()
@@ -36,7 +37,12 @@ class ExampleDisplayer(object):
         train_tfrecord = self.source_dir
         anchors        = utils.get_anchors(self.anchor_dir, self.img_h, self.img_w)
 
-        parser   = Parser(self.img_h, self.img_w, anchors, self.num_classes, debug=True)
+        parser   = Parser(image_h=self.img_h,
+                          image_w=self.img_w,
+                          anchors=anchors,
+                          num_classes=self.num_classes,
+                          cell_size=self.cell_size,
+                          debug=True)
         trainset = dataset(parser, train_tfrecord, 1, shuffle=1)
 
         is_training = tf.placeholder(tf.bool)
