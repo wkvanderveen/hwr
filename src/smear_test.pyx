@@ -11,9 +11,7 @@ import numpy as np
 from binarizer import Binarizer
 from copy import deepcopy
 
-# cimport cv2
 cimport numpy as np
-# from libcpp.vector cimport vector
 
 cdef float SMEAR_DENSITY = 0.90
 cdef int NR_SMEARS = 4
@@ -27,9 +25,8 @@ class Smear:
 	def __init__(self):
 		self.b = Binarizer()
 
-	def smear(self, img):
+	def smear(self, np.ndarray[np.uint8_t, ndim=2] img):
 		cdef int idx, y_max, x_max, x, y, val
-		# cdef int img[] = _img
 		(y_max, x_max) = np.shape(img)
 
 
@@ -38,32 +35,27 @@ class Smear:
 			if idx % 2 == 0: #smear from left to right
 				for y in range(y_max):
 					for x in range(5, x_max, 1):
-						val = img[y, x] + SMEAR_DENSITY * img[y, x-1]
+						val = img[y, x] + <int>(SMEAR_DENSITY * img[y, x-1])
 						img[y, x] = min(255, val)
-				# img = [img[y, x] + SMEAR_DENSITY * img[y, x-1] for x in range(1, x_max, 1) for y in range(y_max)]
-
-			if idx % 2 == 1: #smear from right to left
+						
+			else: #smear from right to left
 				for y in range(y_max):
 					for x in range(x_max-1, 0, -1):
-						val = img[y, x-1] + SMEAR_DENSITY * img[y, x]
+						val = img[y, x-1] + <int>(SMEAR_DENSITY * img[y, x])
 						img[y, x-1] = min(255, val)
+
 
 
 		return img
 
-	def get_contoured_image(self, img_smear, img_original):
+	def get_contoured_image(self, np.ndarray[np.uint8_t, ndim=2] img_smear, np.ndarray[np.uint8_t, ndim=2] img_original):
 		'''
 		Used for extracting the contoured image.. Mostly for testing
 		'''
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
 
-		# img_smear = b.dilate(img_smear, 25)
-		# img_smear = b.erode(img_smear, 20)
-
 		img_smear = self.b.binarize_simple(img_smear, 10)
-
-		# cv2.imwrite("dilated.png", img_smear)
 
 		(approx, rects) = self.get_contour_approximations(img_smear)
 		img_copy = deepcopy(img_original)
@@ -73,7 +65,7 @@ class Smear:
 
 		return img_copy
 
-	def get_contour_approximations(self, img):
+	def get_contour_approximations(self, np.ndarray[np.uint8_t, ndim=2] img):
 		img = np.array(img, dtype=np.uint8)
 		contours, hierarchy = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 		areas = [cv2.contourArea(cnt) for cnt in contours]
@@ -94,18 +86,13 @@ class Smear:
 
 		return (approx, rects)
 
-	def padd_image(self, img, padding):
+	def padd_image(self, np.ndarray[np.uint8_t, ndim=2] img, int padding):
 		return cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[255,255,255])
 
-	def get_croppings(self, img_original, img_smear):
+	def get_croppings(self, np.ndarray[np.uint8_t, ndim=2] img_original, np.ndarray[np.uint8_t, ndim=2] img_smear):
 		cdef int x, y, w, h, idx
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
-
-		# img_smear = self.b.dilate(img_smear, 25)
-		# img_smear = self.b.erode(img_smear, 20)
-
-		# img_smear = self.b.binarize_simple(img_smear, 10)
 
 		cv2.imwrite("dilated.png", img_smear)
 
@@ -116,8 +103,6 @@ class Smear:
 
 			for a in approx:
 				cv2.drawContours(img_copy,[a],0,(90,0,255),2)
-
-			# cv2.imwrite("contoured.png", img_copy)
 
 		croppings = []
 		for idx in range(len(approx)):
@@ -132,19 +117,10 @@ class Smear:
 				(h_img, w_img) = np.shape(img_original)
 				if w * h < h_img * w_img:
 					croppings.append(out)
-					# print("keeping item of size " + str(w*h) + "h: " + str(h))
-					# cv2.imshow('kept', out)
-					# cv2.waitKey(0)
-			# 	else:
-			# 		print("cropping was of size equal to image.. skipping")
-			# else:
-			# 	print("removing item of size " + str(w*h))
-			# 	cv2.imshow('removed', out)
-			# 	cv2.waitKey(0)
 
 		return croppings
 
-	def split_into_lines(self, img):
+	def split_into_lines(self, np.ndarray[np.uint8_t, ndim=2] img):
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
 		print('start smearing')
@@ -156,7 +132,7 @@ class Smear:
 
 		return croppings
 
-	def split_into_lines_and_contour(self, img):
+	def split_into_lines_and_contour(self, np.ndarray[np.uint8_t, ndim=2] img):
 		'''
 		Extended split_into_lines.
 		Also returns the contoured image
@@ -199,23 +175,12 @@ if __name__ == '__main__':
 	bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
 	img = b.binarize_image(bw_img)
-	# img2 = deepcopy(img)
-	# img = b.get_negative(img)
-	# smeared = s.smear(img)
-	# smeared = b.get_negative(smeared)
-	# cv2.imwrite("smeared.png", smeared)
-	# cv2.imshow('smeared', smeared)
-	# cv2.waitKey(0)
-
-	# print("done binarizing")
 	
 	(contoured_img, smear_img, croppings) = s.split_into_lines_and_contour(img)
 	cv2.imwrite("contoured.jpg", contoured_img)
 	cv2.imwrite("smeared.jpg", smear_img)
 
 	for idx, c in enumerate(croppings):
-		# cv2.imshow('crop', c)
 		cv2.imwrite("cropping_%d.png" % (idx), c)
-		# cv2.waitKey(0)
 
 	print("saved %d croppings" % (len(croppings)))

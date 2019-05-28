@@ -3,16 +3,18 @@ binarizer.py
 
 This file contains the code used for binarizing the input image
 '''
+import cython
 import cv2
 from os.path import join, abspath
 import numpy as np
 from skimage.filters import threshold_otsu, threshold_sauvola
+cimport numpy as np
 
 class Binarizer:
 	def __init__(self):
 		pass
 
-	def get_negative(self, img):
+	def get_negative(self, np.ndarray[np.uint8_t, ndim=2] img):
 		(y_max, x_max) = np.shape(img)
 
 		for y in range(y_max):
@@ -20,7 +22,7 @@ class Binarizer:
 				img[y][x] = 255 - img[y][x]
 		return img
 
-	def binarize_otsu(self, img):
+	def binarize_otsu(self, np.ndarray[np.uint8_t, ndim=2] img):
 		thres = threshold_otsu(img) #create otsu threshold
 		(y_max, x_max) = np.shape(img)
 
@@ -29,7 +31,7 @@ class Binarizer:
 				img[y][x] = 255 if img[y][x] > thres else 0
 		return img
 
-	def binarize_simple(self, img, thres = 100):
+	def binarize_simple(self, np.ndarray[np.uint8_t, ndim=2] img, thres = 100):
 		(y_max, x_max) = np.shape(img)
 
 		for y in range(y_max):
