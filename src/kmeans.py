@@ -19,13 +19,13 @@ class AnchorMaker(object):
             s = line.strip().split(' ')
             if self.colab:
                 image = cv2.imread(str(s[0]+" "+s[1]))
-            else:   
+            else:
                 image = cv2.imread(s[0])
             image_h, image_w = image.shape[:2]
-            
+
             if self.colab:
                 s = s[2:]
-            else:   
+            else:
                 s = s[1:]
             box_cnt = len(s) // 5
             for i in range(box_cnt):
@@ -104,5 +104,5 @@ class AnchorMaker(object):
 if __name__ == '__main__':
     anchormaker = AnchorMaker(target_file="../../data/anchors.txt",
                               label_path="../../data/labels-train.txt",
-                              cluster_num=9)
+                              cluster_num=4)
     anchormaker.make_anchors()

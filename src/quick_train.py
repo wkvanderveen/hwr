@@ -19,7 +19,7 @@ sess = tf.Session()
 
 class Trainer(object):
     """docstring for Trainer"""
-    def __init__(self, num_classes, batch_size, steps, img_dims, learning_rate, decay_steps, decay_rate, shuffle_size, eval_internal, save_internal, anchors_path, train_records, test_records, checkpoint_path):
+    def __init__(self, num_classes, batch_size, ignore_thresh, steps, img_dims, learning_rate, decay_steps, decay_rate, shuffle_size, eval_internal, save_internal, anchors_path, train_records, test_records, checkpoint_path):
         super(Trainer, self).__init__()
         self.num_classes = num_classes
         self.batch_size = batch_size
@@ -27,6 +27,7 @@ class Trainer(object):
         self.learning_rate = learning_rate
         self.decay_steps = decay_steps
         self.decay_rate = decay_rate
+        self.ignore_thresh = ignore_thresh
         self.shuffle_size = shuffle_size
         self.eval_internal = eval_internal
         self.save_internal = save_internal
@@ -50,12 +51,13 @@ class Trainer(object):
         is_training = tf.placeholder(tf.bool)
         example = tf.cond(is_training, lambda: trainset.get_next(), lambda: testset.get_next())
 
-        images, *y_true = example
+        images, y_true = example
+
         model = yolov3.yolov3(self.num_classes, ANCHORS)
 
         with tf.variable_scope('yolov3'):
             pred_feature_map = model.forward(images, is_training=is_training)
-            loss             = model.compute_loss(pred_feature_map, y_true)
+            loss             = model.compute_loss(pred_feature_map, y_true, ignore_thresh=self.ignore_thresh)
             y_pred           = model.predict(pred_feature_map)
 
         tf.summary.scalar("loss/coord_loss",   loss[1])
@@ -65,7 +67,7 @@ class Trainer(object):
 
         global_step = tf.Variable(0, trainable=False, collections=[tf.GraphKeys.LOCAL_VARIABLES])
         write_op = tf.summary.merge_all()
-        writer_train = tf.summary.FileWriter("../../data/train_summary")
+        writer_train = tf.summary.FileWriter("../../data/train_summary", sess.graph)
         writer_test  = tf.summary.FileWriter("../../data/test_summary")
 
         saver_to_restore = tf.train.Saver(var_list=tf.contrib.framework.get_variables_to_restore(include=["yolov3/darknet-53"]))
@@ -105,6 +107,7 @@ class Trainer(object):
 
             writer_test.add_summary(run_items[0], global_step=step)
             writer_test.flush() # Flushes the event file to disk
+        print(sorted([n.name for n in tf.get_default_graph().as_graph_def().node]))
 
 
 if __name__ == '__main__':

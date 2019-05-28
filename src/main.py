@@ -27,31 +27,32 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 2  # not too few
+num_classes = 5  # not too few
 split_percentage = 20
-line_length_bounds = (20,50)
-n_training_lines = 50
-n_testing_lines = 50
-max_overlap_train = 20
-max_overlap_test = 20
+line_length_bounds = (5,10)
+n_training_lines = 5000
+n_testing_lines = 100
+max_overlap_train = 5
+max_overlap_test = 5
 
 # Network parameters
-cluster_num = 9
-iou_threshold = 0.1
-score_threshold = 0.1
+cluster_num = 4
+iou_threshold = 0.5
+score_threshold = 0.5
+ignore_threshold = 0.5
 batch_size = 8
-steps = 100
-learning_rate = 1e-3
+steps = 10000
+learning_rate = 1e-4
 decay_steps = 100
-decay_rate = 0.9
+decay_rate = 0.7
 shuffle_size = 200
-eval_internal = 10
-save_internal = 50
+eval_internal = 1000
+save_internal = 1000
 
 # Other parameters
 retrain = False
-show_tfrecord_example = True
-test_example = False
+show_tfrecord_example = False
+test_example = True
 evaluate_network = False # TBA
 
 
@@ -166,6 +167,7 @@ if not network_exists or retrain:
                       learning_rate=learning_rate,
                       decay_steps=decay_steps,
                       decay_rate=decay_rate,
+                      ignore_threshold=ignore_threshold,
                       shuffle_size=shuffle_size,
                       eval_internal=eval_internal,
                       save_internal=save_internal,

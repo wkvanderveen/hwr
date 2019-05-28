@@ -14,9 +14,9 @@ class TfRecordMaker(object):
 
         dataset = {}
         with open(self.label_path,'r') as f:
-            if self.colab == True: 
-                increase=1 
-            else: 
+            if self.colab == True:
+                increase=1
+            else:
                 increase=0
 
             for line in f.readlines():
@@ -36,7 +36,7 @@ class TfRecordMaker(object):
         print(f">> Processing {images_num} images")
 
         tfrecord_file = os.path.normpath(self.imgs_dir)+".tfrecords"
-        print(tfrecord_file)
+
         with tf.python_io.TFRecordWriter(tfrecord_file) as record_writer:
             for i in range(images_num):
                 image = tf.gfile.FastGFile(image_paths[i], 'rb').read()
