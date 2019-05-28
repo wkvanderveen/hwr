@@ -11,6 +11,8 @@ import skimage
 import matplotlib.pyplot as plt
 from heapq import heappush, heappop
 
+import time
+
 from binarizer import Binarizer
 from smear_test import Smear
 from line_segmenter import Line_segmenter
@@ -134,10 +136,17 @@ if __name__ == '__main__':
 
 		bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
+		t = time.time()
+
 		img = b.binarize_image(bw_img)
+
+		print("time passed in binarizer: ", time.time() - t)
+		t2 = time.time()
 
 		(_, smear, _) = s.split_into_lines_and_contour(img)
 		segments, hist = l.histogram(smear)
+		print("time passed in smear: ", time.time() - t2)
+		print("time passed in prepro: ", time.time() - t)
 
 		minima = l.get_minima(hist)
 
