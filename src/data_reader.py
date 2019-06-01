@@ -1,6 +1,6 @@
 import numpy as np 
 import matplotlib.pylab as plt
-from PIL import Image
+from skimage import io
 import os
 import sys
 np.set_printoptions(threshold=sys.maxsize)
@@ -34,7 +34,7 @@ class DataReader:
 					#print(img_path)
 					onehot = np.zeros(num_classes)
 					onehot[class_num] = 1
-					letters.append(plt.imread(img_path))
+					letters.append(io.imread(img_path, as_gray=True))
 					classes.append(onehot)
 			letters = np.array(letters)
 			classes = np.array(classes)
@@ -54,7 +54,7 @@ class DataReader:
 					#print(img_path)
 					onehot = np.zeros(num_classes)
 					onehot[class_num] = 1
-					letters.append(plt.imread(img_path))
+					letters.append(io.imread(img_path, as_gray=True))
 					classes.append(onehot)
 			letters = np.array(letters)
 			classes = np.array(classes)

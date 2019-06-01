@@ -16,7 +16,7 @@ EPOCHS = 12
 NR_STEPS = 50 #Steps per epoch
 VALIDATION_STEPS = 50
 IMG_H = IMG_W = 38
-CHANNELS = 3
+CHANNELS = 1
 TRAIN_X_FILE = '../../data/train_letters.npy' 
 TRAIN_Y_FILE = '../../data/train_labels.npy'
 TEST_X_FILE = '../../data/test_letters.npy' 
@@ -46,8 +46,8 @@ if __name__ == '__main__':
 	testX = np.load(TEST_X_FILE, allow_pickle=True)
 	testY = np.load(TEST_Y_FILE, allow_pickle=True)
 
-	trainX = [resize(image, (IMG_H,IMG_W)) for image in trainX]
-	testX = [resize(image, (IMG_H,IMG_W))  for image in testX]
+	trainX = [resize(image, (IMG_H,IMG_W, CHANNELS)) for image in trainX]
+	testX = [resize(image, (IMG_H,IMG_W, CHANNELS))  for image in testX]
 	trainX = np.array(trainX)
 	testX = np.array(testX)
 
@@ -75,4 +75,4 @@ if __name__ == '__main__':
 	score = model.evaluate(testX, testY, verbose=0)
 	print('Test loss: ', score[0])
 	print('Test accuracy: ', score[1])
-	model.save()
+	model.save(MODEL_SAVE)
