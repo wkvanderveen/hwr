@@ -64,7 +64,8 @@ class DataReader:
 			np.save(self.save_file_test_labes, classes)
 			print("Classes saved as npy file in: ", self.save_file_test_labes)
 
-reader = DataReader()
-#Select mode to read train or test data
-reader.read_letters('train')
-reader.read_letters('test')
+if __name__=='__main__':
+	reader = DataReader()
+	#Select mode to read train or test data
+	reader.read_letters('train')
+	reader.read_letters('test')

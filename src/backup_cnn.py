@@ -10,69 +10,77 @@ from keras import backend as K
 from skimage.transform import resize
 import numpy as np
 
-BATCH_SIZE = 128
-CLASSES = 3
-EPOCHS = 12
-NR_STEPS = 50 #Steps per epoch
-VALIDATION_STEPS = 50
-IMG_H = IMG_W = 38
-CHANNELS = 1
-TRAIN_X_FILE = '../../data/train_letters.npy' 
-TRAIN_Y_FILE = '../../data/train_labels.npy'
-TEST_X_FILE = '../../data/test_letters.npy' 
-TEST_Y_FILE = '../../data/test_labels.npy'
-MODEL_SAVE = '../../backup_model.model'
 
-def build_net(input_shape):
-	model = Sequential()
-	model.add(Conv2D(32, kernel_size=(3, 3),
-	                 activation='relu',
-	                 input_shape= input_shape))
-	model.add(Conv2D(64, (3, 3), activation='relu'))
-	model.add(MaxPooling2D(pool_size=(2, 2)))
-	model.add(Dropout(0.25))
-	model.add(Flatten())
-	model.add(Dense(128, activation='relu'))
-	model.add(Dropout(0.5))
-	model.add(Dense(CLASSES, activation='softmax'))
-	return model
+
+class CNN_network:
+	def __init__(self):
+		self.BATCH_SIZE = 128
+		self.CLASSES = 3
+		self.EPOCHS = 12
+		self.IMG_H = self.IMG_W = 38
+		self.CHANNELS = 1
+		self.TRAIN_X_FILE = '../../data/train_letters.npy' 
+		self.TRAIN_Y_FILE = '../../data/train_labels.npy'
+		self.TEST_X_FILE = '../../data/test_letters.npy' 
+		self.TEST_Y_FILE = '../../data/test_labels.npy'
+		self.MODEL_SAVE = '../../backup_model.model'
+
+	def build_net(self, input_shape):
+		model = Sequential()
+		model.add(Conv2D(32, kernel_size=(3, 3),
+		                 activation='relu',
+		                 input_shape= input_shape))
+		model.add(Conv2D(64, (3, 3), activation='relu'))
+		model.add(MaxPooling2D(pool_size=(2, 2)))
+		model.add(Dropout(0.25))
+		model.add(Flatten())
+		model.add(Dense(128, activation='relu'))
+		model.add(Dropout(0.5))
+		model.add(Dense(self.CLASSES, activation='softmax'))
+		return model
+
+	def read_data(self):
+		self.trainX = np.load(self.TRAIN_X_FILE, allow_pickle=True)
+		self.trainY = np.load(self.TRAIN_Y_FILE, allow_pickle=True)
+		self.testX = np.load(self.TEST_X_FILE, allow_pickle=True)
+		self.testY = np.load(self.TEST_Y_FILE, allow_pickle=True)
+		self.trainX = [resize(image, (self.IMG_H,self.IMG_W, self.CHANNELS)) for image in self.trainX]
+		self.testX = [resize(image, (self.IMG_H,self.IMG_W, self.CHANNELS))  for image in self.testX]
+		self.trainX = np.array(self.trainX)
+		self.testX = np.array(self.testX)
+		print(np.shape(self.trainX), type(self.trainX))
+		print(np.shape(self.trainY), type(self.trainY))
+
+	def compile_model(self, model):
+		model.compile(loss=keras.losses.categorical_crossentropy,
+			optimizer=keras.optimizers.Adadelta(),
+			metrics=['accuracy'])
+		return model
+
+	def train_model(self, model):
+		model.fit(self.trainX, self.trainY,
+			batch_size=self.BATCH_SIZE,
+			epochs=self.EPOCHS, 
+			verbose=1,
+			validation_data=(self.testX,self.testY))
+		return model
+
+	def evaluate_model(self, model):
+		score = model.evaluate(self.testX, self.testY, verbose=0)
+		print('Test loss: ', score[0])
+		print('Test accuracy: ', score[1])
+
+	def run_network(self):
+		input_shape = (self.IMG_H, self.IMG_W, self.CHANNELS)
+		model = self.build_net(input_shape)
+		self.read_data()
+		model = self.compile_model(model)
+		model = self.train_model(model)
+		self.evaluate_model(model)
+		model.save(self.MODEL_SAVE)
 
 if __name__ == '__main__':
-	input_shape = (IMG_H, IMG_W, CHANNELS)
-	model = build_net(input_shape)
+	network = CNN_network()
+	network.run_network()
 
-	trainX = np.load(TRAIN_X_FILE, allow_pickle=True)
-	trainY = np.load(TRAIN_Y_FILE, allow_pickle=True)
-	testX = np.load(TEST_X_FILE, allow_pickle=True)
-	testY = np.load(TEST_Y_FILE, allow_pickle=True)
-
-	trainX = [resize(image, (IMG_H,IMG_W, CHANNELS)) for image in trainX]
-	testX = [resize(image, (IMG_H,IMG_W, CHANNELS))  for image in testX]
-	trainX = np.array(trainX)
-	testX = np.array(testX)
-
-	print(np.shape(trainX), type(trainX))
-	print(np.shape(trainY), type(trainY))
-
-	# train_generator = ImageDataGenerator(
-	# 	preprocessing_function=preprocess_input)
-
-	# history = model.fit_generator(train_generator.flow(trainX, trainY, batch_size=BATCH_SIZE), 
-	# 	epochs=EPOCHS, 
-	# 	steps_per_epoch = NR_STEPS,
-	# 	validation_data = (testX, testY), 
-	# 	validation_steps = VALIDATION_STEPS)
-
-	model.compile(loss=keras.losses.categorical_crossentropy,
-		optimizer=keras.optimizers.Adadelta(),
-		metrics=['accuracy'])
-
-	model.fit(trainX, trainY,
-		batch_size=BATCH_SIZE,
-		epochs=EPOCHS, 
-		verbose=1,
-		validation_data=(testX,testY))
-	score = model.evaluate(testX, testY, verbose=0)
-	print('Test loss: ', score[0])
-	print('Test accuracy: ', score[1])
-	model.save(MODEL_SAVE)
+	
