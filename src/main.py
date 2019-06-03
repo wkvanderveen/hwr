@@ -27,7 +27,7 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 1
+num_classes = 2
 split_percentage = 20
 line_length_bounds = (10,30)
 n_training_lines = 20
@@ -43,8 +43,9 @@ cluster_num = 4
 iou_threshold = 0.5
 score_threshold = 0.5
 ignore_threshold = 0.5
+size_threshold = (4,4)  # in pixels
 batch_size = 8
-steps = 10000
+steps = 500
 learning_rate = 1e-4
 decay_steps = 100
 decay_rate = 0.7
@@ -55,7 +56,7 @@ cell_size = 32  # cannot be changed; perhaps need fix?
 
 # Other parameters
 retrain = False
-show_tfrecord_example = True
+show_tfrecord_example = False
 test_example = True
 
 # [preprocessing here]
@@ -244,6 +245,7 @@ if network_exists and test_example:
                     num_classes=num_classes,
                     score_threshold=score_threshold,
                     iou_threshold=iou_threshold,
+                    size_threshold=size_threshold,
                     img_dims=img_dims,
                     checkpoint_dir=checkpoint_dir,
                     letters_test_dir=letters_test_dir,

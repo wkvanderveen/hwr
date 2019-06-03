@@ -113,7 +113,6 @@ def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thre
         boxes ==> shape [1, 10647, 4]
         scores ==> shape [1, 10647, num_classes]
     """
-
     boxes = boxes.reshape(-1, 4)
     scores = scores.reshape(-1, num_classes)
     # Picked bounding boxes
@@ -155,7 +154,7 @@ def resize_image_correct_bbox(image, boxes, image_h, image_w):
 
 
 def draw_boxes(image, boxes, scores, labels, classes, detection_size,
-               font='./font/FiraMono-Medium.otf', show=True):
+               font='./font/FiraMono-Medium.otf', show=True, size_threshold=(4,4)):
     """
     :param boxes, shape of  [num, 4]
     :param scores, shape of [num, ]
@@ -163,25 +162,52 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     :param image,
     :param classes, the return list from the function `read_coco_names`
     """
+    picked_boxes = []
+    picked_labels = []
+    picked_scores = []
+    for i, box in enumerate(boxes):
+        if (box[0] < 0 or
+            box[1] < 0 or
+            box[2] > detection_size[1] or
+            box[3] > detection_size[0] or
+            box[2]-box[0] < size_threshold[0] or # MIN WIDTH
+            box[1]-box[3] < size_threshold[1]):  # MIN HEIGHT
+            continue
+
+        picked_boxes.append(box)
+        picked_labels.append(labels[i])
+        picked_scores.append(scores[i])
+    boxes = picked_boxes
+    labels = picked_labels
+    scores = picked_scores
+
+
+
 
     if boxes is None: return image
-    print(f"HAS BOXES:\n{boxes}")
     image = Image.fromarray(np.uint8((image)*255))
     draw = ImageDraw.Draw(image)
     # draw settings
-    font = ImageFont.truetype(font = font, size = np.floor(2e-2 * image.size[1]).astype('int32'))
+    font = ImageFont.truetype(
+        font = font,
+        size = np.floor(2e-2 * image.size[1]).astype('int32'))
     hsv_tuples = [( x / len(classes), 0.9, 1.0) for x in range(len(classes))]
+
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
-    colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
-    for i in range(len(labels)): # for each bounding box, do:
-        print(f"FOR BOUNDING BOX {i}:\n")
+    colors = list(map(lambda x: (int(x[0] * 255),
+                                 int(x[1] * 255),
+                                 int(x[2] * 255)),
+
+                      colors))
+
+    for i in range(len(boxes)): # for each bounding box, do:
         bbox, score, label = boxes[i], scores[i], classes[labels[i]]
         bbox_text = "%s %.2f" %(label, score)
         text_size = draw.textsize(bbox_text, font)
         # convert_to_original_size
         detection_size, original_size = np.array(detection_size), np.array(image.size)
         ratio = original_size / detection_size
-        bbox = list((bbox.reshape(2,2) * ratio).reshape(-1))
+        # bbox = list((bbox.reshape(2,2) * ratio).reshape(-1))
 
         draw.rectangle(bbox, outline=colors[labels[i]], width=3)
         text_origin = bbox[:2]-np.array([0, text_size[1]])
@@ -189,7 +215,6 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
         draw.rectangle([tuple(text_origin), tuple(text_origin+text_size)], fill=colors[labels[i]])
         # # draw bbox
         draw.text(tuple(text_origin), bbox_text, fill=(0,0,0), font=font)
-        print(text_origin, bbox_text)
 
     image.show() if show else None
     return image

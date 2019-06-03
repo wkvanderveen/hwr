@@ -21,7 +21,8 @@ from random import choice
 class Tester(object):
     """docstring for Tester"""
     def __init__(self, img_dims, num_classes, source_dir, score_threshold,
-        iou_threshold, checkpoint_dir, letters_test_dir, max_boxes):
+        iou_threshold, size_threshold, checkpoint_dir, letters_test_dir,
+        max_boxes):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
@@ -30,6 +31,7 @@ class Tester(object):
         self.source_dir = source_dir
         self.score_threshold = score_threshold
         self.iou_threshold = iou_threshold
+        self.size_threshold = size_threshold
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
@@ -56,9 +58,9 @@ class Tester(object):
                 feed_dict={input_tensor: np.expand_dims(img, axis=0)})
 
             boxes, scores, labels = utils.cpu_nms(
-                boxes,
-                scores,
-                self.num_classes,
+                boxes=boxes,
+                scores=scores,
+                num_classes=self.num_classes,
                 score_thresh=self.score_threshold,
                 iou_thresh=self.iou_threshold,
                 max_boxes=self.max_boxes)
@@ -70,7 +72,8 @@ class Tester(object):
                 labels,
                 classes,
                 [self.img_h, self.img_w],
-                show=True)
+                show=True,
+                size_threshold=self.size_threshold)
 
         print("\n\t(If nothing is plotted, no characters were " +
               "detected with the current thresholds)")
