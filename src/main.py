@@ -49,8 +49,8 @@ learning_rate = 1e-5
 decay_steps = 100
 decay_rate = 0.7
 shuffle_size = 200
-eval_internal = 100
-save_internal = 50
+eval_internal = 20
+save_internal = 10
 cell_size = 32  # cannot be changed; perhaps need fix?
 
 # Other parameters
