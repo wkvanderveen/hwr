@@ -44,7 +44,6 @@ class TfRecordMaker(object):
                 image_orig = cv2.imread(image_paths[i], cv2.IMREAD_GRAYSCALE) # << 1 CHANNEL
                 normalizedImg = cv2.normalize(image_orig, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
                 image = cv2.imencode('.png', normalizedImg)[1].tostring()
-
                 boxes = dataset[image_paths[i]]
                 boxes = boxes.tostring()
 

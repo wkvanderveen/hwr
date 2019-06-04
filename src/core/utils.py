@@ -167,7 +167,6 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
 
     if boxes is None: return image
     print(f"HAS BOXES:\n{boxes}")
-    print(image)
     image = Image.fromarray(np.uint8((image)))
     draw = ImageDraw.Draw(image)
     # draw settings
