@@ -27,9 +27,9 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 1
+num_classes = 27
 split_percentage = 20
-line_length_bounds = (10,30)
+line_length_bounds = (10, 30)
 n_training_lines = 20
 n_testing_lines = 20
 max_overlap_train = 10

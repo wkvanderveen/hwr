@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import tensorflow as tf
 import os
@@ -39,7 +40,12 @@ class TfRecordMaker(object):
 
         with tf.python_io.TFRecordWriter(tfrecord_file) as record_writer:
             for i in range(images_num):
-                image = tf.gfile.FastGFile(image_paths[i], 'rb').read()
+                # image = cv2.imread(image_paths[i], cv2.IMREAD_GRAYSCALE) << 1 CHANNEL
+                image_orig = cv2.imread(image_paths[i])
+                image_orig = image_orig / 255.
+                image = cv2.imencode('.jpg', image_orig)[1].tostring()
+
+                # image = tf.gfile.FastGFile(image_paths[i], 'rb').read()
                 boxes = dataset[image_paths[i]]
                 boxes = boxes.tostring()
 
