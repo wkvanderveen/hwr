@@ -1,7 +1,7 @@
 '''
-line_segmenter.py
+line_segmenter.pyx
 
-This file includes code for the line segmentation part of the pipeline
+This file includes code for the line segmentation part of the pipeline, rewritten in Cython
 '''
 import cython
 import cv2

@@ -103,27 +103,37 @@ class Smear:
 
 		(approx, rects) = self.get_contour_approximations(img_smear)
 
-		if True: ### USED FOR TESTING
-			img_copy = deepcopy(img_original)
+		# if True: ### USED FOR TESTING
+		# 	img_copy = deepcopy(img_original)
 
-			for a in approx:
-				cv2.drawContours(img_copy,[a],0,(90,0,255),2)
+		# 	for a in approx:
+		# 		cv2.drawContours(img_copy,[a],0,(90,0,255),2)
 
 		cdef list croppings = []
+		cdef list smear_croppings = []
 		for idx in range(len(approx)):
 			mask = np.zeros_like(img_smear) # Create mask where white is what we want, black otherwise
 			cv2.drawContours(mask, approx, idx, 255, -1) # Draw filled contour in mask
 			out = np.full_like(img_smear, 255, dtype=np.uint8) #create a white canvas with the same size as the input image
 			out[mask == 255] = img_original[mask == 255]
 
+			#create a smeared cropping for acid drop segmentation
+			cout = np.full_like(img_smear, 255, dtype=np.uint8) 
+			cout[mask == 255] = img_smear[mask == 255]
+
+
 			(x, y, w, h) = rects[idx]
 			out = out[y:(y+h), x:(x+w)]
-			if w * h > AREA_THRESHOLD_2:
-				(h_img, w_img) = np.shape(img_original)
-				if w * h < h_img * w_img:
-					croppings.append(out)
+			cout = cout[y:(y+h), x:(x+w)]
+			# if w * h > AREA_THRESHOLD_2:
+			# 	(h_img, w_img) = np.shape(img_original)
+			# 	if w * h < h_img * w_img:
+			croppings.append(out)
+			smear_croppings.append(cout)
 
-		return croppings
+
+
+		return (croppings, smear_croppings)
 
 	def split_into_lines(self, np.ndarray[np.uint8_t, ndim=2] img):
 		img_smear = np.array(img, dtype=np.uint8) #copy image
@@ -133,7 +143,7 @@ class Smear:
 		print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
-		croppings = self.get_croppings(img, img_smear)
+		(croppings, _) = self.get_croppings(img, img_smear)
 
 		return croppings
 
@@ -154,10 +164,10 @@ class Smear:
 		print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
-		croppings = self.get_croppings(img, img_smear)
+		(croppings, smear_croppings) = self.get_croppings(img, img_smear)
 		img_contoured = self.get_contoured_image(img_smear, img)
 
-		return (img_contoured, img_smear, croppings)
+		return (img_contoured, img_smear, croppings, smear_croppings)
 
 
 

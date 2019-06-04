@@ -1,1 +1,3 @@
 data/*
+*.pyd
+src/preprocessing/build/*
