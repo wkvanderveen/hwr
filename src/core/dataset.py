@@ -99,7 +99,7 @@ class Parser(object):
 
         y_true_13 = tf.py_func(self.preprocess_true_boxes, inp=[gt_boxes],
                             Tout = [tf.float32])
-        image = image / 255.
+        #image = image / 255.
 
         return image, y_true_13
 

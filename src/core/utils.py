@@ -166,7 +166,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
 
     if boxes is None: return image
     print(f"HAS BOXES:\n{boxes}")
-    image = Image.fromarray(np.uint8((image)*255))
+    image = Image.fromarray(np.uint8((image)))
     draw = ImageDraw.Draw(image)
     # draw settings
     font = ImageFont.truetype(font = font, size = np.floor(2e-2 * image.size[1]).astype('int32'))

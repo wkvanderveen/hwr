@@ -44,7 +44,7 @@ class yolov3(object):
         self.feature_maps = []
 
     def _yolo_block(self, inputs, filters):
-        inputs = common._conv2d_fixed_padding(inputs, filters=filters * 1, kernel_size=1)
+        inputs = common._conv2d_fixed_padding(inputs, filters=filters * 1, kernel_size=3)
         return inputs
 
     def _detection_layer(self, inputs, anchors):

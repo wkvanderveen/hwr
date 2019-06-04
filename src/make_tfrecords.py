@@ -45,7 +45,7 @@ class TfRecordMaker(object):
                 image_orig = cv2.imread(image_paths[i])
                 #image_orig = image_orig / 255.
                 normalizedImg = cv2.normalize(image_orig, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-                image = cv2.imencode('.jpg', image_orig)[1].tostring()
+                image = cv2.imencode('.jpg', normalizedImg)[1].tostring()
 
                 # image = tf.gfile.FastGFile(image_paths[i], 'rb').read()
                 boxes = dataset[image_paths[i]]
