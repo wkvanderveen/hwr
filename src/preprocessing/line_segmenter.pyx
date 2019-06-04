@@ -177,10 +177,11 @@ class Line_segmenter:
 			if np.abs(temp_minima[idx] - temp_minima[idx+1]) > min_dist: #there is enough distance between the two minima
 				minima.append(temp_minima[idx])
 
-		if len(minima) == 0 and len(temp_minima) > 0: #append last minima
-			minima.append(temp_minima[-1])
-		elif temp_minima[-1] - minima[-1] > min_dist: 
-			minima.append(temp_minima[-1])
+		if len(temp_minima) > 0:
+			if len(minima) == 0: #append last minima
+				minima.append(temp_minima[-1])
+			elif temp_minima[-1] - minima[-1] > min_dist:
+				minima.append(temp_minima[-1])
 
 		print("kept %d out of %d minima." % (len(minima), len(temp_minima)) )
 		return minima

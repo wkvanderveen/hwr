@@ -9,6 +9,8 @@ import cv2
 import numpy as np
 cimport numpy as np
 
+import matplotlib.pyplot as plt
+
 cdef float MAX_CROPPING_HEIGHT = 150 #in px
 
 def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
@@ -34,7 +36,9 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	img = b.binarize_image(img)
 
 	#smear
-	(_, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
+	(contoured, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
+
+	croppings.reverse() #order croppings from top to bot
 
 	final_croppings = []
 	for (c, s) in zip(croppings, smear_croppings):
@@ -42,38 +46,61 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 		if height > MAX_CROPPING_HEIGHT: 
 			#split further using acid drop
 			hist = l.create_v_histogram(s)
+
+			plt.plot(hist)
+			plt.show()
+
+			cv2.imshow("c", contoured)
+			cv2.waitKey(0)
+
 			minima = l.get_minima(hist)
 
-			#crop to acid drop
-			linedict = {}
-			(_, xmax) = np.shape(c)
-			for x in range(xmax):
-				linedict[x] = 0
-
-			for m in minima:
-				(ymax, xmax) = np.shape(c)
-				linedict_old = deepcopy(linedict)
-				line = a.acid_drop(c, 0, m, xmax-1, m, 9000)
-
-				#put line in dict for easier accessing in next loop
+			if len(minima) == 0: 
+				#cropping can't be cropped any further
+				final_croppings.append(c)
+			else: 				
+				#crop further using acid drop
 				linedict = {}
+				(_, xmax) = np.shape(c)
+				for x in range(xmax):
+					linedict[x] = 0
 
-				for (x, y) in line:
-					linedict[x] = y
+				(ymax, xmax) = np.shape(c)
 
+				for m in minima:
+					linedict_old = deepcopy(linedict)
+					line = a.acid_drop(c, 0, m, xmax-1, m, 9000)
+
+					#put line in dict for easier accessing in next loop
+					linedict = {}
+
+					for (x, y) in line:
+						linedict[x] = y
+
+					out = np.full_like(c, 255, dtype=np.uint8) 
+					
+
+					for y in range(ymax):
+						for x in range(xmax):
+							if y <= linedict[x] and y >= linedict_old[x]:
+								out[y, x] = c[y, x] #copy the pixel from the original croppings
+
+					print(min(linedict_old.values()), max(linedict.values()))
+
+					out = out[min(linedict_old.values()):max(linedict.values()), :] #crop vertically
+
+					final_croppings.append(out)
+
+				#add final cropping (last line to bot of image)
 				out = np.full_like(c, 255, dtype=np.uint8) 
-				
-
 				for y in range(ymax):
 					for x in range(xmax):
-						if y <= linedict[x] and y >= linedict_old[x]:
+						if y >= linedict[x]:
 							out[y, x] = c[y, x] #copy the pixel from the original croppings
-
-				print(min(linedict_old.values()), max(linedict.values()))
-
-				out = out[min(linedict_old.values()):max(linedict.values()), :] #crop vertically
-
+				out = out[min(linedict.values()): , :] #crop vertically
 				final_croppings.append(out)
+
+
 		else:
 			#the cropping is probably good
 			final_croppings.append(c)
