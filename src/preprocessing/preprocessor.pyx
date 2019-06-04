@@ -13,18 +13,18 @@ cdef float MAX_CROPPING_HEIGHT = 150 #in px
 
 def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	'''
-	Takes an image as its input and returns a list of croppings
+	Takes an image as its input and returns a list of croppings using the full preprocessing pipeline
 	'''
 
 	#type declarations
-	cdef int x, y, xmax, ymax, 
-	cdef np.ndarray[np.uint8_t, ndim=2] img
+	cdef int x, y, xmax, ymax
+	cdef np.ndarray[np.uint8_t, ndim=2] img, c, s, out
 	cdef np.ndarray[np.uint64_t, ndim=1] hist
 	cdef list croppings, smear_croppings, final_croppings
 	cdef dict linedict, linedict_old
 
 	b = Binarizer()
-	s = Smear()
+	sm = Smear()
 	l = Line_segmenter()
 	a = Acid_drop()
 
@@ -34,7 +34,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	img = b.binarize_image(img)
 
 	#smear
-	(_, _, croppings, smear_croppings) = s.split_into_lines_and_contour(img)
+	(_, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
 
 	final_croppings = []
 	for (c, s) in zip(croppings, smear_croppings):
@@ -47,16 +47,15 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 			#crop to acid drop
 			linedict = {}
 			(_, xmax) = np.shape(c)
-			line = a.acid_drop(c, 0, minima[0], xmax-1, minima[0], 9000) #get the first line
-			for (x, y) in line:
-					linedict[x] = y
+			for x in range(xmax):
+				linedict[x] = 0
 
-			for idx in range(1, len(minima), 1):
+			for m in minima:
 				(ymax, xmax) = np.shape(c)
 				linedict_old = deepcopy(linedict)
-				line = a.acid_drop(c, 0, minima[idx], xmax-1, minima[idx], 9000)
+				line = a.acid_drop(c, 0, m, xmax-1, m, 9000)
 
-				#put line in dict for easier accessing in nest loop
+				#put line in dict for easier accessing in next loop
 				linedict = {}
 
 				for (x, y) in line:
@@ -65,10 +64,10 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 				out = np.full_like(c, 255, dtype=np.uint8) 
 				
 
-				for y in range(0, ymax):
-					for x in range(0, xmax):
+				for y in range(ymax):
+					for x in range(xmax):
 						if y <= linedict[x] and y >= linedict_old[x]:
-							out[y, x] = c[y, x]
+							out[y, x] = c[y, x] #copy the pixel from the original croppings
 
 				print(min(linedict_old.values()), max(linedict.values()))
 
