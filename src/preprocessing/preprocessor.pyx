@@ -75,39 +75,8 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 				out = out[min(linedict_old.values()):max(linedict.values()), :] #crop vertically
 
 				final_croppings.append(out)
-
-				cv2.imshow("crop", out)
-
-				cv2.waitKey(0)
-
-
-
-
 		else:
 			#the cropping is probably good
 			final_croppings.append(c)
 
-
-
-
-
-		
-
-		# ## actually apply acid drop
-		# (_, maxx) = np.shape(img)
-
-		# for m in minima:
-		# 	print("working on minima.. %d" % (m))
-		# 	sys.stdout.flush()
-		# 	# line = find_path(img, m)
-		# 	line = a.acid_drop(img, 0, m, maxx-1, m, 9000)
-		# 	# for (x, y) in line:
-		# 	# 	print("(%d,%d)" % (x, y))
-		# 	line = np.array(line)
-		# 	# pts = line.reshape((-1,1,2))
-		# 	img = cv2.polylines(img,[line],False,(125))
-
-
-		# cv2.imwrite('a-star%d.png' % (idx), img)
-		# print("saved image to a-star.png")
-		# idx += 1
+	return (img, final_croppings) ##returns image for testing
