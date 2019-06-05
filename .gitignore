@@ -1,3 +1,6 @@
 data/*
 *.pyd
 *.png
+src/preprocessing/build/*
+src/preprocessing/*.html
+src/preprocessing/*.c
