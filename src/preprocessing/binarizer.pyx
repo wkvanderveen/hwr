@@ -33,6 +33,16 @@ class Binarizer:
 				img[y, x] = 255 if img[y, x] > thres else 0
 		return img
 
+	def binarize_sauvola(self, np.ndarray[np.uint8_t, ndim=2] img):
+		cdef int x, y, x_max, y_max
+		cdef np.ndarray[np.float64_t, ndim=2] thres = threshold_sauvola(img) #create otsu threshold
+		(y_max, x_max) = np.shape(img)
+
+		for y in range(y_max):
+			for x in range(x_max):
+				img[y, x] = 255 if img[y, x] > thres else 0
+		return img
+
 	def binarize_simple(self, np.ndarray[np.uint8_t, ndim=2] img, thres = 100):
 		cdef int x, y, x_max, y_max
 		(y_max, x_max) = np.shape(img)
@@ -76,11 +86,8 @@ class Binarizer:
 		# cv2.imwrite('mask.png', mask)
 
 		#remove noise
-		# img = np.array(img, dtype=np.uint8)
 		img = cv2.medianBlur(img, 7)
 
-		# cv2.imwrite('cleaned_new.png', img)
-		# img = np.array(img, dtype=np.uint8)
 		return img
 
 	def erode(self, img, se_size = 5):
@@ -107,7 +114,8 @@ class Binarizer:
 		return mask
 
 	def apply_mask(self, np.ndarray[np.uint8_t, ndim=2] img, np.ndarray[np.uint8_t, ndim=2] mask):
-		cdef int x, y, x_max, y_max, mask_thres, img_thres
+		cdef int x, y, x_max, y_max, mask_thres
+		cdef np.ndarray[np.float64_t, ndim=2] img_thres 
 		'''
 		Creates a mask from the image to segement out the backgroud. 
 		Uses Otsu to create thresholds to use when the mask is applied.
@@ -120,10 +128,11 @@ class Binarizer:
 		mask_thres = 100 # (mask is already binarized, so an arbitrary number works as a threshold)
 		img_out = np.zeros((y_max, x_max), dtype=np.uint8) #alloc memory
 
-		img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
+		# img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
+		img_thres = threshold_sauvola(img)
 		for y in range(y_max):
 			for x in range(x_max):
-				img_out[y, x] = 0 if (img[y, x] < img_thres and mask[y, x] > mask_thres) else 255
+				img_out[y, x] = 0 if (img[y, x] < img_thres[y, x] and mask[y, x] > mask_thres) else 255
 
 		return img_out
 
