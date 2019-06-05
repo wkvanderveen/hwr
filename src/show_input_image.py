@@ -53,7 +53,7 @@ class ExampleDisplayer(object):
 
         n_box = len(boxes)
         print(boxes)
-        
+
         for i in range(n_box):
             image = cv2.rectangle(image,(int(float(boxes[i][0])),
                                          int(float(boxes[i][1]))),
@@ -64,7 +64,8 @@ class ExampleDisplayer(object):
             image = cv2.putText(image, label, (int(float(boxes[i][0])),int(float(boxes[i][1]))),
                                 cv2.FONT_HERSHEY_SIMPLEX,  .6, (0, 255, 0), 1, 2)
 
-        image = Image.fromarray(np.uint8(image))
+
+        image = Image.fromarray(np.uint8(image*255))
         image.show()
 
 

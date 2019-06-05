@@ -38,7 +38,7 @@ class WeightConverter(object):
 
         with tf.Graph().as_default() as graph:
             sess = tf.Session(graph=graph)
-            inputs = tf.placeholder(tf.float32, [1, self.img_h, self.img_w, 3]) # placeholder for detector inputs
+            inputs = tf.placeholder(tf.float32, [1, self.img_h, self.img_w, 1]) # placeholder for detector inputs
             print("=>", inputs)
 
             with tf.variable_scope('yolov3'):

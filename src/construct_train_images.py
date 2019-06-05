@@ -20,9 +20,6 @@ class Linemaker(object):
 
     def make_lines(self):
 
-        channels = 3
-        n_lines = 100
-
         classes     = os.listdir(self.source_dir)
         num_classes = len(classes)
 

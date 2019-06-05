@@ -16,6 +16,7 @@ import tensorflow as tf
 import cv2
 from core import utils
 import os
+from numpy import expand_dims
 from random import choice
 
 class Tester(object):
@@ -40,8 +41,9 @@ class Tester(object):
         image_name = choice(os.listdir(self.source_dir))
         image_path = os.path.join(self.source_dir, image_name)
 
-        img = cv2.imread(image_path)
+        img = cv2.imread(image_path, 0)
         img = cv2.resize(img, (self.img_w, self.img_h))
+        img = expand_dims(img, axis=2)
 
         classes = os.listdir(self.letters_test_dir)
 
