@@ -80,7 +80,7 @@ class Smear:
 		contours = [cnt for (cnt, area) in zip(contours, areas) if area > thres]
 
 		removed = len(areas) - len(contours)
-		print('removed ' + str(removed) + ' areas')
+		# print('removed ' + str(removed) + ' areas')
 
 		approx = []
 		for cnt in contours:
@@ -99,15 +99,9 @@ class Smear:
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
 
-		cv2.imwrite("dilated.png", img_smear)
+		# cv2.imwrite("dilated.png", img_smear)
 
 		(approx, rects) = self.get_contour_approximations(img_smear)
-
-		# if True: ### USED FOR TESTING
-		# 	img_copy = deepcopy(img_original)
-
-		# 	for a in approx:
-		# 		cv2.drawContours(img_copy,[a],0,(90,0,255),2)
 
 		cdef list croppings = []
 		cdef list smear_croppings = []
@@ -138,9 +132,9 @@ class Smear:
 	def split_into_lines(self, np.ndarray[np.uint8_t, ndim=2] img):
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
-		print('start smearing')
+		# print('start smearing')
 		img_smear = self.smear(img_smear)
-		print('finished smearing')
+		# print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
 		(croppings, _) = self.get_croppings(img, img_smear)
@@ -159,9 +153,9 @@ class Smear:
 
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
-		print('start smearing')
+		# print('start smearing')
 		img_smear = self.smear(img_smear)
-		print('finished smearing')
+		# print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
 		(croppings, smear_croppings) = self.get_croppings(img, img_smear)

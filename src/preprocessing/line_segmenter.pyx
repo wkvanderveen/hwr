@@ -183,7 +183,7 @@ class Line_segmenter:
 			elif temp_minima[-1] - minima[-1] > min_dist:
 				minima.append(temp_minima[-1])
 
-		print("kept %d out of %d minima." % (len(minima), len(temp_minima)) )
+		# print("kept %d out of %d minima." % (len(minima), len(temp_minima)) )
 		return minima
 		
 

@@ -18,13 +18,14 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	Takes an image as its input and returns a list of croppings using the full preprocessing pipeline
 	'''
 
-	#type declarations
+	#type declarations for cython
 	cdef int x, y, xmax, ymax
 	cdef np.ndarray[np.uint8_t, ndim=2] img, c, s, out
 	cdef np.ndarray[np.uint64_t, ndim=1] hist
 	cdef list croppings, smear_croppings, final_croppings
 	cdef dict linedict, linedict_old
 
+	#instantiate used classes
 	b = Binarizer()
 	sm = Smear()
 	l = Line_segmenter()
@@ -47,12 +48,6 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 		if height > MAX_CROPPING_HEIGHT: 
 			#split further using acid drop
 			hist = l.create_v_histogram(s)
-
-			# plt.plot(hist)
-			# plt.show()
-
-			# cv2.imshow("c", contoured)
-			# cv2.waitKey(0)
 
 			minima = l.get_minima(hist)
 
@@ -86,7 +81,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 							if y <= linedict[x] and y >= linedict_old[x]:
 								out[y, x] = c[y, x] #copy the pixel from the original croppings
 
-					print(min(linedict_old.values()), max(linedict.values()))
+					# print(min(linedict_old.values()), max(linedict.values()))
 
 					out = out[min(linedict_old.values()):max(linedict.values()), :] #crop vertically
 
@@ -106,4 +101,4 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 			#the cropping is probably good
 			final_croppings.append(c)
 
-	return (img, final_croppings) ##returns image for testing
+	return final_croppings

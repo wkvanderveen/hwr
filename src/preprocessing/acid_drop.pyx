@@ -104,7 +104,7 @@ class Acid_drop: #only wrapped in a class for uniformity.
 					navmap[y-1, x, 1] = y
 
 		if target_found:
-			print("target found!")
+			# print("target found!")
 			line = []
 			while x != sx or y != sy:
 				line.append((x, y))
