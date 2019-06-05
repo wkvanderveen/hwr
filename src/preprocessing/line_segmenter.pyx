@@ -1,8 +1,9 @@
 '''
-line_segmenter.py
+line_segmenter.pyx
 
-This file includes code for the line segmentation part of the pipeline
+This file includes code for the line segmentation part of the pipeline, rewritten in Cython
 '''
+import cython
 import cv2
 from os.path import join, abspath
 import os
@@ -11,18 +12,21 @@ import skimage
 import matplotlib.pyplot as plt
 from binarizer import Binarizer
 
-STROKE_WIDTH = 30 #line width per vertical stroke in image
-THRESH_RATIO = 0.1#Every histogram peak above this ratio is considered a line
-LINE_WIDTH = 5 #expected line width
+cimport numpy as np
+
+cdef int STROKE_WIDTH = 30 #line width per vertical stroke in image
+cdef double THRESH_RATIO = 0.1#Every histogram peak above this ratio is considered a line
+cdef int LINE_WIDTH = 5 #expected line width
 
 
 class Line_segmenter:
 	def __init__(self):
 		pass
 
-	def create_v_histogram(self, img):
+	def create_v_histogram(self, np.ndarray[np.uint8_t, ndim=2] img):
+		cdef int idx, y_max, x_max
 		(y_max, x_max) = np.shape(img)
-		hist = np.zeros((y_max))
+		cdef np.ndarray[np.uint64_t, ndim=1] hist = np.zeros((y_max), dtype=np.uint64)
 
 		for idx in range(y_max):
 			# hist[idx] = np.sum(img[idx, :]) / 255
@@ -30,10 +34,10 @@ class Line_segmenter:
 
 		return hist
 
-	def smooth_hist(self, hist, smooth_len):
+	def smooth_hist(self, np.ndarray[np.uint64_t, ndim=1] hist, unsigned int smooth_len):
 		#applies an averager over the histogram to smooth it
-		window = np.repeat(1.0/np.float(smooth_len), smooth_len)
-		return np.convolve(hist, smooth_len)
+		cdef np.ndarray[np.float64_t, ndim=1] window = np.repeat(1.0/np.float64(smooth_len), smooth_len)
+		return  np.uint64(np.convolve(hist, smooth_len)) #cast back to uints, conv returns floats
 
 
 	def histogram(self, img):
@@ -157,11 +161,12 @@ class Line_segmenter:
 			full_image = np.concatenate((full_image, image), axis=1)
 		return full_image
 
-	def get_minima(self, hist, min_dist = 30, smooth=101, stride=21):
-		temp_minima = []
-		minima = []
+	def get_minima(self, np.ndarray[np.uint64_t, ndim=1] hist, unsigned int min_dist = 30, unsigned int smooth=101, unsigned int stride=21):
+		cdef int idx
+		cdef list temp_minima = []
+		cdef list minima = []
 		hist = self.smooth_hist(hist, smooth)
-		mean = np.mean(hist)
+		cdef double mean = np.mean(hist)
 		#add all minima to a list
 		for idx in range(stride, len(hist) - stride, 1):
 			if hist[idx] < hist[idx-stride] and hist[idx] < hist[idx+stride] and hist[idx] < mean:
@@ -172,12 +177,13 @@ class Line_segmenter:
 			if np.abs(temp_minima[idx] - temp_minima[idx+1]) > min_dist: #there is enough distance between the two minima
 				minima.append(temp_minima[idx])
 
-		if len(minima) == 0 and len(temp_minima) > 0: #append last minima
-			minima.append(temp_minima[-1])
-		elif temp_minima[-1] - minima[-1] > min_dist: 
-			minima.append(temp_minima[-1])
+		if len(temp_minima) > 0:
+			if len(minima) == 0: #append last minima
+				minima.append(temp_minima[-1])
+			elif temp_minima[-1] - minima[-1] > min_dist:
+				minima.append(temp_minima[-1])
 
-		print("kept %d out of %d minima." % (len(minima), len(temp_minima)) )
+		# print("kept %d out of %d minima." % (len(minima), len(temp_minima)) )
 		return minima
 		
 
