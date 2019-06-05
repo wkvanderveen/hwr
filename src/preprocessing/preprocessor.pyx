@@ -36,9 +36,10 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	img = b.binarize_image(img)
 
 	#smear
-	(contoured, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
+	(_, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
 
 	croppings.reverse() #order croppings from top to bot
+	smear_croppings.reverse()
 
 	final_croppings = []
 	for (c, s) in zip(croppings, smear_croppings):
@@ -47,11 +48,11 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 			#split further using acid drop
 			hist = l.create_v_histogram(s)
 
-			plt.plot(hist)
-			plt.show()
+			# plt.plot(hist)
+			# plt.show()
 
-			cv2.imshow("c", contoured)
-			cv2.waitKey(0)
+			# cv2.imshow("c", contoured)
+			# cv2.waitKey(0)
 
 			minima = l.get_minima(hist)
 

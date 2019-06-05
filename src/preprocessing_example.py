@@ -34,11 +34,11 @@ if __name__ == '__main__':
 
 		(preprocessed_img, croppings) = preprocess_image(bw_img)
 		print("seperated into %d croppings" % (len(croppings)))
-		cv2.imshow("original", preprocessed_img)
-		cv2.waitKey(0)
+		# cv2.imshow("original", preprocessed_img)
+		# cv2.waitKey(0)
 
-		for idx, c in enumerate(croppings):
-			cv2.imshow("cropping%d" % idx, c)
-			cv2.waitKey(0)
-		cv2.destroyAllWindows()
+		# for idx, c in enumerate(croppings):
+		# 	cv2.imshow("cropping%d" % idx, c)
+		# 	cv2.waitKey(0)
+		# cv2.destroyAllWindows()
 
