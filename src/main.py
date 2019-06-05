@@ -27,11 +27,11 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 27
+num_classes = 5
 split_percentage = 20
-line_length_bounds = (10, 30)
-n_training_lines = 20
-n_testing_lines = 20
+line_length_bounds = (1, 1)
+n_training_lines = 5000
+n_testing_lines = 1000
 max_overlap_train = 10
 max_overlap_test = 10
 max_boxes = 20
@@ -44,14 +44,14 @@ iou_threshold = 0.5
 score_threshold = 0.5
 ignore_threshold = 0.5
 batch_size = 8
-steps = 10000
-learning_rate = 1e-4
+steps = 5000
+learning_rate = 1e-5
 decay_steps = 100
 decay_rate = 0.7
 shuffle_size = 200
-eval_internal = 100
-save_internal = 50
-cell_size = 32  # cannot be changed; perhaps need fix?
+eval_internal = 20
+save_internal = 10
+cell_size = 2  # cannot be changed; perhaps need fix? Depends on Yolov3 network layout strides
 
 # Other parameters
 retrain = False
