@@ -11,7 +11,7 @@ cimport numpy as np
 
 import matplotlib.pyplot as plt
 
-cdef float MAX_CROPPING_HEIGHT = 150 #in px
+cdef float MAX_CROPPING_HEIGHT = 130 #in px
 
 def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	'''
@@ -98,7 +98,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 
 
 		else:
-			#the cropping is probably good
+			#the cropping is properly made by the smearer
 			final_croppings.append(c)
 
 	return final_croppings
