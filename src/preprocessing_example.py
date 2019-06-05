@@ -4,7 +4,6 @@ Example part of the preprocessing pipeline including all needed imports
 
 
 import sys
-import time #used for timing the app
 
 sys.path.append('preprocessing/')
 
@@ -12,14 +11,8 @@ import cython
 import cv2
 import os
 from os.path import join, abspath
-import sys
-import numpy as np
-from heapq import heappush, heappop
 
-from binarizer import Binarizer
-from smear_test import Smear
-from line_segmenter import Line_segmenter
-from acid_drop import Acid_drop
+#this is the file needed for preprocessing
 from preprocessor import preprocess_image
 
 
