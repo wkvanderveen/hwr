@@ -27,14 +27,14 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 2
+num_classes = 3
 split_percentage = 20
-line_length_bounds = (10,30)
-n_training_lines = 20
-n_testing_lines = 20
+line_length_bounds = (5,20)
+n_training_lines = 1000
+n_testing_lines = 1000
 max_overlap_train = 10
 max_overlap_test = 10
-max_boxes = 20
+max_boxes = 50
 
 # Network parameters
 n_filters_dn = (16,32,64)
@@ -45,18 +45,18 @@ score_threshold = 0.5
 ignore_threshold = 0.5
 size_threshold = (4,4)  # in pixels
 batch_size = 8
-steps = 500
+steps = 1000
 learning_rate = 1e-4
 decay_steps = 100
 decay_rate = 0.7
 shuffle_size = 200
 eval_internal = 100
-save_internal = 50
+save_internal = 100
 cell_size = 32  # cannot be changed; perhaps need fix?
 
 # Other parameters
 retrain = False
-show_tfrecord_example = False
+show_tfrecord_example = True
 test_example = True
 
 # [preprocessing here]

@@ -27,6 +27,8 @@ class Linemaker(object):
         num_classes = len(classes)
 
         max_h, max_w = 0, 0
+        max_paddings = [10, 10, 10, 10] # L,T,R,B  (min 5)
+
 
         if not os.path.isdir(self.target_dir):
             os.mkdir(self.target_dir)
@@ -64,21 +66,56 @@ class Linemaker(object):
                 chars.append(img)
                 labels.append(char_name)
 
-            max_height = max([c.shape[0] for c in chars])
+            max_height = max_paddings[1] + max_paddings[3] + max([c.shape[0] for c in chars])
 
             positions['x1'].append(0)
             positions['x2'].append(chars[0].shape[1])
 
-            for char_idx, char in enumerate(chars):
-                border_width = max_height-char.shape[0]
+            for char_idx in range(len(chars)):
 
-                positions['y1'].append(border_width)
-                positions['y2'].append(border_width + char.shape[0])
+                top_offset = rand.randint(5, max_paddings[1])
+                bot_offset = rand.randint(5, max_paddings[3])
 
+                # add random top and bottom offset
                 chars[char_idx] = cv2.copyMakeBorder(
-                    char, max_height-char.shape[0], 0,0,0,cv2.BORDER_REPLICATE)
+                    chars[char_idx],
+                    top_offset,
+                    bot_offset,
+                    0,
+                    0,
+                    cv2.BORDER_REPLICATE)
+
+                border_width = max_height-chars[char_idx].shape[0]
+
+                positions['y1'].append(border_width+top_offset)
+                positions['y2'].append(border_width+chars[char_idx].shape[0]-bot_offset)
+
+                # top up the char to the max image size
+                chars[char_idx] = cv2.copyMakeBorder(
+                    chars[char_idx],
+                    max_height-chars[char_idx].shape[0],
+                    0,
+                    0,
+                    0,
+                    cv2.BORDER_REPLICATE)
+
+            # Start making the line from the characters
 
             line = chars[0]
+
+            # left pad the line
+            left_offset = rand.randint(5,max_paddings[0])
+
+            positions['x1'][0] += left_offset
+            positions['x2'][0] += left_offset
+
+            line = cv2.copyMakeBorder(
+                    line,
+                    0,
+                    0,
+                    left_offset,
+                    0,
+                    cv2.BORDER_REPLICATE)
 
             if not self.max_overlap:
                 for char_idx in range(1,line_length):
@@ -115,6 +152,14 @@ class Linemaker(object):
                     if rand.random() < 0.2:
                         line = np.concatenate((line, 255*np.ones(shape=chars[char_idx].shape)), axis=1)
 
+            line = cv2.copyMakeBorder(
+                    line,
+                    0,
+                    0,
+                    0,
+                    rand.randint(5, max_paddings[3]),
+                    cv2.BORDER_REPLICATE)
+
             for char_idx, char in enumerate(chars):
                 with open(self.label_dir, "a") as file:
                     label = (f"{positions['x1'][char_idx]} " +
@@ -123,6 +168,8 @@ class Linemaker(object):
                              f"{positions['y2'][char_idx]} " +
                              f"{classes.index(labels[char_idx])} ")
                     file.write(str(label).rstrip('\n'))
+
+
 
             with open(self.label_dir, "a") as file:
                 file.write('\n')
