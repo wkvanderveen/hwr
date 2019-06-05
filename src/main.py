@@ -28,36 +28,37 @@ anchor_file = "../../data/anchors.txt"
 
 # Data parameters
 
-num_classes = 3
+num_classes = 2
 split_percentage = 20
-line_length_bounds = (5,20)
-n_training_lines = 1000
-n_testing_lines = 1000
+line_length_bounds = (4,8)
+n_training_lines = 10
+n_testing_lines = 10
 max_overlap_train = 10
 max_overlap_test = 10
-max_boxes = 50
+max_boxes = 20
+test_on_train = True
 
 # Network parameters
-n_filters_dn = (16,32,64)
-n_filt_yolo = 8
-cluster_num = 4
-iou_threshold = 0.5
-score_threshold = 0.5
-ignore_threshold = 0.5
-size_threshold = (4,4)  # in pixels
-batch_size = 8
-steps = 5000
-learning_rate = 1e-5
+n_filters_dn = (8,8,16)
+n_filt_yolo = 32
+cluster_num = 8
+iou_threshold = 0.0
+score_threshold = 0.0
+ignore_threshold = 0.0
+size_threshold = (1,1)  # in pixels
+batch_size = 1
+steps = 500
+learning_rate = 1e-2
 decay_steps = 100
-decay_rate = 0.7
-shuffle_size = 200
-eval_internal = 20
-save_internal = 10
-cell_size = 2  # cannot be changed; perhaps need fix? Depends on Yolov3 network layout strides
+decay_rate = 0.3
+shuffle_size = 1
+eval_internal = 50
+save_internal = 100
+cell_size = 8  # cannot be changed; perhaps need fix? Depends on Yolov3 network layout strides
 
 # Other parameters
 retrain = False
-show_tfrecord_example = True
+show_tfrecord_example = False
 test_example = True
 
 # [preprocessing here]
@@ -242,7 +243,7 @@ if network_exists and test_example:
 
     weightconverter.convert_weights()
 
-    tester = Tester(source_dir=lines_train_dir,
+    tester = Tester(source_dir=(lines_train_dir if test_on_train else lines_test_dir),
                     num_classes=num_classes,
                     score_threshold=score_threshold,
                     iou_threshold=iou_threshold,

@@ -66,7 +66,7 @@ def gpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thre
     return boxes, score, label
 
 
-def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5):
+def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5, size_threshold=(4,4)):
     """
     Pure Python NMS baseline.
 
@@ -78,6 +78,28 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5):
     """
 
     assert boxes.shape[1] == 4 and len(scores.shape) == 1
+
+    # print(boxes)
+
+    # picked_boxes = []
+    # picked_labels = []
+    # picked_scores = []
+
+    # for i, box in enumerate(boxes):
+    #     if (box[0] < 0 or
+    #         box[1] < 0 or
+    #         # box[2] > detection_size[1] or
+    #         # box[3] > detection_size[0] or
+    #         abs(box[2]-box[0]) < size_threshold[0] or # MIN WIDTH
+    #         abs(box[3]-box[1]) < size_threshold[1]):  # MIN HEIGHT
+    #         continue
+
+    #     picked_boxes.append(box)
+    #     picked_labels.append(labels[i])
+    #     picked_scores.append(scores[i])
+    # boxes = picked_boxes
+    # labels = picked_labels
+    # scores = picked_scores
 
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
@@ -100,6 +122,7 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5):
         w = np.maximum(0.0, xx2 - xx1 + 1)
         h = np.maximum(0.0, yy2 - yy1 + 1)
         inter = w * h
+
         ovr = inter / (areas[i] + areas[order[1:]] - inter)
 
         inds = np.where(ovr <= iou_thresh)[0]
@@ -107,7 +130,7 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5):
 
     return keep[:max_boxes]
 
-def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thresh=0.5):
+def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thresh=0.5, size_threshold=(4,4)):
     """
     /*----------------------------------- NMS on cpu ---------------------------------------*/
     Arguments:
@@ -126,7 +149,7 @@ def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thre
         if len(filter_boxes) == 0: continue
         # do non_max_suppression on the cpu
         indices = py_nms(filter_boxes, filter_scores,
-                         max_boxes=max_boxes, iou_thresh=iou_thresh)
+                         max_boxes=max_boxes, iou_thresh=iou_thresh, size_threshold=(4,4))
         picked_boxes.append(filter_boxes[indices])
         picked_score.append(filter_scores[indices])
         picked_label.append(np.ones(len(indices), dtype='int32')*i)
@@ -163,33 +186,18 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     :param image,
     :param classes, the return list from the function `read_coco_names`
     """
-    picked_boxes = []
-    picked_labels = []
-    picked_scores = []
-    for i, box in enumerate(boxes):
-        if (box[0] < 0 or
-            box[1] < 0 or
-            box[2] > detection_size[1] or
-            box[3] > detection_size[0] or
-            box[2]-box[0] < size_threshold[0] or # MIN WIDTH
-            box[1]-box[3] < size_threshold[1]):  # MIN HEIGHT
-            continue
-
-        picked_boxes.append(box)
-        picked_labels.append(labels[i])
-        picked_scores.append(scores[i])
-    boxes = picked_boxes
-    labels = picked_labels
-    scores = picked_scores
-
-
-
-
     if boxes is None: return image
 
+
+
+
     print(f"HAS BOXES:\n{boxes}")
+    # image = np.squeeze(image)  # collapse inner dimension
+    image = np.repeat(image, 3, axis=2)
+    print(image.shape)
     image = Image.fromarray(np.uint8((image)))
     draw = ImageDraw.Draw(image)
+
     # draw settings
     font = ImageFont.truetype(
         font = font,
@@ -375,7 +383,7 @@ def evaluate(y_pred, y_true, iou_thresh=0.5, score_thresh=0.3):
         pred_probs = y_pred[2][i:i+1]
 
         pred_boxes, pred_scores, pred_labels = cpu_nms(pred_boxes, pred_confs*pred_probs, num_classes,
-                                                      score_thresh=score_thresh, iou_thresh=iou_thresh)
+                                                      score_thresh=score_thresh, iou_thresh=iou_thresh, size_threshold=(4,4))
 
         true_boxes = np.array(true_boxes_list)
         box_centers, box_sizes = true_boxes[:,0:2], true_boxes[:,2:4]

@@ -62,8 +62,6 @@ class Trainer(object):
 
         model = yolov3.yolov3(self.num_classes, ANCHORS)
 
-        print(f"{images.shape}")
-
         with tf.variable_scope('yolov3'):
             pred_feature_map = model.forward(images,
                                              is_training=is_training,

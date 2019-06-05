@@ -51,7 +51,7 @@ class Parser(object):
         gaussian_blur = lambda image: cv2.GaussianBlur(image, (5, 5), 0)
         h, w = image.shape.as_list()[:2]
         image = tf.py_func(gaussian_blur, [image], tf.uint8)
-        image.set_shape([h, w, 3])
+        image.set_shape([h, w, 1])
 
         return image, gt_boxes
 
@@ -181,7 +181,7 @@ class Parser(object):
             }
         )
 
-        image = tf.image.decode_jpeg(features['image'], channels = 3)
+        image = tf.image.decode_jpeg(features['image'], channels = 1)
         image = tf.image.convert_image_dtype(image, tf.uint8)
 
         gt_boxes = tf.decode_raw(features['boxes'], tf.float32)
@@ -206,6 +206,7 @@ class dataset(object):
 
         self._TFRecordDataset = self._TFRecordDataset.map(map_func = self.parser.parser_example,
                                                         num_parallel_calls = 10)
+
         self._TFRecordDataset = self._TFRecordDataset.repeat() if self.repeat else self._TFRecordDataset
 
         if self.shuffle is not None:

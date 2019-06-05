@@ -24,13 +24,13 @@ class darknet53(object):
 
     def forward(self, inputs, n_filters): #The multiplication of the strides should be equal to cell_size in main.py
         #TODO: look at the amount of filters
-        print("Before: ", inputs.get_shape())
-        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=3, strides=1)
-        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[1],  kernel_size=5, strides=1)
+
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=3, strides=2)
+        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[1],  kernel_size=5, strides=2)
         inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[2],  kernel_size=7, strides=2)
         # inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[2],  kernel_size=3, strides=2)
         # inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=1, strides=4)
-        print("After: ", inputs.get_shape())
+
         return inputs
 
 
@@ -46,8 +46,8 @@ class yolov3(object):
         self.feature_maps = []
 
     def _yolo_block(self, inputs, filters):
-        inputs = common._conv2d_fixed_padding(inputs, filters=32 * 1, kernel_size=7)
-        inputs = common._conv2d_fixed_padding(inputs, filters=64 * 1, kernel_size=3)
+        inputs = common._conv2d_fixed_padding(inputs, filters=64 * 1, kernel_size=16)
+        inputs = common._conv2d_fixed_padding(inputs, filters=128 * 1, kernel_size=8)
         return inputs
 
     def _detection_layer(self, inputs, anchors):
