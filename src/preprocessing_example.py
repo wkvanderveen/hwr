@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 	if not os.path.isdir(OUTPATH):
 		print("path " + OUTPATH + "not found.. creating new dir")
-		os.mkdir(outpath)
+		os.mkdir(OUTPATH)
 
 	for (fidx, f) in enumerate(files):
 		bw_img =  cv2.imread(f)

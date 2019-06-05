@@ -56,18 +56,17 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 				final_croppings.append(c)
 			else: 				
 				#crop further using acid drop
+
+				#initialize linedict with zeros (index of top row of image)
 				linedict = {}
-				(_, xmax) = np.shape(c)
+				(ymax, xmax) = np.shape(c)
 				for x in range(xmax):
 					linedict[x] = 0
-
-				(ymax, xmax) = np.shape(c)
 
 				for m in minima:
 					linedict_old = deepcopy(linedict)
 					line = a.acid_drop(c, 0, m, xmax-1, m, 9000)
 
-					#put line in dict for easier accessing in next loop
 					linedict = {}
 
 					for (x, y) in line:
@@ -80,8 +79,6 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 						for x in range(xmax):
 							if y <= linedict[x] and y >= linedict_old[x]:
 								out[y, x] = c[y, x] #copy the pixel from the original croppings
-
-					# print(min(linedict_old.values()), max(linedict.values()))
 
 					out = out[min(linedict_old.values()):max(linedict.values()), :] #crop vertically
 
