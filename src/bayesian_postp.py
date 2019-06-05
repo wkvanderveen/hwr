@@ -67,7 +67,8 @@ class Bayesian_processor(object):
 
     def append_word_to_file(self, word, file):
         # TBA
-        word = ''.join([self.chars[letter.index(max(letter))] for letter in word])
+        wordstring = ''.join([self.chars[letter.index(max(letter))]
+                              for letter in word])
         pass
 
 
