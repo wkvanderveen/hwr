@@ -10,6 +10,7 @@ from convert_weight import WeightConverter
 from quick_train import Trainer
 from show_input_image import ExampleDisplayer
 from quick_test import Tester
+from numpy import prod, asarray
 
 ## PARAMETERS ##
 
@@ -27,39 +28,47 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-
-num_classes = 27
+num_classes = 2
 split_percentage = 20
-line_length_bounds = (4,4)
-n_training_lines = 10
-n_testing_lines = 10
-max_overlap_train = 10
-max_overlap_test = 10
+line_length_bounds = (10,15)
+n_training_lines = 1000
+n_testing_lines = 50
+max_overlap_train = 0
+max_overlap_test = 0
 max_boxes = 20
-test_on_train = True
+test_on_train = False
+
 
 # Network parameters
-n_filters_dn = (8,16,32)
-n_filt_yolo = (32, 64)
+n_filters_dn = (32,)
+n_strides_dn = (3,)
+n_ksizes_dn = (5,)
+cell_size = 1
+
+n_filt_yolo = (8, 16, 32)
+n_ksizes_yolo = (1,1,1)
 cluster_num = 8
 iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0
 size_threshold = (1,1)  # in pixels
+
 batch_size = 1
-steps = 10000
+steps = 1000
 learning_rate = 1e-2
 decay_steps = 100
 decay_rate = 0.3
 shuffle_size = 10
-eval_internal = 50
+eval_internal = 100
 save_internal = 100
-cell_size = 1  # cannot be changed; perhaps need fix? Depends on Yolov3 network layout strides
+print_every_n = 20
+
 
 # Other parameters
-retrain = True
+retrain = False
 show_tfrecord_example = False
 test_example = True
+
 
 # [preprocessing here]
 
@@ -175,7 +184,10 @@ if not network_exists or retrain:
                                       score_threshold=score_threshold,
                                       iou_threshold=iou_threshold,
                                       n_filt_yolo=n_filt_yolo,
-                                      n_filters_dn=n_filters_dn)
+                                      ksizes_yolo=n_ksizes_yolo,
+                                      n_filters_dn=n_filters_dn,
+                                      n_strides_dn=n_strides_dn,
+                                      n_ksizes_dn=n_ksizes_dn)
     print("Converting weights...")
     weightconverter.convert_weights()
 
@@ -186,11 +198,15 @@ if not network_exists or retrain:
                       decay_steps=decay_steps,
                       decay_rate=decay_rate,
                       n_filters_dn=n_filters_dn,
+                      n_strides_dn=n_strides_dn,
+                      n_ksizes_dn=n_ksizes_dn,
                       n_filt_yolo=n_filt_yolo,
+                      ksizes_yolo=n_ksizes_yolo,
                       ignore_threshold=ignore_threshold,
                       shuffle_size=shuffle_size,
                       eval_internal=eval_internal,
                       save_internal=save_internal,
+                      print_every_n=print_every_n,
                       img_dims=img_dims,
                       cell_size=cell_size,
                       anchors_path=anchor_file,
@@ -234,7 +250,10 @@ if network_exists and test_example:
         img_dims=img_dims,
         weights_dir=weights_dir,
         n_filters_dn=n_filters_dn,
+        n_strides_dn=n_strides_dn,
+        n_ksizes_dn=n_ksizes_dn,
         n_filt_yolo=n_filt_yolo,
+        ksizes_yolo=n_ksizes_yolo,
         anchors_path=anchor_file,
         score_threshold=score_threshold,
         iou_threshold=iou_threshold,

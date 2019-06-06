@@ -19,7 +19,7 @@ sess = tf.Session()
 
 class Trainer(object):
     """docstring for Trainer"""
-    def __init__(self, num_classes, batch_size, n_filters_dn, cell_size, n_filt_yolo, ignore_threshold, steps, img_dims, learning_rate, decay_steps, decay_rate, shuffle_size, eval_internal, save_internal, anchors_path, train_records, test_records, checkpoint_path):
+    def __init__(self, num_classes, batch_size, n_filters_dn, n_strides_dn, n_ksizes_dn, cell_size, n_filt_yolo, ksizes_yolo, ignore_threshold, steps, img_dims, learning_rate, decay_steps, decay_rate, shuffle_size, eval_internal, save_internal, print_every_n, anchors_path, train_records, test_records, checkpoint_path):
         super(Trainer, self).__init__()
         self.num_classes = num_classes
         self.batch_size = batch_size
@@ -31,10 +31,14 @@ class Trainer(object):
         self.shuffle_size = shuffle_size
         self.eval_internal = eval_internal
         self.save_internal = save_internal
+        self.print_every_n = print_every_n
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
         self.n_filt_yolo = n_filt_yolo
+        self.ksizes_yolo = ksizes_yolo
         self.n_filters_dn = n_filters_dn
+        self.n_strides_dn = n_strides_dn
+        self.n_ksizes_dn = n_ksizes_dn
         self.cell_size = cell_size
         self.anchors_path = anchors_path
         self.train_records = train_records
@@ -66,7 +70,10 @@ class Trainer(object):
             pred_feature_map = model.forward(images,
                                              is_training=is_training,
                                              n_filters_dn=self.n_filters_dn,
-                                             n_filt_yolo=self.n_filt_yolo)
+                                             n_strides_dn=self.n_strides_dn,
+                                             n_ksizes_dn=self.n_ksizes_dn,
+                                             n_filt_yolo=self.n_filt_yolo,
+                                             ksizes_yolo=self.ksizes_yolo)
 
             loss             = model.compute_loss(pred_feature_map, y_true, ignore_thresh=self.ignore_thresh)
             y_pred           = model.predict(pred_feature_map)
@@ -104,11 +111,10 @@ class Trainer(object):
             writer_train.add_summary(run_items[1], global_step=step)
             writer_train.flush() # Flushes the event file to disk
             if (step+1) % self.save_internal == 0: saver.save(sess, save_path=self.checkpoint_path, global_step=step+1)
+            if (step+1) % self.print_every_n == 0:
+                print("=> STEP %10d [TRAIN]:\tloss_xy:%7.4f \tloss_wh:%7.4f \tloss_conf:%7.4f \tloss_class:%7.4f"
+                    %(step+1, run_items[5], run_items[6], run_items[7], run_items[8]))
 
-            
-            print("=> STEP %10d [TRAIN]:\tloss_xy:%7.4f \tloss_wh:%7.4f \tloss_conf:%7.4f \tloss_class:%7.4f"
-                %(step+1, run_items[5], run_items[6], run_items[7], run_items[8]))
-            
 
             run_items = sess.run([write_op, y_pred, y_true] + loss, feed_dict={is_training:False})
             if (step+1) % self.eval_internal == 0:
