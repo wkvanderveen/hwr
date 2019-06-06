@@ -12,6 +12,12 @@ cimport numpy as np
 import matplotlib.pyplot as plt
 
 cdef float MAX_CROPPING_HEIGHT = 130 #in px
+cdef int MIN_BLACK_PIXELS = 1200 #minimum number of black pixels in cropping to be saved
+
+def sum_black_pixels(np.ndarray[np.uint8_t, ndim=2] img):
+	# return np.sum(img[img == 0])
+	return img[img == 0].size
+
 
 def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	'''
@@ -53,7 +59,8 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 
 			if len(minima) == 0: 
 				#cropping can't be cropped any further
-				final_croppings.append(c)
+				if sum_black_pixels(c) > MIN_BLACK_PIXELS:
+					final_croppings.append(c)
 			else: 				
 				#crop further using acid drop
 
@@ -81,8 +88,8 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 								out[y, x] = c[y, x] #copy the pixel from the original croppings
 
 					out = out[min(linedict_old.values()):max(linedict.values()), :] #crop vertically
-
-					final_croppings.append(out)
+					if sum_black_pixels(out) > MIN_BLACK_PIXELS:
+						final_croppings.append(out)
 
 				#add final cropping (last line to bot of image)
 				out = np.full_like(c, 255, dtype=np.uint8) 
@@ -91,11 +98,13 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 						if y >= linedict[x]:
 							out[y, x] = c[y, x] #copy the pixel from the original croppings
 				out = out[min(linedict.values()): , :] #crop vertically
-				final_croppings.append(out)
+				if sum_black_pixels(out) > MIN_BLACK_PIXELS:
+					final_croppings.append(out)
 
 
 		else:
 			#the cropping is properly made by the smearer
-			final_croppings.append(c)
+			if sum_black_pixels(c) > MIN_BLACK_PIXELS:
+				final_croppings.append(c)
 
 	return final_croppings

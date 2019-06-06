@@ -13,7 +13,7 @@ import os
 from os.path import join, abspath
 
 #this is the file needed for preprocessing
-from preprocessor import preprocess_image
+from preprocessor import preprocess_image, sum_black_pixels
 
 
 PATH = join(abspath('..'), 'data')
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 		# cv2.waitKey(0)
 
 		for idx, c in enumerate(croppings):
-			cv2.imwrite(join(OUTPATH, "%d_%d.png" % (fidx, idx)), c)
+			cv2.imwrite(join(OUTPATH, "%d_%d_%d.png" % (fidx, idx, sum_black_pixels(c))), c)
 		# 	cv2.imshow("cropping%d" % idx, c)
 		# 	cv2.waitKey(0)
 		# cv2.destroyAllWindows()
