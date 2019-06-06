@@ -27,5 +27,11 @@ The code is compiled into ```.pyd``` files (on windows, this might differ on lin
 
 An example call to the pipeline is given in ```src/preprocessing_example.py```.
 If Cython was correctly installed and the code compiled the example program will execute without errors.
+```
+cd ..
+python preprocessing_example.py
+```
+The example program takes every file in ```hwr/data/image-data``` and converts it into binarized lines. The lines are then saved in ```hwr/data/lines```.
+These paths can be changed at the top of the ```src/preprocessing_example.py``` file.
 
-The example program takes every file in ```hwr/data/image-data``` and converts it into binarized lines. The lines are then saved in ```hwr/data/lines```
+

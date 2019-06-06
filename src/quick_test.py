@@ -38,45 +38,44 @@ class Tester(object):
         self.max_boxes = max_boxes
 
     def test(self):
-        #image_name = choice(os.listdir(self.source_dir))
-        for image_name in os.listdir(self.source_dir):
-            image_path = os.path.join(self.source_dir, image_name)
+        image_name = choice(os.listdir(self.source_dir))
+        image_path = os.path.join(self.source_dir, image_name)
 
-            img = cv2.imread(image_path, 0)
-            img = cv2.resize(img, (self.img_w, self.img_h))
-            img = expand_dims(img, axis=2)
+        img = cv2.imread(image_path, 0)
+        img = cv2.resize(img, (self.img_w, self.img_h))
+        img = expand_dims(img, axis=2)
 
-            classes = os.listdir(self.letters_test_dir)
+        classes = os.listdir(self.letters_test_dir)
 
-            cpu_nms_graph = tf.Graph()
+        cpu_nms_graph = tf.Graph()
 
-            input_tensor, output_tensors = utils.read_pb_return_tensors(
-                cpu_nms_graph,
-                os.path.join(self.checkpoint_dir, "yolov3_cpu_nms.pb"),
-                ["Placeholder:0", "concat_5:0", "mul_2:0"])
+        input_tensor, output_tensors = utils.read_pb_return_tensors(
+            cpu_nms_graph,
+            os.path.join(self.checkpoint_dir, "yolov3_cpu_nms.pb"),
+            ["Placeholder:0", "concat_5:0", "mul_2:0"])
 
-            with tf.Session(graph=cpu_nms_graph) as sess:
-                boxes, scores = sess.run(
-                    output_tensors,
-                    feed_dict={input_tensor: np.expand_dims(img, axis=0)})
+        with tf.Session(graph=cpu_nms_graph) as sess:
+            boxes, scores = sess.run(
+                output_tensors,
+                feed_dict={input_tensor: np.expand_dims(img, axis=0)})
 
-                boxes, scores, labels = utils.cpu_nms(
-                    boxes=boxes,
-                    scores=scores,
-                    num_classes=self.num_classes,
-                    score_thresh=self.score_threshold,
-                    iou_thresh=self.iou_threshold,
-                    max_boxes=self.max_boxes)
+            boxes, scores, labels = utils.cpu_nms(
+                boxes=boxes,
+                scores=scores,
+                num_classes=self.num_classes,
+                score_thresh=self.score_threshold,
+                iou_thresh=self.iou_threshold,
+                max_boxes=self.max_boxes)
 
-                image = utils.draw_boxes(
-                    img,
-                    boxes,
-                    scores,
-                    labels,
-                    classes,
-                    [self.img_h, self.img_w],
-                    show=True,
-                    size_threshold=self.size_threshold)
+            image = utils.draw_boxes(
+                img,
+                boxes,
+                scores,
+                labels,
+                classes,
+                [self.img_h, self.img_w],
+                show=True,
+                size_threshold=self.size_threshold)
 
-            print("\n\t(If nothing is plotted, no characters were " +
-                  "detected with the current thresholds)")
+        print("\n\t(If nothing is plotted, no characters were " +
+              "detected with the current thresholds)")
