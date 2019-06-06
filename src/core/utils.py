@@ -188,7 +188,25 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     """
     if boxes is None: return image
 
+    picked_boxes = []
+    picked_labels = []
+    picked_scores = []
 
+    for i, box in enumerate(boxes):
+        if (box[0] < 0 or
+            box[1] < 0 or
+            box[2] > detection_size[1] or
+            box[3] > detection_size[0] or
+            abs(box[2]-box[0]) < size_threshold[0] or # MIN WIDTH
+            abs(box[3]-box[1]) < size_threshold[1]):  # MIN HEIGHT
+            continue
+
+        picked_boxes.append(box)
+        picked_labels.append(labels[i])
+        picked_scores.append(scores[i])
+    boxes = picked_boxes
+    labels = picked_labels
+    scores = picked_scores
 
 
     print(f"HAS BOXES:\n{boxes}")
