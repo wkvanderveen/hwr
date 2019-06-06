@@ -28,13 +28,13 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 2
+num_classes = 10
 split_percentage = 20
-line_length_bounds = (10,15)
-n_training_lines = 1000
+line_length_bounds = (15,20)
+n_training_lines = 500
 n_testing_lines = 50
-max_overlap_train = 0
-max_overlap_test = 0
+max_overlap_train = 5
+max_overlap_test = 5
 max_boxes = 20
 test_on_train = False
 
@@ -52,20 +52,22 @@ iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0
 size_threshold = (1,1)  # in pixels
+remove_overlap_half = True
+remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
 batch_size = 1
-steps = 1000
+steps = 220
 learning_rate = 1e-2
-decay_steps = 100
-decay_rate = 0.3
+decay_steps = 50
+decay_rate = 0.5
 shuffle_size = 10
-eval_internal = 100
-save_internal = 100
-print_every_n = 20
+eval_internal = 20
+save_internal = 20
+print_every_n = 10
 
 
 # Other parameters
-retrain = False
+retrain = True
 show_tfrecord_example = False
 test_example = True
 
@@ -202,6 +204,7 @@ if not network_exists or retrain:
                       n_ksizes_dn=n_ksizes_dn,
                       n_filt_yolo=n_filt_yolo,
                       ksizes_yolo=n_ksizes_yolo,
+                      size_threshold=size_threshold,
                       ignore_threshold=ignore_threshold,
                       shuffle_size=shuffle_size,
                       eval_internal=eval_internal,
@@ -269,9 +272,62 @@ if network_exists and test_example:
                     size_threshold=size_threshold,
                     img_dims=img_dims,
                     checkpoint_dir=checkpoint_dir,
-                    letters_test_dir=(letters_train_dir if test_on_train else lines_test_dir),
-                    max_boxes=max_boxes)
-    tester.test()
+                    letters_test_dir=(letters_train_dir if test_on_train else letters_test_dir),
+                    max_boxes=max_boxes,
+                    remove_overlap_half=remove_overlap_half,
+                    remove_overlap_full=remove_overlap_full)
+    results = tester.test()
+
+    print('\n'*5)
+
+    if not results:
+        print("No characters were detected!")
+    else:
+        [print(f"x={int(x)}:\t{c}\t(p = {p:.3f})") for (x,c,p) in results]
+
+    print('\n'*5)
+
+    def convert_to_uni(name):
+        hebrew = {
+            'Alef':         u'\u05D0',
+            'Ayin':         u'\u05E2',
+            'Bet':          u'\u05D1',
+            'Dalet':        u'\u05D3',
+            'Gimel':        u'\u05D2',
+            'He':           u'\u05D4',
+            'Het':          u'\u05D7',
+            'Kaf':          u'\u05DB',
+            'Kaf-final':    u'\u05DA',
+            'Lamed':        u'\u05DC',
+            'Mem':          u'\u05DD',
+            'Mem-medial':   u'\u05DE',
+            'Nun-final':    u'\u05DF',
+            'Nun-medial':   u'\u05E0',
+            'Pe':           u'\u05E4',
+            'Pe-final':     u'\u05E3',
+            'Qof':          u'\u05E7',
+            'Resh':         u'\u05E8',
+            'Samekh':       u'\u05E1',
+            'Shin':         u'\u05E9',
+            'Taw':          u'\u05EA',
+            'Tet':          u'\u05D8',
+            'Tsadi-final':  u'\u05E5',
+            'Tsadi-medial': u'\u05E6',
+            'Waw':          u'\u05D5',
+            'Yod':          u'\u05D9',
+            'Zayin':        u'\u05D6'
+
+        }
+        if name in hebrew:
+            return hebrew[name]
+        else:
+            return '?'
+
+    print(''.join([convert_to_uni(c) for (_,c,_) in results]))
+
+    print('\n'*5)
+
+
 
 # [postprocessing here]
 
