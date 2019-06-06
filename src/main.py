@@ -28,9 +28,9 @@ anchor_file = "../../data/anchors.txt"
 
 # Data parameters
 
-num_classes = 2
+num_classes = 27
 split_percentage = 20
-line_length_bounds = (4,8)
+line_length_bounds = (4,4)
 n_training_lines = 10
 n_testing_lines = 10
 max_overlap_train = 10
@@ -39,8 +39,8 @@ max_boxes = 20
 test_on_train = True
 
 # Network parameters
-n_filters_dn = (8,8,16)
-n_filt_yolo = 32
+n_filters_dn = (8,16,32)
+n_filt_yolo = (32, 64)
 cluster_num = 8
 iou_threshold = 0.0
 score_threshold = 0.0
@@ -54,10 +54,10 @@ decay_rate = 0.3
 shuffle_size = 1
 eval_internal = 50
 save_internal = 100
-cell_size = 8  # cannot be changed; perhaps need fix? Depends on Yolov3 network layout strides
+cell_size = 1  # cannot be changed; perhaps need fix? Depends on Yolov3 network layout strides
 
 # Other parameters
-retrain = False
+retrain = True
 show_tfrecord_example = False
 test_example = True
 
@@ -250,7 +250,7 @@ if network_exists and test_example:
                     size_threshold=size_threshold,
                     img_dims=img_dims,
                     checkpoint_dir=checkpoint_dir,
-                    letters_test_dir=letters_test_dir,
+                    letters_test_dir=(letters_train_dir if test_on_train else lines_test_dir),
                     max_boxes=max_boxes)
     tester.test()
 
