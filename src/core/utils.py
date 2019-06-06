@@ -79,28 +79,6 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5, size_threshold=(4,4)):
 
     assert boxes.shape[1] == 4 and len(scores.shape) == 1
 
-    # print(boxes)
-
-    # picked_boxes = []
-    # picked_labels = []
-    # picked_scores = []
-
-    # for i, box in enumerate(boxes):
-    #     if (box[0] < 0 or
-    #         box[1] < 0 or
-    #         # box[2] > detection_size[1] or
-    #         # box[3] > detection_size[0] or
-    #         abs(box[2]-box[0]) < size_threshold[0] or # MIN WIDTH
-    #         abs(box[3]-box[1]) < size_threshold[1]):  # MIN HEIGHT
-    #         continue
-
-    #     picked_boxes.append(box)
-    #     picked_labels.append(labels[i])
-    #     picked_scores.append(scores[i])
-    # boxes = picked_boxes
-    # labels = picked_labels
-    # scores = picked_scores
-
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]
@@ -208,11 +186,9 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     labels = picked_labels
     scores = picked_scores
 
-
     print(f"HAS BOXES:\n{boxes}")
     # image = np.squeeze(image)  # collapse inner dimension
     image = np.repeat(image, 3, axis=2)
-    print(image.shape)
     image = Image.fromarray(np.uint8((image)))
     draw = ImageDraw.Draw(image)
 
