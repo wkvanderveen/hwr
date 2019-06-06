@@ -28,11 +28,11 @@ anchor_file = "../../data/anchors.txt"
 
 # Data parameters
 
-num_classes = 2
+num_classes = 1
 split_percentage = 20
 line_length_bounds = (4,8)
-n_training_lines = 10
-n_testing_lines = 10
+n_training_lines = 20
+n_testing_lines = 20
 max_overlap_train = 10
 max_overlap_test = 10
 max_boxes = 20
@@ -40,18 +40,18 @@ test_on_train = True
 
 # Network parameters
 n_filters_dn = (8,8,16)
-n_filt_yolo = 32
-cluster_num = 8
+n_filt_yolo = 64
+cluster_num = 32
 iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0
 size_threshold = (1,1)  # in pixels
 batch_size = 1
-steps = 500
+steps = 10000
 learning_rate = 1e-2
 decay_steps = 100
 decay_rate = 0.3
-shuffle_size = 1
+shuffle_size = 10
 eval_internal = 50
 save_internal = 100
 cell_size = 8  # cannot be changed; perhaps need fix? Depends on Yolov3 network layout strides
