@@ -18,19 +18,17 @@ slim = tf.contrib.slim
 class darknet53(object):
     """network for performing feature extraction"""
 
-    def __init__(self, inputs, n_filters):
-        self.outputs = self.forward(inputs, n_filters)
+    def __init__(self, inputs, n_filters, n_strides, n_ksizes):
+        self.outputs = self.forward(inputs, n_filters, n_strides, n_ksizes)
 
 
-    def forward(self, inputs, n_filters): #The multiplication of the strides should be equal to cell_size in main.py
-        #TODO: look at the amount of filters
+    def forward(self, inputs, n_filters, n_strides, n_ksizes):
 
-        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=3, strides=1)
-        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[1],  kernel_size=5, strides=1)
-        inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[2],  kernel_size=7, strides=1)
-        #inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[2],  kernel_size=21, strides=1)
-        # inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[2],  kernel_size=3, strides=2)
-        # inputs = common._conv2d_fixed_padding(inputs, filters=n_filters[0],  kernel_size=1, strides=4)
+        for i in range(min(len(n_filters), len(n_strides)), len(n_ksizes)):
+            inputs = common._conv2d_fixed_padding(inputs,
+                                                  filters=n_filters[i],
+                                                  kernel_size=n_ksizes[i],
+                                                  strides=n_strides[i])
 
         return inputs
 
@@ -46,9 +44,13 @@ class yolov3(object):
         self._NUM_CLASSES = num_classes
         self.feature_maps = []
 
-    def _yolo_block(self, inputs, filters):
-        inputs = common._conv2d_fixed_padding(inputs, filters=filters[0] * 1, kernel_size=3)
-        inputs = common._conv2d_fixed_padding(inputs, filters=filters[1] * 1, kernel_size=3)
+    def _yolo_block(self, inputs, filters, ksizes):
+
+        for i in range(min(len(filters), len(ksizes))):
+            inputs = common._conv2d_fixed_padding(inputs,
+                                                  filters=filters[i] * 1,
+                                                  kernel_size=ksizes[i])
+
         return inputs
 
     def _detection_layer(self, inputs, anchors):
@@ -93,7 +95,7 @@ class yolov3(object):
         boxes = tf.concat([box_centers, box_sizes], axis=-1)
         return x_y_offset, boxes, conf_logits, prob_logits
 
-    def forward(self, inputs, n_filters_dn, n_filt_yolo, is_training=False, reuse=False):
+    def forward(self, inputs, n_filters_dn, n_strides_dn, n_ksizes_dn, n_filt_yolo, ksizes_yolo, is_training=False, reuse=False):
         self.img_size = tf.shape(inputs)[1:3]
 
         batch_norm_params = {
@@ -111,10 +113,10 @@ class yolov3(object):
                                 biases_initializer=None,
                                 activation_fn=lambda x: tf.nn.leaky_relu(x, alpha=self._LEAKY_RELU)):
                 with tf.variable_scope('darknet-53'):
-                    inputs = darknet53(inputs, n_filters=n_filters_dn).outputs
+                    inputs = darknet53(inputs, n_filters=n_filters_dn, n_strides=n_strides_dn, n_ksizes=n_ksizes_dn).outputs
 
                 with tf.variable_scope('yolo-v3'):
-                    inputs = self._yolo_block(inputs, filters=n_filt_yolo)
+                    inputs = self._yolo_block(inputs, filters=n_filt_yolo, ksizes=ksizes_yolo)
                     feature_map = self._detection_layer(inputs, self._ANCHORS)
                     feature_map = tf.identity(feature_map, name='feature_map')
 
