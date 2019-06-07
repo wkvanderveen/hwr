@@ -23,7 +23,7 @@ class Tester(object):
     """docstring for Tester"""
     def __init__(self, img_dims, num_classes, source_dir, score_threshold,
         iou_threshold, size_threshold, checkpoint_dir, letters_test_dir,
-        max_boxes):
+        max_boxes, remove_overlap_half, remove_overlap_full):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
@@ -36,6 +36,8 @@ class Tester(object):
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
+        self.remove_overlap_half = remove_overlap_half
+        self.remove_overlap_full = remove_overlap_full
 
     def test(self):
         image_name = choice(os.listdir(self.source_dir))
@@ -67,7 +69,7 @@ class Tester(object):
                 iou_thresh=self.iou_threshold,
                 max_boxes=self.max_boxes)
 
-            image = utils.draw_boxes(
+            (image, results) = utils.draw_boxes(
                 img,
                 boxes,
                 scores,
@@ -75,7 +77,8 @@ class Tester(object):
                 classes,
                 [self.img_h, self.img_w],
                 show=True,
-                size_threshold=self.size_threshold)
+                size_threshold=self.size_threshold,
+                remove_overlap_half=self.remove_overlap_half,
+                remove_overlap_full=self.remove_overlap_full)
 
-        print("\n\t(If nothing is plotted, no characters were " +
-              "detected with the current thresholds)")
+        return results
