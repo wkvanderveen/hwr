@@ -60,6 +60,23 @@ class Tester(object):
             boxes, scores = sess.run(
                 output_tensors,
                 feed_dict={input_tensor: np.expand_dims(img, axis=0)})
+            boxes = boxes.reshape(-1, 4)
+            scores = scores.reshape(-1, self.num_classes)
+
+            mask = np.logical_and(boxes[:,0] >= 0, boxes[:,0] <= img.shape[1])
+            mask = np.logical_and(mask, boxes[:,1] >= 0)
+            mask = np.logical_and(mask, boxes[:,2] >= 0)
+            mask = np.logical_and(mask, boxes[:,3] >= 0)
+            mask = np.logical_and(mask, boxes[:,1] <= img.shape[0])
+            mask = np.logical_and(mask, boxes[:,2] <= img.shape[1])
+            mask = np.logical_and(mask, boxes[:,3] <= img.shape[0])
+            mask = np.logical_and(mask, boxes[:,0] < boxes[:,2])
+            mask = np.logical_and(mask, boxes[:,1] < boxes[:,3])
+            mask = np.logical_and(mask, abs(boxes[:,2]-boxes[:,0]) >= self.size_threshold[0])
+            mask = np.logical_and(mask, abs(boxes[:,3]-boxes[:,1]) >= self.size_threshold[1])
+
+            boxes = boxes[mask]
+            scores = scores[mask]
 
             boxes, scores, labels = utils.cpu_nms(
                 boxes=boxes,

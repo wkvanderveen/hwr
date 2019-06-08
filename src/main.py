@@ -28,53 +28,54 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 10
+num_classes = 2
 split_percentage = 20
-line_length_bounds = (15,20)
-n_training_lines = 500
-n_testing_lines = 50
-max_overlap_train = 5
-max_overlap_test = 5
-max_boxes = 20
-test_on_train = False
+line_length_bounds = (5,5)
+n_training_lines = 200
+n_testing_lines = 20
+max_overlap_train = 10
+max_overlap_test = 10
+max_boxes = 10
+test_on_train = True
 
 
 # Network parameters
 n_filters_dn = (32,)
 n_strides_dn = (3,)
 n_ksizes_dn = (5,)
-cell_size = 1
+cell_size = 1  # todo: check out what values this can take and why
 
-n_filt_yolo = (8, 16, 32)
-n_ksizes_yolo = (1,1,1)
+n_filt_yolo = (16,32,64,128)  # x,y-loss is hardly decreasing; experiment with yolo filters and kernel sizes
+n_ksizes_yolo = (5,5,5,5)
 cluster_num = 8
 iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0
-size_threshold = (1,1)  # in pixels
+size_threshold = (2,2)  # in pixels
 remove_overlap_half = True
 remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
-batch_size = 1
-steps = 220
-learning_rate = 1e-2
-decay_steps = 50
-decay_rate = 0.5
-shuffle_size = 10
-eval_internal = 20
-save_internal = 20
+batch_size = 2
+steps = 600
+learning_rate = 1e-3
+decay_steps = 100
+decay_rate = 1.0
+shuffle_size = 50
+eval_internal = 100
+save_internal = 100
 print_every_n = 10
 
 
 # Other parameters
-retrain = True
+retrain = False
 show_tfrecord_example = False
 test_example = True
 
 
 # [preprocessing here]
 
-# PREPARE NETWORK IF NOT READY
+
+
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
 
 if not network_exists or retrain:
@@ -328,13 +329,7 @@ if network_exists and test_example:
     print('\n'*5)
 
 
-
-# [postprocessing here]
-
-
 """
 TODO:
-* Train on the data to see if YOLO works
 * Add preprocessing
-* Add postprocessing & writer
 """

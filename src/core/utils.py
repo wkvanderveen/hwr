@@ -79,10 +79,10 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5):
 
     assert boxes.shape[1] == 4 and len(scores.shape) == 1
 
-    x1 = np.clip(boxes[:, 0], -10000, 10000)
-    y1 = np.clip(boxes[:, 1], -10000, 10000)
-    x2 = np.clip(boxes[:, 2], -10000, 10000)
-    y2 = np.clip(boxes[:, 3], -10000, 10000)
+    x1 = boxes[:,0]
+    y1 = boxes[:,1]
+    x2 = boxes[:,2]
+    y2 = boxes[:,3]
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
     order = scores.argsort()[::-1]
@@ -90,7 +90,9 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5):
 
     while order.size > 0:
         i = order[0]
+
         keep.append(i)
+
         xx1 = np.maximum(x1[i], x1[order[1:]])
         yy1 = np.maximum(y1[i], y1[order[1:]])
         xx2 = np.minimum(x2[i], x2[order[1:]])
@@ -114,12 +116,12 @@ def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thre
         boxes ==> shape [1, 10647, 4]
         scores ==> shape [1, 10647, num_classes]
     """
-    boxes = boxes.reshape(-1, 4)
-    scores = scores.reshape(-1, num_classes)
+
     # Picked bounding boxes
     picked_boxes, picked_score, picked_label = [], [], []
 
     for i in range(num_classes):
+
         indices = np.where(scores[:,i] >= score_thresh)
         filter_boxes = boxes[indices]
         filter_scores = scores[:,i][indices]
@@ -164,30 +166,10 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     :param image,
     :param classes, the return list from the function `read_coco_names`
     """
-    if boxes is None: return image
-
-    picked_boxes = []
-    picked_labels = []
-    picked_scores = []
-    print("Filtering out illegal box sizes...")
-    for i, box in enumerate(boxes):
-        if (box[0] < 0 or
-            box[1] < 0 or
-            box[2] > detection_size[1] or
-            box[3] > detection_size[0] or
-            abs(box[2]-box[0]) < size_threshold[0] or # MIN WIDTH
-            abs(box[3]-box[1]) < size_threshold[1]):  # MIN HEIGHT
-            continue
-
-        picked_boxes.append(box)
-        picked_labels.append(labels[i])
-        picked_scores.append(scores[i])
-    boxes = picked_boxes
-    labels = picked_labels
-    scores = picked_scores
+    if boxes is None: return (image, tuple())
 
     if remove_overlap_full or remove_overlap_half:
-        print("Filtering out overlapping boxes...")
+
         picked_boxes = []
         picked_labels = []
         picked_scores = []

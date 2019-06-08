@@ -73,7 +73,11 @@ class WeightConverter(object):
 
             if self.freeze:
                 ckpt_idx = self.checkpoint_dir + '-' + str(self.checkpoint_step)
-                saver.restore(sess, ckpt_idx)
+                try:
+                    saver.restore(sess, ckpt_idx)
+                except:
+                    print(f"Error: you tried to restore a checkpoint ({self.checkpoint_dir}) that doesn't exist.")
+                    print("Please clear the network and retrain, or load a different checkpoint by changing the steps parameter.")
                 print('=> checkpoint file restored from ', ckpt_idx)
                 utils.freeze_graph(sess, '../../data/checkpoint/yolov3_cpu_nms.pb', cpu_out_node_names)
                 utils.freeze_graph(sess, '../../data/checkpoint/yolov3_gpu_nms.pb', gpu_out_node_names)
