@@ -226,9 +226,6 @@ class yolov3(object):
                                   pred_box_xy,
                                   pred_box_wh)
 
-        print(f"Valid true box xy: {valid_true_box_xy}")
-        print(f"Pred box xy: {pred_box_xy}")
-
         best_iou = tf.reduce_max(iou, axis=-1)
         # get_ignore_mask
         ignore_mask = tf.cast(best_iou < 0.5, tf.float32)
@@ -259,7 +256,7 @@ class yolov3(object):
 
         xy_loss = tf.reduce_sum(tf.square(true_xy    - pred_xy) * object_mask * box_loss_scale) / N
         wh_loss = tf.reduce_sum(tf.square(true_tw_th - pred_tw_th) * object_mask * box_loss_scale) / N
-        print(f"xy_loss = {xy_loss}")
+
 
 
         conf_pos_mask = object_mask

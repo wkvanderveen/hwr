@@ -2,7 +2,7 @@ import os
 import shutil
 
 folder = '../../data/'
-clear_lines = False
+clear_lines = True
 for the_file in os.listdir(folder):
     file_path = os.path.join(folder, the_file)
     try:

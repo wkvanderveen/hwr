@@ -178,7 +178,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
             if remove_overlap_half:
                 center = [(box[0]+box[2])/2, (box[1]+box[3])/2]
                 for io, other in enumerate(boxes):
-                    if i == io: continue
+                    if i >= io: continue
                     if center[0] >= other[0] and center[1] >= other[1] and center[0] <= other[2] and center[1] <= other[3]:
                         break
                 else:
@@ -188,7 +188,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
                     picked_scores.append(scores[i])
             elif remove_overlap_full:
                 for io, other in enumerate(boxes):
-                    if i == io: continue
+                    if i >= io: continue
                     if box[0]>=other[0] and box[1]>=other[1] and box[2] <= other[2] and box[3] <= other[3]:
                         break
                 else:

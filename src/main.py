@@ -28,45 +28,45 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 5
+num_classes = 4
 split_percentage = 20
 augment = False
-line_length_bounds = (6,8)
-n_training_lines = 8000
-n_testing_lines = 100
+line_length_bounds = (12,12)
+n_training_lines = 1000
+n_testing_lines = 500
 max_overlap_train = 5
 max_overlap_test = 5
-max_boxes = 10
+max_boxes = 16
 test_on_train = True
 
 
 # Network parameters (darknet)
-n_filters_dn = (32,64)
-n_strides_dn = (2,2)
-n_ksizes_dn = (6,6)
+n_filters_dn = (128,)
+n_strides_dn = (3,)
+n_ksizes_dn = (12,)
 
 # Network parameters (yolo)
-n_filt_yolo = (128,256,512,1024,2048)
-n_ksizes_yolo = (8,7,6,5,4)
-n_strides_yolo = (2,2,2,2,2)
-cluster_num = 12
+n_filt_yolo = (256,)
+n_strides_yolo = (1,)
+n_ksizes_yolo = (12,)
+cluster_num = 8
 
 # Thresholds and filters
-filters = False
+filters = True
 iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0  # doesn't do anything
-size_threshold = (1,1)  # in pixels
-remove_overlap_half = False
-remove_overlap_full = False  # redundant if `remove_overlap_half == True'
+size_threshold = (20,25)  # in pixels
+remove_overlap_half = True
+remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
 batch_size = 1
-steps = 4000
-learning_rate = 1e-3
-decay_steps = 200
-decay_rate = 0.7
+steps = 2000
+learning_rate = 1e-4
+decay_steps = 100
+decay_rate = 0.3
 shuffle_size = 20
-eval_internal = 500
+eval_internal = 1e4
 save_internal = 500
 print_every_n = 50
 cell_size = prod(list(n_strides_yolo))

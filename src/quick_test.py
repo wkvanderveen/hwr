@@ -65,6 +65,8 @@ class Tester(object):
             scores = scores.reshape(-1, self.num_classes)
 
             min_wh, max_wh = -10000, 10000
+            min_ratio = 1/3  # 0 -- 1
+
             mask = np.logical_and(boxes[:,0] >= min_wh, boxes[:,0] <= max_wh)
             mask = np.logical_and(mask, boxes[:,1] >= min_wh)
             mask = np.logical_and(mask, boxes[:,2] >= min_wh)
@@ -78,9 +80,18 @@ class Tester(object):
             boxes = boxes[mask]
             scores = scores[mask]
 
+            h = abs(boxes[:,2]-boxes[:,0])
+            w = abs(boxes[:,3]-boxes[:,1])
+
+            mask = np.logical_and(w/h > min_ratio, h/w > min_ratio)
+
+            boxes = boxes[mask]
+            scores = scores[mask]
+
 
 
             if self.filters:
+                # Harder filters
                 print(f"Test: Boxes before filtering:\t{boxes.shape[0]}")
 
                 mask = np.logical_and(boxes[:,0] >= 0, boxes[:,0] <= img.shape[1])
