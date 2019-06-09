@@ -23,7 +23,7 @@ class Tester(object):
     """docstring for Tester"""
     def __init__(self, img_dims, num_classes, source_dir, score_threshold,
         iou_threshold, size_threshold, checkpoint_dir, letters_test_dir,
-        max_boxes, remove_overlap_half, remove_overlap_full):
+        max_boxes, remove_overlap_half, remove_overlap_full, filters):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
@@ -32,6 +32,7 @@ class Tester(object):
         self.source_dir = source_dir
         self.score_threshold = score_threshold
         self.iou_threshold = iou_threshold
+        self.filters = filters
         self.size_threshold = size_threshold
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
@@ -63,20 +64,44 @@ class Tester(object):
             boxes = boxes.reshape(-1, 4)
             scores = scores.reshape(-1, self.num_classes)
 
-            mask = np.logical_and(boxes[:,0] >= 0, boxes[:,0] <= img.shape[1])
-            mask = np.logical_and(mask, boxes[:,1] >= 0)
-            mask = np.logical_and(mask, boxes[:,2] >= 0)
-            mask = np.logical_and(mask, boxes[:,3] >= 0)
-            mask = np.logical_and(mask, boxes[:,1] <= img.shape[0])
-            mask = np.logical_and(mask, boxes[:,2] <= img.shape[1])
-            mask = np.logical_and(mask, boxes[:,3] <= img.shape[0])
+            min_wh, max_wh = -10000, 10000
+            mask = np.logical_and(boxes[:,0] >= min_wh, boxes[:,0] <= max_wh)
+            mask = np.logical_and(mask, boxes[:,1] >= min_wh)
+            mask = np.logical_and(mask, boxes[:,2] >= min_wh)
+            mask = np.logical_and(mask, boxes[:,3] >= min_wh)
+            mask = np.logical_and(mask, boxes[:,1] <= max_wh)
+            mask = np.logical_and(mask, boxes[:,2] <= max_wh)
+            mask = np.logical_and(mask, boxes[:,3] <= max_wh)
             mask = np.logical_and(mask, boxes[:,0] < boxes[:,2])
             mask = np.logical_and(mask, boxes[:,1] < boxes[:,3])
-            mask = np.logical_and(mask, abs(boxes[:,2]-boxes[:,0]) >= self.size_threshold[0])
-            mask = np.logical_and(mask, abs(boxes[:,3]-boxes[:,1]) >= self.size_threshold[1])
 
             boxes = boxes[mask]
             scores = scores[mask]
+
+
+
+            if self.filters:
+                print(f"Test: Boxes before filtering:\t{boxes.shape[0]}")
+
+                mask = np.logical_and(boxes[:,0] >= 0, boxes[:,0] <= img.shape[1])
+                mask = np.logical_and(mask, boxes[:,1] >= 0)
+                mask = np.logical_and(mask, boxes[:,2] >= 0)
+                mask = np.logical_and(mask, boxes[:,3] >= 0)
+                mask = np.logical_and(mask, boxes[:,1] <= img.shape[0])
+                mask = np.logical_and(mask, boxes[:,2] <= img.shape[1])
+                mask = np.logical_and(mask, boxes[:,3] <= img.shape[0])
+                mask = np.logical_and(mask, boxes[:,0] < boxes[:,2])
+                mask = np.logical_and(mask, boxes[:,1] < boxes[:,3])
+                mask = np.logical_and(mask, abs(boxes[:,2]-boxes[:,0]) >= self.size_threshold[0])
+                mask = np.logical_and(mask, abs(boxes[:,3]-boxes[:,1]) >= self.size_threshold[1])
+
+                boxes = boxes[mask]
+                scores = scores[mask]
+
+                print(f"Test: Boxes after filtering:\t{boxes.shape[0]}")
+
+                if boxes.shape[0] == 0:
+                    print(f"Try changing the filters/thresholds in the parameters.")
 
             boxes, scores, labels = utils.cpu_nms(
                 boxes=boxes,

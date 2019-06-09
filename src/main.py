@@ -28,42 +28,48 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 2
+num_classes = 5
 split_percentage = 20
-line_length_bounds = (5,5)
-n_training_lines = 200
-n_testing_lines = 20
-max_overlap_train = 10
-max_overlap_test = 10
+augment = False
+line_length_bounds = (6,8)
+n_training_lines = 8000
+n_testing_lines = 100
+max_overlap_train = 5
+max_overlap_test = 5
 max_boxes = 10
 test_on_train = True
 
 
-# Network parameters
-n_filters_dn = (32,)
-n_strides_dn = (3,)
-n_ksizes_dn = (5,)
-cell_size = 1  # todo: check out what values this can take and why
+# Network parameters (darknet)
+n_filters_dn = (32,64)
+n_strides_dn = (2,2)
+n_ksizes_dn = (6,6)
 
-n_filt_yolo = (16,32,64,128)  # x,y-loss is hardly decreasing; experiment with yolo filters and kernel sizes
-n_ksizes_yolo = (5,5,5,5)
-cluster_num = 8
+# Network parameters (yolo)
+n_filt_yolo = (128,256,512,1024,2048)
+n_ksizes_yolo = (8,7,6,5,4)
+n_strides_yolo = (2,2,2,2,2)
+cluster_num = 12
+
+# Thresholds and filters
+filters = False
 iou_threshold = 0.0
 score_threshold = 0.0
-ignore_threshold = 0.0
-size_threshold = (2,2)  # in pixels
-remove_overlap_half = True
-remove_overlap_full = True  # redundant if `remove_overlap_half == True'
+ignore_threshold = 0.0  # doesn't do anything
+size_threshold = (1,1)  # in pixels
+remove_overlap_half = False
+remove_overlap_full = False  # redundant if `remove_overlap_half == True'
 
-batch_size = 2
-steps = 600
+batch_size = 1
+steps = 4000
 learning_rate = 1e-3
-decay_steps = 100
-decay_rate = 1.0
-shuffle_size = 50
-eval_internal = 100
-save_internal = 100
-print_every_n = 10
+decay_steps = 200
+decay_rate = 0.7
+shuffle_size = 20
+eval_internal = 500
+save_internal = 500
+print_every_n = 50
+cell_size = prod(list(n_strides_yolo))
 
 
 # Other parameters
@@ -91,12 +97,12 @@ if not network_exists or retrain:
 
         sleep(0.2)
         num_classes = splitter.split()
-
-        print(f"Augmenting training letters...")
-        augmenter = Augmenter(source_dir=letters_train_dir,
-                              shear=True,
-                              coarse_dropout=(0.10, 0.5))
-        augmenter.augment()
+        if augment:
+          print(f"Augmenting training letters...")
+          augmenter = Augmenter(source_dir=letters_train_dir,
+                                shear=True,
+                                coarse_dropout=(0.10, 0.5))
+          augmenter.augment()
 
     else:  # if training letters exist
         print("Training dataset detected! " +
@@ -188,6 +194,7 @@ if not network_exists or retrain:
                                       iou_threshold=iou_threshold,
                                       n_filt_yolo=n_filt_yolo,
                                       ksizes_yolo=n_ksizes_yolo,
+                                      n_strides_yolo=n_strides_yolo,
                                       n_filters_dn=n_filters_dn,
                                       n_strides_dn=n_strides_dn,
                                       n_ksizes_dn=n_ksizes_dn)
@@ -205,6 +212,7 @@ if not network_exists or retrain:
                       n_ksizes_dn=n_ksizes_dn,
                       n_filt_yolo=n_filt_yolo,
                       ksizes_yolo=n_ksizes_yolo,
+                      n_strides_yolo=n_strides_yolo,
                       size_threshold=size_threshold,
                       ignore_threshold=ignore_threshold,
                       shuffle_size=shuffle_size,
@@ -258,6 +266,7 @@ if network_exists and test_example:
         n_ksizes_dn=n_ksizes_dn,
         n_filt_yolo=n_filt_yolo,
         ksizes_yolo=n_ksizes_yolo,
+        n_strides_yolo=n_strides_yolo,
         anchors_path=anchor_file,
         score_threshold=score_threshold,
         iou_threshold=iou_threshold,
@@ -276,7 +285,8 @@ if network_exists and test_example:
                     letters_test_dir=(letters_train_dir if test_on_train else letters_test_dir),
                     max_boxes=max_boxes,
                     remove_overlap_half=remove_overlap_half,
-                    remove_overlap_full=remove_overlap_full)
+                    remove_overlap_full=remove_overlap_full,
+                    filters=filters)
     results = tester.test()
 
     print('\n'*5)
