@@ -21,32 +21,36 @@ cdef int AREA_THRESHOLD_2 = 8000 #pixel threshold
 cdef double EPSILON_DELTA = 0.0001 #modifier for the epsilon value used for determining how tightly the contour must fit 
 cdef int PADDING = 100 #padding around the smeared image in pixels
 
+
+cdef np.ndarray[np.uint8_t, ndim=2] smear(np.ndarray[np.uint8_t, ndim=2] img):
+	cdef int idx, y_max, x_max, x, y, val
+	(y_max, x_max) = np.shape(img)
+
+
+	
+	for idx in range(NR_SMEARS):
+		if idx % 2 == 0: #smear from left to right
+			for y in range(y_max):
+				for x in range(5, x_max, 1):
+					val = img[y, x] + <int>(SMEAR_DENSITY * img[y, x-1])
+					img[y, x] = min(255, val)
+					
+		else: #smear from right to left
+			for y in range(y_max):
+				for x in range(x_max-1, 0, -1):
+					val = img[y, x-1] + <int>(SMEAR_DENSITY * img[y, x])
+					img[y, x-1] = min(255, val)
+
+
+
+	return img
+
+
+
+
 class Smear:
 	def __init__(self):
 		self.b = Binarizer()
-
-	def smear(self, np.ndarray[np.uint8_t, ndim=2] img):
-		cdef int idx, y_max, x_max, x, y, val
-		(y_max, x_max) = np.shape(img)
-
-
-		
-		for idx in range(NR_SMEARS):
-			if idx % 2 == 0: #smear from left to right
-				for y in range(y_max):
-					for x in range(5, x_max, 1):
-						val = img[y, x] + <int>(SMEAR_DENSITY * img[y, x-1])
-						img[y, x] = min(255, val)
-						
-			else: #smear from right to left
-				for y in range(y_max):
-					for x in range(x_max-1, 0, -1):
-						val = img[y, x-1] + <int>(SMEAR_DENSITY * img[y, x])
-						img[y, x-1] = min(255, val)
-
-
-
-		return img
 
 	def get_contoured_image(self, np.ndarray[np.uint8_t, ndim=2] img_smear, np.ndarray[np.uint8_t, ndim=2] img_original):
 		'''
@@ -133,7 +137,7 @@ class Smear:
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
 		# print('start smearing')
-		img_smear = self.smear(img_smear)
+		img_smear = smear(img_smear)
 		# print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
@@ -154,7 +158,7 @@ class Smear:
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
 		# print('start smearing')
-		img_smear = self.smear(img_smear)
+		img_smear = smear(img_smear)
 		# print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
