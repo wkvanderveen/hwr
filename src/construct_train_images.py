@@ -24,7 +24,7 @@ class Linemaker(object):
         num_classes = len(classes)
 
         max_h, max_w = 0, 0
-        max_paddings = [10, 10, 10, 10] # L,T,R,B  (min 5)
+        max_paddings = [5, 5, 5, 5] # L,T,R,B  (min 5)
 
 
         if not os.path.isdir(self.target_dir):

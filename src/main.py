@@ -28,40 +28,48 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 2
+num_classes = 4
 split_percentage = 20
-line_length_bounds = (10,15)
+augment = False
+line_length_bounds = (12,12)
 n_training_lines = 1000
-n_testing_lines = 50
-max_overlap_train = 0
-max_overlap_test = 0
-max_boxes = 20
-test_on_train = False
+n_testing_lines = 500
+max_overlap_train = 5
+max_overlap_test = 5
+max_boxes = 16
+test_on_train = True
 
 
-# Network parameters
-n_filters_dn = (32,)
+# Network parameters (darknet)
+n_filters_dn = (128,)
 n_strides_dn = (3,)
-n_ksizes_dn = (5,)
-cell_size = 1
+n_ksizes_dn = (12,)
 
-n_filt_yolo = (8, 16, 32)
-n_ksizes_yolo = (1,1,1)
+# Network parameters (yolo)
+n_filt_yolo = (256,)
+n_strides_yolo = (1,)
+n_ksizes_yolo = (12,)
 cluster_num = 8
+
+# Thresholds and filters
+filters = True
 iou_threshold = 0.0
 score_threshold = 0.0
-ignore_threshold = 0.0
-size_threshold = (1,1)  # in pixels
+ignore_threshold = 0.0  # doesn't do anything
+size_threshold = (20,25)  # in pixels
+remove_overlap_half = True
+remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
 batch_size = 1
-steps = 1000
-learning_rate = 1e-2
+steps = 2000
+learning_rate = 1e-4
 decay_steps = 100
 decay_rate = 0.3
-shuffle_size = 10
-eval_internal = 100
-save_internal = 100
-print_every_n = 20
+shuffle_size = 20
+eval_internal = 1e4
+save_internal = 500
+print_every_n = 50
+cell_size = prod(list(n_strides_yolo))
 
 
 # Other parameters
@@ -72,7 +80,8 @@ test_example = True
 
 # [preprocessing here]
 
-# PREPARE NETWORK IF NOT READY
+
+
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
 
 if not network_exists or retrain:
@@ -88,12 +97,12 @@ if not network_exists or retrain:
 
         sleep(0.2)
         num_classes = splitter.split()
-
-        print(f"Augmenting training letters...")
-        augmenter = Augmenter(source_dir=letters_train_dir,
-                              shear=True,
-                              coarse_dropout=(0.10, 0.5))
-        augmenter.augment()
+        if augment:
+          print(f"Augmenting training letters...")
+          augmenter = Augmenter(source_dir=letters_train_dir,
+                                shear=True,
+                                coarse_dropout=(0.10, 0.5))
+          augmenter.augment()
 
     else:  # if training letters exist
         print("Training dataset detected! " +
@@ -185,6 +194,7 @@ if not network_exists or retrain:
                                       iou_threshold=iou_threshold,
                                       n_filt_yolo=n_filt_yolo,
                                       ksizes_yolo=n_ksizes_yolo,
+                                      n_strides_yolo=n_strides_yolo,
                                       n_filters_dn=n_filters_dn,
                                       n_strides_dn=n_strides_dn,
                                       n_ksizes_dn=n_ksizes_dn)
@@ -202,6 +212,8 @@ if not network_exists or retrain:
                       n_ksizes_dn=n_ksizes_dn,
                       n_filt_yolo=n_filt_yolo,
                       ksizes_yolo=n_ksizes_yolo,
+                      n_strides_yolo=n_strides_yolo,
+                      size_threshold=size_threshold,
                       ignore_threshold=ignore_threshold,
                       shuffle_size=shuffle_size,
                       eval_internal=eval_internal,
@@ -254,6 +266,7 @@ if network_exists and test_example:
         n_ksizes_dn=n_ksizes_dn,
         n_filt_yolo=n_filt_yolo,
         ksizes_yolo=n_ksizes_yolo,
+        n_strides_yolo=n_strides_yolo,
         anchors_path=anchor_file,
         score_threshold=score_threshold,
         iou_threshold=iou_threshold,
@@ -269,16 +282,64 @@ if network_exists and test_example:
                     size_threshold=size_threshold,
                     img_dims=img_dims,
                     checkpoint_dir=checkpoint_dir,
-                    letters_test_dir=(letters_train_dir if test_on_train else lines_test_dir),
-                    max_boxes=max_boxes)
-    tester.test()
+                    letters_test_dir=(letters_train_dir if test_on_train else letters_test_dir),
+                    max_boxes=max_boxes,
+                    remove_overlap_half=remove_overlap_half,
+                    remove_overlap_full=remove_overlap_full,
+                    filters=filters)
+    results = tester.test()
 
-# [postprocessing here]
+    print('\n'*5)
+
+    if not results:
+        print("No characters were detected!")
+    else:
+        [print(f"x={int(x)}:\t{c}\t(p = {p:.3f})") for (x,c,p) in results]
+
+    print('\n'*5)
+
+    def convert_to_uni(name):
+        hebrew = {
+            'Alef':         u'\u05D0',
+            'Ayin':         u'\u05E2',
+            'Bet':          u'\u05D1',
+            'Dalet':        u'\u05D3',
+            'Gimel':        u'\u05D2',
+            'He':           u'\u05D4',
+            'Het':          u'\u05D7',
+            'Kaf':          u'\u05DB',
+            'Kaf-final':    u'\u05DA',
+            'Lamed':        u'\u05DC',
+            'Mem':          u'\u05DD',
+            'Mem-medial':   u'\u05DE',
+            'Nun-final':    u'\u05DF',
+            'Nun-medial':   u'\u05E0',
+            'Pe':           u'\u05E4',
+            'Pe-final':     u'\u05E3',
+            'Qof':          u'\u05E7',
+            'Resh':         u'\u05E8',
+            'Samekh':       u'\u05E1',
+            'Shin':         u'\u05E9',
+            'Taw':          u'\u05EA',
+            'Tet':          u'\u05D8',
+            'Tsadi-final':  u'\u05E5',
+            'Tsadi-medial': u'\u05E6',
+            'Waw':          u'\u05D5',
+            'Yod':          u'\u05D9',
+            'Zayin':        u'\u05D6'
+
+        }
+        if name in hebrew:
+            return hebrew[name]
+        else:
+            return '?'
+
+    print(''.join([convert_to_uni(c) for (_,c,_) in results]))
+
+    print('\n'*5)
 
 
 """
 TODO:
-* Train on the data to see if YOLO works
 * Add preprocessing
-* Add postprocessing & writer
 """

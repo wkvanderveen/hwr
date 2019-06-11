@@ -44,12 +44,13 @@ class yolov3(object):
         self._NUM_CLASSES = num_classes
         self.feature_maps = []
 
-    def _yolo_block(self, inputs, filters, ksizes):
+    def _yolo_block(self, inputs, filters, ksizes, strides):
 
         for i in range(min(len(filters), len(ksizes))):
             inputs = common._conv2d_fixed_padding(inputs,
                                                   filters=filters[i] * 1,
-                                                  kernel_size=ksizes[i])
+                                                  kernel_size=ksizes[i],
+                                                  strides=strides[i])
 
         return inputs
 
@@ -95,7 +96,7 @@ class yolov3(object):
         boxes = tf.concat([box_centers, box_sizes], axis=-1)
         return x_y_offset, boxes, conf_logits, prob_logits
 
-    def forward(self, inputs, n_filters_dn, n_strides_dn, n_ksizes_dn, n_filt_yolo, ksizes_yolo, is_training=False, reuse=False):
+    def forward(self, inputs, n_filters_dn, n_strides_dn, n_ksizes_dn, n_filt_yolo, ksizes_yolo, n_strides_yolo, is_training=False, reuse=False):
         self.img_size = tf.shape(inputs)[1:3]
 
         batch_norm_params = {
@@ -116,7 +117,7 @@ class yolov3(object):
                     inputs = darknet53(inputs, n_filters=n_filters_dn, n_strides=n_strides_dn, n_ksizes=n_ksizes_dn).outputs
 
                 with tf.variable_scope('yolo-v3'):
-                    inputs = self._yolo_block(inputs, filters=n_filt_yolo, ksizes=ksizes_yolo)
+                    inputs = self._yolo_block(inputs, filters=n_filt_yolo, ksizes=ksizes_yolo, strides=n_strides_yolo)
                     feature_map = self._detection_layer(inputs, self._ANCHORS)
                     feature_map = tf.identity(feature_map, name='feature_map')
 
@@ -165,7 +166,7 @@ class yolov3(object):
         boxes = tf.concat([x0, y0, x1, y1], axis=-1)
         return boxes, confs, probs
 
-    def compute_loss(self, pred_feature_map, y_true, ignore_thresh=0.5, max_box_per_image=8):
+    def compute_loss(self, pred_feature_map, y_true):
         """
         Note: compute the loss
         Arguments: y_pred, list -> [feature_map_1, feature_map_2, feature_map_3]
@@ -192,46 +193,51 @@ class yolov3(object):
         grid_size = tf.shape(feature_map)[1:3]
         grid_size_ = feature_map.shape.as_list()[1:3]
 
-        y_true = tf.reshape(y_true, [-1, grid_size_[0], grid_size_[1], len(self._ANCHORS), 5+self._NUM_CLASSES])
+        y_true = tf.reshape(y_true, [-1,
+                                     grid_size_[0],
+                                     grid_size_[1],
+                                     len(self._ANCHORS),
+                                     5+self._NUM_CLASSES])
 
         # the downscale ratio in height and weight
         ratio = tf.cast(self.img_size / grid_size, tf.float32)
         # N: batch_size
         N = tf.cast(tf.shape(feature_map)[0], tf.float32)
 
-        x_y_offset, pred_boxes, pred_conf_logits, pred_prob_logits = self._reorg_layer(feature_map, anchors)
-        # shape: take 416x416 input image and 13*13 feature_map for example:
-        # [N, 13, 13, 3, 1]
-        object_mask = y_true[..., 4:5]
-        # shape: [N, 13, 13, 3, 4] & [N, 13, 13, 3] ==> [V, 4]
-        # V: num of true gt box
-        valid_true_boxes = tf.boolean_mask(y_true[..., 0:4], tf.cast(object_mask[..., 0], 'bool'))
+        x_y_offset, pred_boxes, pred_conf_logits, pred_prob_logits = \
+            self._reorg_layer(feature_map, anchors)
 
-        # shape: [V, 2]
+        object_mask = y_true[..., 4:5]
+
+        # V: num of true gt box
+        valid_true_boxes = tf.boolean_mask(y_true[..., 0:4],
+                                           tf.cast(object_mask[..., 0],
+                                                   'bool'))
+
         valid_true_box_xy = valid_true_boxes[:, 0:2]
         valid_true_box_wh = valid_true_boxes[:, 2:4]
-        # shape: [N, 13, 13, 3, 2]
+
         pred_box_xy = pred_boxes[..., 0:2]
         pred_box_wh = pred_boxes[..., 2:4]
 
         # calc iou
-        # shape: [N, 13, 13, 3, V]
-        iou = self._broadcast_iou(valid_true_box_xy, valid_true_box_wh, pred_box_xy, pred_box_wh)
+        iou = self._broadcast_iou(valid_true_box_xy,
+                                  valid_true_box_wh,
+                                  pred_box_xy,
+                                  pred_box_wh)
 
-        # shape: [N, 13, 13, 3]
         best_iou = tf.reduce_max(iou, axis=-1)
         # get_ignore_mask
         ignore_mask = tf.cast(best_iou < 0.5, tf.float32)
-        # shape: [N, 13, 13, 3, 1]
+
         ignore_mask = tf.expand_dims(ignore_mask, -1)
         # get xy coordinates in one cell from the feature_map
         # numerical range: 0 ~ 1
-        # shape: [N, 13, 13, 3, 2]
         true_xy = y_true[..., 0:2] / ratio[::-1] - x_y_offset
         pred_xy = pred_box_xy      / ratio[::-1] - x_y_offset
 
         # get_tw_th, numerical range: 0 ~ 1
-        # shape: [N, 13, 13, 3, 2]
+
         true_tw_th = y_true[..., 2:4] / anchors
         pred_tw_th = pred_box_wh      / anchors
         # for numerical stability
@@ -245,21 +251,21 @@ class yolov3(object):
 
         # box size punishment:
         # box with smaller area has bigger weight. This is taken from the yolo darknet C source code.
-        # shape: [N, 13, 13, 3, 1]
+
         box_loss_scale = 2. - (y_true[..., 2:3] / tf.cast(self.img_size[1], tf.float32)) * (y_true[..., 3:4] / tf.cast(self.img_size[0], tf.float32))
 
-        # shape: [N, 13, 13, 3, 1]
         xy_loss = tf.reduce_sum(tf.square(true_xy    - pred_xy) * object_mask * box_loss_scale) / N
         wh_loss = tf.reduce_sum(tf.square(true_tw_th - pred_tw_th) * object_mask * box_loss_scale) / N
 
-        # shape: [N, 13, 13, 3, 1]
+
+
         conf_pos_mask = object_mask
         conf_neg_mask = (1 - object_mask) * ignore_mask
         conf_loss_pos = conf_pos_mask * tf.nn.sigmoid_cross_entropy_with_logits(labels=object_mask, logits=pred_conf_logits)
         conf_loss_neg = conf_neg_mask * tf.nn.sigmoid_cross_entropy_with_logits(labels=object_mask, logits=pred_conf_logits)
         conf_loss = tf.reduce_sum(conf_loss_pos + conf_loss_neg) / N
 
-        # shape: [N, 13, 13, 3, 1]
+
         class_loss = object_mask * tf.nn.sigmoid_cross_entropy_with_logits(labels=y_true[..., 5:], logits=pred_prob_logits)
         class_loss = tf.reduce_sum(class_loss) / N
 
@@ -271,11 +277,7 @@ class yolov3(object):
         maintain an efficient way to calculate the ios matrix between ground truth true boxes and the predicted boxes
         note: here we only care about the size match
         '''
-        # shape:
-        # true_box_??: [V, 2]
-        # pred_box_??: [N, 13, 13, 3, 2]
 
-        # shape: [N, 13, 13, 3, 1, 2]
         pred_box_xy = tf.expand_dims(pred_box_xy, -2)
         pred_box_wh = tf.expand_dims(pred_box_wh, -2)
 

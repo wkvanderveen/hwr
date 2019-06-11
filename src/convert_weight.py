@@ -8,7 +8,7 @@ from core import yolov3, utils
 
 class WeightConverter(object):
     """docstring for WeightConverter"""
-    def __init__(self, freeze, convert, num_classes, n_filters_dn, n_strides_dn, n_ksizes_dn, n_filt_yolo, ksizes_yolo, img_dims, checkpoint_dir, weights_dir, anchors_path, score_threshold, iou_threshold, checkpoint_step=None):
+    def __init__(self, freeze, convert, num_classes, n_filters_dn, n_strides_dn, n_ksizes_dn, n_filt_yolo, ksizes_yolo, n_strides_yolo, img_dims, checkpoint_dir, weights_dir, anchors_path, score_threshold, iou_threshold, checkpoint_step=None):
         super(WeightConverter, self).__init__()
         self.freeze = freeze
         self.convert = convert
@@ -23,6 +23,7 @@ class WeightConverter(object):
         self.n_strides_dn = n_strides_dn
         self.n_ksizes_dn = n_ksizes_dn
         self.ksizes_yolo = ksizes_yolo
+        self.n_strides_yolo = n_strides_yolo
         self.checkpoint_step = checkpoint_step
 
         if not os.path.exists(checkpoint_dir):
@@ -51,6 +52,7 @@ class WeightConverter(object):
                                             n_ksizes_dn=self.n_ksizes_dn,
                                             n_filt_yolo=self.n_filt_yolo,
                                             ksizes_yolo=self.ksizes_yolo,
+                                            n_strides_yolo=self.n_strides_yolo,
                                             is_training=False)
 
             boxes, confs, probs = model.predict(feature_map)
@@ -73,7 +75,11 @@ class WeightConverter(object):
 
             if self.freeze:
                 ckpt_idx = self.checkpoint_dir + '-' + str(self.checkpoint_step)
-                saver.restore(sess, ckpt_idx)
+                try:
+                    saver.restore(sess, ckpt_idx)
+                except:
+                    print(f"Error: you tried to restore a checkpoint ({self.checkpoint_dir}) that doesn't exist.")
+                    print("Please clear the network and retrain, or load a different checkpoint by changing the steps parameter.")
                 print('=> checkpoint file restored from ', ckpt_idx)
                 utils.freeze_graph(sess, '../../data/checkpoint/yolov3_cpu_nms.pb', cpu_out_node_names)
                 utils.freeze_graph(sess, '../../data/checkpoint/yolov3_gpu_nms.pb', gpu_out_node_names)

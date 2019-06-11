@@ -66,7 +66,7 @@ def gpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thre
     return boxes, score, label
 
 
-def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5, size_threshold=(4,4)):
+def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5):
     """
     Pure Python NMS baseline.
 
@@ -79,19 +79,20 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5, size_threshold=(4,4)):
 
     assert boxes.shape[1] == 4 and len(scores.shape) == 1
 
-    x1 = boxes[:, 0]
-    y1 = boxes[:, 1]
-    x2 = boxes[:, 2]
-    y2 = boxes[:, 3]
+    x1 = boxes[:,0]
+    y1 = boxes[:,1]
+    x2 = boxes[:,2]
+    y2 = boxes[:,3]
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
     order = scores.argsort()[::-1]
-
     keep = []
 
     while order.size > 0:
         i = order[0]
+
         keep.append(i)
+
         xx1 = np.maximum(x1[i], x1[order[1:]])
         yy1 = np.maximum(y1[i], y1[order[1:]])
         xx2 = np.minimum(x2[i], x2[order[1:]])
@@ -108,26 +109,26 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.5, size_threshold=(4,4)):
 
     return keep[:max_boxes]
 
-def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thresh=0.5, size_threshold=(4,4)):
+def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.3, iou_thresh=0.5):
     """
     /*----------------------------------- NMS on cpu ---------------------------------------*/
     Arguments:
         boxes ==> shape [1, 10647, 4]
         scores ==> shape [1, 10647, num_classes]
     """
-    boxes = boxes.reshape(-1, 4)
-    scores = scores.reshape(-1, num_classes)
+
     # Picked bounding boxes
     picked_boxes, picked_score, picked_label = [], [], []
 
     for i in range(num_classes):
+
         indices = np.where(scores[:,i] >= score_thresh)
         filter_boxes = boxes[indices]
         filter_scores = scores[:,i][indices]
         if len(filter_boxes) == 0: continue
         # do non_max_suppression on the cpu
         indices = py_nms(filter_boxes, filter_scores,
-                         max_boxes=max_boxes, iou_thresh=iou_thresh, size_threshold=(4,4))
+                         max_boxes=max_boxes, iou_thresh=iou_thresh)
         picked_boxes.append(filter_boxes[indices])
         picked_score.append(filter_scores[indices])
         picked_label.append(np.ones(len(indices), dtype='int32')*i)
@@ -156,7 +157,8 @@ def resize_image_correct_bbox(image, boxes, image_h, image_w):
 
 
 def draw_boxes(image, boxes, scores, labels, classes, detection_size,
-               font='./font/FiraMono-Medium.otf', show=True, size_threshold=(4,4)):
+               font='./font/FiraMono-Medium.otf', show=True, size_threshold=(4,4),
+               remove_overlap_half=False, remove_overlap_full=False):
     """
     :param boxes, shape of  [num, 4]
     :param scores, shape of [num, ]
@@ -164,30 +166,41 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     :param image,
     :param classes, the return list from the function `read_coco_names`
     """
-    if boxes is None: return image
+    if boxes is None: return (image, tuple())
 
-    picked_boxes = []
-    picked_labels = []
-    picked_scores = []
+    if remove_overlap_full or remove_overlap_half:
 
-    for i, box in enumerate(boxes):
-        if (box[0] < 0 or
-            box[1] < 0 or
-            box[2] > detection_size[1] or
-            box[3] > detection_size[0] or
-            abs(box[2]-box[0]) < size_threshold[0] or # MIN WIDTH
-            abs(box[3]-box[1]) < size_threshold[1]):  # MIN HEIGHT
-            continue
+        picked_boxes = []
+        picked_labels = []
+        picked_scores = []
 
-        picked_boxes.append(box)
-        picked_labels.append(labels[i])
-        picked_scores.append(scores[i])
-    boxes = picked_boxes
-    labels = picked_labels
-    scores = picked_scores
+        for i, box in enumerate(boxes):
+            if remove_overlap_half:
+                center = [(box[0]+box[2])/2, (box[1]+box[3])/2]
+                for io, other in enumerate(boxes):
+                    if i >= io: continue
+                    if center[0] >= other[0] and center[1] >= other[1] and center[0] <= other[2] and center[1] <= other[3]:
+                        break
+                else:
+                    # center not within other box
+                    picked_boxes.append(box)
+                    picked_labels.append(labels[i])
+                    picked_scores.append(scores[i])
+            elif remove_overlap_full:
+                for io, other in enumerate(boxes):
+                    if i >= io: continue
+                    if box[0]>=other[0] and box[1]>=other[1] and box[2] <= other[2] and box[3] <= other[3]:
+                        break
+                else:
+                    #box not fully within other box
+                    picked_boxes.append(box)
+                    picked_labels.append(labels[i])
+                    picked_scores.append(scores[i])
+        boxes = picked_boxes
+        labels = picked_labels
+        scores = picked_scores
 
-    print(f"HAS BOXES:\n{boxes}")
-    # image = np.squeeze(image)  # collapse inner dimension
+
     image = np.repeat(image, 3, axis=2)
     image = Image.fromarray(np.uint8((image)))
     draw = ImageDraw.Draw(image)
@@ -205,6 +218,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
 
                       colors))
 
+    results = []
     for i in range(len(boxes)): # for each bounding box, do:
         bbox, score, label = boxes[i], scores[i], classes[labels[i]]
         bbox_text = "%s %.2f" %(label, score)
@@ -212,17 +226,20 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
         # convert_to_original_size
         detection_size, original_size = np.array(detection_size), np.array(image.size)
         ratio = original_size / detection_size
-        # bbox = list((bbox.reshape(2,2) * ratio).reshape(-1))
+
 
         draw.rectangle(bbox, outline=colors[labels[i]], width=3)
         text_origin = bbox[:2]-np.array([0, text_size[1]])
-        print(f"bbox: {bbox[:2]}   and   arr: {np.array([0, text_size[1]])}")
-        draw.rectangle([tuple(text_origin), tuple(text_origin+text_size)], fill=colors[labels[i]])
-        # # draw bbox
-        draw.text(tuple(text_origin), bbox_text, fill=(0,0,0), font=font)
 
+        draw.rectangle([tuple(text_origin), tuple(text_origin+text_size)], fill=colors[labels[i]])
+        # draw bbox
+        draw.text(tuple(text_origin), bbox_text, fill=(0,0,0), font=font)
+        x_center = (bbox[0]+bbox[2])/2
+        results.append((x_center, label, score))
+
+    results.sort(key=lambda tup: tup[0])
     image.show() if show else None
-    return image
+    return (image, results)
 
 def read_coco_names(class_file_name):
     names = {}
@@ -377,7 +394,7 @@ def evaluate(y_pred, y_true, iou_thresh=0.5, score_thresh=0.3):
         pred_probs = y_pred[2][i:i+1]
 
         pred_boxes, pred_scores, pred_labels = cpu_nms(pred_boxes, pred_confs*pred_probs, num_classes,
-                                                      score_thresh=score_thresh, iou_thresh=iou_thresh, size_threshold=(4,4))
+                                                      score_thresh=score_thresh, iou_thresh=iou_thresh)
 
         true_boxes = np.array(true_boxes_list)
         box_centers, box_sizes = true_boxes[:,0:2], true_boxes[:,2:4]

@@ -23,7 +23,7 @@ class Tester(object):
     """docstring for Tester"""
     def __init__(self, img_dims, num_classes, source_dir, score_threshold,
         iou_threshold, size_threshold, checkpoint_dir, letters_test_dir,
-        max_boxes):
+        max_boxes, remove_overlap_half, remove_overlap_full, filters):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
@@ -32,10 +32,13 @@ class Tester(object):
         self.source_dir = source_dir
         self.score_threshold = score_threshold
         self.iou_threshold = iou_threshold
+        self.filters = filters
         self.size_threshold = size_threshold
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
+        self.remove_overlap_half = remove_overlap_half
+        self.remove_overlap_full = remove_overlap_full
 
     def test(self):
         image_name = choice(os.listdir(self.source_dir))
@@ -58,6 +61,58 @@ class Tester(object):
             boxes, scores = sess.run(
                 output_tensors,
                 feed_dict={input_tensor: np.expand_dims(img, axis=0)})
+            boxes = boxes.reshape(-1, 4)
+            scores = scores.reshape(-1, self.num_classes)
+
+            min_wh, max_wh = -10000, 10000
+            min_ratio = 1/3  # 0 -- 1
+
+            mask = np.logical_and(boxes[:,0] >= min_wh, boxes[:,0] <= max_wh)
+            mask = np.logical_and(mask, boxes[:,1] >= min_wh)
+            mask = np.logical_and(mask, boxes[:,2] >= min_wh)
+            mask = np.logical_and(mask, boxes[:,3] >= min_wh)
+            mask = np.logical_and(mask, boxes[:,1] <= max_wh)
+            mask = np.logical_and(mask, boxes[:,2] <= max_wh)
+            mask = np.logical_and(mask, boxes[:,3] <= max_wh)
+            mask = np.logical_and(mask, boxes[:,0] < boxes[:,2])
+            mask = np.logical_and(mask, boxes[:,1] < boxes[:,3])
+
+            boxes = boxes[mask]
+            scores = scores[mask]
+
+            h = abs(boxes[:,2]-boxes[:,0])
+            w = abs(boxes[:,3]-boxes[:,1])
+
+            mask = np.logical_and(w/h > min_ratio, h/w > min_ratio)
+
+            boxes = boxes[mask]
+            scores = scores[mask]
+
+
+
+            if self.filters:
+                # Harder filters
+                print(f"Test: Boxes before filtering:\t{boxes.shape[0]}")
+
+                mask = np.logical_and(boxes[:,0] >= 0, boxes[:,0] <= img.shape[1])
+                mask = np.logical_and(mask, boxes[:,1] >= 0)
+                mask = np.logical_and(mask, boxes[:,2] >= 0)
+                mask = np.logical_and(mask, boxes[:,3] >= 0)
+                mask = np.logical_and(mask, boxes[:,1] <= img.shape[0])
+                mask = np.logical_and(mask, boxes[:,2] <= img.shape[1])
+                mask = np.logical_and(mask, boxes[:,3] <= img.shape[0])
+                mask = np.logical_and(mask, boxes[:,0] < boxes[:,2])
+                mask = np.logical_and(mask, boxes[:,1] < boxes[:,3])
+                mask = np.logical_and(mask, abs(boxes[:,2]-boxes[:,0]) >= self.size_threshold[0])
+                mask = np.logical_and(mask, abs(boxes[:,3]-boxes[:,1]) >= self.size_threshold[1])
+
+                boxes = boxes[mask]
+                scores = scores[mask]
+
+                print(f"Test: Boxes after filtering:\t{boxes.shape[0]}")
+
+                if boxes.shape[0] == 0:
+                    print(f"Try changing the filters/thresholds in the parameters.")
 
             boxes, scores, labels = utils.cpu_nms(
                 boxes=boxes,
@@ -67,7 +122,7 @@ class Tester(object):
                 iou_thresh=self.iou_threshold,
                 max_boxes=self.max_boxes)
 
-            image = utils.draw_boxes(
+            (image, results) = utils.draw_boxes(
                 img,
                 boxes,
                 scores,
@@ -75,7 +130,8 @@ class Tester(object):
                 classes,
                 [self.img_h, self.img_w],
                 show=True,
-                size_threshold=self.size_threshold)
+                size_threshold=self.size_threshold,
+                remove_overlap_half=self.remove_overlap_half,
+                remove_overlap_full=self.remove_overlap_full)
 
-        print("\n\t(If nothing is plotted, no characters were " +
-              "detected with the current thresholds)")
+        return results
