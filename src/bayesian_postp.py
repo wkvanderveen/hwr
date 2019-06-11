@@ -28,7 +28,7 @@ char_map = {'Alef' : 0,
             'Tsadi-final' : 22, 
             'Tasdi-final' : 22, # catch typo in dataset
             'Tsadi-medial' : 23, 
-            'Tsadi' : 23, 
+            'Tsadi' : 23,       # catch typo in dataset
             'Waw' : 24, 
             'Yod' : 25, 
             'Zayin' : 26
@@ -64,12 +64,16 @@ hebrew_map = {
             26:             u'\u05D6'
         }
 
-class Bayesian_processor(object):
-    """docstring for Bayesian_processor"""
-    def __init__(self, bigrams, letters_dir=None, chars=None):
-        super(Bayesian_processor, self).__init__()
-        self.ngrams = np.load(fn)
+## needed for the final program, as YOLO now returns hebrew
+rev_hebrew_map = {}
+for key, val in hebrew_map.items(): 
+    rev_hebrew_map[val] = key
 
+
+class Bayesian_processor():
+    """docstring for Bayesian_processor"""
+    def __init__(self):
+        self.ngrams = np.load(fn)
         self.unigrams = self.ngrams['unigrams']
         self.bigrams = self.ngrams['bigrams']
 
@@ -90,7 +94,6 @@ class Bayesian_processor(object):
 
         ## forward pass
         for idx, prior_softmax in enumerate(predicted_word):
-            # posterior_letter = np.zeros((len(self.unigrams)), dtype=np.double)
 
             if idx > 0:
                 previous_softmax = predicted_word[idx-1]  # or posterior word?
@@ -150,25 +153,7 @@ class Bayesian_processor(object):
 if __name__ == "__main__":
     # When running this script standalone, use this example:
 
-    # Define alphabet
-    chars = 'ABC'
-
-    # Define bigram probabilities
-    bigrams = {
-        'AA': 0.3,
-        'AB': 0.2,
-        'AC': 0.5,
-
-        'BA': 0.1,
-        'BB': 0.2,
-        'BC': 0.7,
-
-        'CA': 0.3,
-        'CB': 0.9,
-        'CC': 0.3
-    }
-
-    # Construct mock prediction softmax
+    # Construct mock prediction softmax (of length (n x 27) )
     predicted_word = [
         [0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1],
         [0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3],
@@ -177,8 +162,7 @@ if __name__ == "__main__":
         [0.3, 0.3, 0.4, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3]
     ]
 
-    processor = Bayesian_processor(bigrams=bigrams,
-                                   chars=chars)
+    processor = Bayesian_processor()
     posterior_word = processor.process_word(predicted_word)
     posterior_word = processor.normalize_posteriors(posterior_word)
 
