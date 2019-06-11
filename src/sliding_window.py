@@ -6,83 +6,121 @@ np.set_printoptions(threshold=np.inf)
 
 
 class SlidingWindow:
-    characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
-                  "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
-                  "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
-    model = load_model("../../data/backup_model.model")
-    final_yaxis = False
-    final_xaxis = False
-    stop = False
-    i = 0
+    def __init__(self):
+        self.characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
+                      "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
+                      "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
+        self.model = load_model("../../data/backup_model.model")
+        self.final_yaxis = False
+        self.final_xaxis = False
+        self.stop = False
+        self.i = 0
 
-    image = cv2.imread("../../data/TESTLINE.jpg", cv2.IMREAD_GRAYSCALE)  # your image path
-    txtfile = open("../../data/softmax.txt", "w")
-    aspect = image.shape[1] / image.shape[0]
-    reshape_height = 60
-    reshape_width = int(60 * aspect)
-    image = cv2.resize(image, (reshape_width, reshape_height))
-    stepSize = 4
-    (w_width, w_height) = (38, 38)  # window size
-    classificationMatrix = np.zeros(shape=(len(characters), reshape_width))
+        self.image = cv2.imread("../../data/backup_val_lines/line2.png", cv2.IMREAD_GRAYSCALE)  # your image path
+        self.txtfile = open("../../data/softmax.txt", "w")
+        self.aspect = self.image.shape[1] / self.image.shape[0]
+        self.reshape_height = 60
+        self.reshape_width = int(60 * self.aspect)
+        self.image = cv2.resize(self.image, (self.reshape_width, self.reshape_height))
+        self.stepSize = 4
+        (self.w_width, self.w_height) = (38, 38)  # window size
+        self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
 
-    def find_peaks(x):
+        self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
+
+
+    def find_mean(self, x):
+        length = len(x)
+        total = 0
+        for i in range(length):
+            total += x[i]
+        return total/length
+
+    def merge_peaks(self, x):
+        width, height = x.shape # shape: [27, n]
+        last_saved_idx = 0
+        for idx in range(width):
+            for idx2 in range(height):
+                if x[idx, idx2] > 0:
+                    print(x[idx, idx2])
+                    if (idx2 - last_saved_idx) < self.PEAK_CONCAT_DIST:
+                        x[idx, last_saved_idx:idx2] = x[idx, last_saved_idx]
+                    last_saved_idx = idx2
+        return x
+
+    def find_peaks(self, x):
+        peaks = []
+        upper_arr = []
         max = np.max(x)
         length = len(x)
-        ret = []
-        for i in range(length):
-            ispeak = True
-            if i - 1 > 0:
-                ispeak &= (x[i] > 1.8 * x[i - 1])
-            if i + 1 < length:
-                ispeak &= (x[i] > 1.8 * x[i + 1])
+        width, height = x.shape # shape: [27, n]
+        
+        for idx2 in range(height): 
+            mean1 = self.find_mean(np.unique(x)) #unique since there are a lot of 0s
+            last_saved_idx = 0 #used to concat same character peaks with small distance
+            if mean1 != 0:
+                for idx in range(width):
+                    item = x[idx, idx2]
+                    if item <= mean1:
+                        x[idx, idx2] = 0.0
+                        
+                    if item > mean1:
+                        upper_arr.append(item)
+                # mean2 = self.find_mean(np.unique(np.array(upper_arr))) #unique since there are a lot of 0s
+                # for idx in range(width):
+                #     item = x[idx, idx2]
+                #     if item <= mean2:
+                #         x[idx, idx2] = 0.0
+                # print(mean1, mean2)
+        #print(x)
+        return x
 
-            ispeak &= (x[i] > 0.05 * max)
-            if ispeak:
-                ret.append(i)
-        return ret
+    def get_letters(self):
+        for x in range(0, self.image.shape[1], self.stepSize):
+            self.final_yaxis = False
 
-    for x in range(0, image.shape[1], stepSize):
-        final_yaxis = False
+            if (x + self.w_width) >= self.image.shape[1]:
+                x = self.image.shape[1] - self.w_width
+                self.final_xaxis = True
 
-        if (x + w_width) >= image.shape[1]:
-            x = image.shape[1] - w_width
-            final_xaxis = True
+            for y in range(0, self.image.shape[0], self.stepSize):
+                self.i = self.i + 1
+                filename = ""
 
-        for y in range(0, image.shape[0], stepSize):
-            i = i + 1
-            filename = ""
+                if (y + self.w_height) >= self.image.shape[0]:
+                    y = self.image.shape[0] - self.w_height
+                    self.final_yaxis = True
 
-            if (y + w_height) >= image.shape[0]:
-                y = image.shape[0] - w_height
-                final_yaxis = True
+                if self.stop is False:
+                    window = self.image[y:y + self.w_height, x:x + self.w_width]
+                    temp = window.reshape((1, 38, 38, 1))
+                    predict = self.model.predict(temp)
+                    softmaxes = [np.where(predict[0] != 0.0)[0]][0]
+                    # txtfile.write(str(i) + " - ")
+                    for softmax in softmaxes:
+                        self.classificationMatrix[softmax][x] += 1
+                        filename += self.characters[softmax]
+                        # txtfile.write(characters[softmax] + " " + str(predict[0][softmax]) + " ")
+                    # txtfile.write('\n')
+                    # filename = "../../data/" + str(i) + "-" + filename + ".png"
+                    # cv2.imwrite(filename, window)
 
-            if stop is False:
-                window = image[y:y + w_height, x:x + w_width]
-                temp = window.reshape((1, 38, 38, 1))
-                predict = model.predict(temp)
-                softmaxes = [np.where(predict[0] != 0.0)[0]][0]
-                # txtfile.write(str(i) + " - ")
-                for softmax in softmaxes:
-                    classificationMatrix[softmax][x] += 1
-                    filename += characters[softmax]
-                    # txtfile.write(characters[softmax] + " " + str(predict[0][softmax]) + " ")
-                # txtfile.write('\n')
-                # filename = "../../data/" + str(i) + "-" + filename + ".png"
-                # cv2.imwrite(filename, window)
+                if self.final_yaxis and self.final_xaxis:
+                    self.stop = True
 
-            if final_yaxis and final_xaxis:
-                stop = True
+                if self.final_yaxis:
+                    break
+        self.txtfile.close()
+        ret = self.find_peaks(self.classificationMatrix).tolist()
+        ret = self.merge_peaks(np.array(ret)).tolist()
+        for idx in range(0, 27):
+            if any(item > 0 for item in ret[idx]) is True:
+                plt.plot(ret[idx], label=self.characters[idx])
+        plt.legend()
+        plt.show()
 
-            if final_yaxis:
-                break
-    txtfile.close()
-    ret = []
-    for i in range(0, 27):
-        ret.append(find_peaks(classificationMatrix[i]))
-        # classificationMatrix[i] = classificationMatrix[i] - 15
-        # if(classificationMatrix[i])
-        plt.plot(classificationMatrix[i], label=characters[i])
+        #TODO: implement program to go from histogram to Hebrew character output
 
-    print(ret)
-    plt.legend()
-    plt.show()
+if __name__ == '__main__':
+    sw = SlidingWindow()
+    sw.get_letters()
