@@ -56,13 +56,9 @@ if __name__ == '__main__':
 
 		outfile = file.split('.')[0] #get root filename
 		outfile += '.txt'
+		## Example call:
+		# write_to_file(transcribed_lines, outfile)
 
-		## write_to_file(transcribed_lines, fn)
-
-		# print("Succesfully transcribed ", file, " to ", outfile, ".")
 		print("Succesfully transcribed \"%s\" to \"%s\"." % (file, outfile))
 
 	print("Finished transcribing.")
-
-
-
