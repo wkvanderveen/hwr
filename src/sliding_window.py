@@ -4,11 +4,9 @@ from keras.models import load_model
 
 
 class SlidingWindow:
-    characters = ["Alef", "Ayin", "Bet", "Dalet", "Gimel", "He", "Het", "Kaf", "Kaf-final", "Lamed", "Mem",
-                  "Mem-medial", "Nun-final",
-                  "Nun-medial", "Pe", "Pe-final", "Qof", "Resh", "Samekh", "Shin", "Taw", "Tet", "Tsadi-final",
-                  "Tsadi-medial", "Waw",
-                  "Yod", "Zayin"]
+    characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
+                  "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
+                  "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
     model = load_model("../../data/backup_model.model")
     final_yaxis = False
     final_xaxis = False
