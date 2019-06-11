@@ -23,28 +23,32 @@ class CNN_network:
 		self.TRAIN_Y_FILE = '../../data/train_labels.npy'
 		self.TEST_X_FILE = '../../data/test_letters.npy' 
 		self.TEST_Y_FILE = '../../data/test_labels.npy'
-		self.MODEL_SAVE = '../../backup_model.model'
+		self.MODEL_SAVE = '../../data/backup_model.model'
 		#Hyperparameters
-		self.CONV_KERNELSIZES = [(3,3), (3,3)]
-		self.CONV_FILTERS = [32, 64]
+		self.CONV_KERNELSIZES = [(3,3), (3,3), (5,5)]
+		self.CONV_FILTERS = [32, 64, 64]
 		self.POOL_KERNELSIZE = [(2,2)]
 		self.DENSE = [128]
-		self.CONV_ACTIV = ['relu', 'relu']
 		self.DENSE_ACTIV = ['relu']
 		self.OUTPUT_ACTIV = ['softmax']
+		self.DROPOUT_1 = 0.1
+		self.DROPOUT_2 = 0.2
+
+		self.SAVE_EVERY = 1000 #steps
 
 
 	def build_net(self, input_shape):
 		model = Sequential()
 		model.add(Conv2D(self.CONV_FILTERS[0], kernel_size=self.CONV_KERNELSIZES[0],
-		                 activation=self.CONV_ACTIV[0],
+		                 activation='relu',
 		                 input_shape= input_shape))
-		model.add(Conv2D(self.CONV_FILTERS[1], self.CONV_KERNELSIZES[1], activation=self.CONV_ACTIV[1]))
+		model.add(Conv2D(self.CONV_FILTERS[1], self.CONV_KERNELSIZES[1], activation='relu'))
 		model.add(MaxPooling2D(pool_size=self.POOL_KERNELSIZE[0]))
-		model.add(Dropout(0.25))
+		model.add(Conv2D(self.CONV_FILTERS[2], self.CONV_KERNELSIZES[2], activation='relu'))
+		model.add(Dropout(self.DROPOUT_1))
 		model.add(Flatten())
 		model.add(Dense(self.DENSE[0], activation=self.DENSE_ACTIV[0]))
-		model.add(Dropout(0.5))
+		model.add(Dropout(self.DROPOUT_2))
 		model.add(Dense(self.CLASSES, activation=self.OUTPUT_ACTIV[0]))
 		return model
 
@@ -71,11 +75,14 @@ class CNN_network:
 		return model
 
 	def train_model(self, model):
+		cb = keras.callbacks.ModelCheckpoint('../../data/weights{epoch:08d}.h5', 
+                                     save_weights_only=True, period=self.SAVE_EVERY)
 		model.fit(self.trainX, self.trainY,
 			batch_size=self.BATCH_SIZE,
 			epochs=self.EPOCHS, 
 			verbose=1,
-			validation_data=(self.testX,self.testY))
+			validation_data=(self.testX,self.testY),
+			callbacks=cb)
 		return model
 
 	def evaluate_model(self, model):
