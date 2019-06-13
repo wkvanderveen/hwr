@@ -83,6 +83,7 @@ class SlidingWindow:
 
     def get_letters(self):
         self.final_xaxis = False
+        self.stop = False
         self.reset_classificationMatrix()
         for x in range(0, self.image.shape[1], self.stepSize):
             self.final_yaxis = False
@@ -123,7 +124,7 @@ class SlidingWindow:
         ret = self.find_peaks(self.classificationMatrix).tolist()
         #ret = self.merge_peaks(np.array(ret)).tolist()
         plt.subplot(2, 1, 1)
-        for idx in range(0, 27):
+        for idx in range(27):
             if any(item > 0 for item in ret[idx]) is True:
                 plt.plot(ret[idx], label=self.characters[idx])
                 plt.legend()
