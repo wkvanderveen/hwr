@@ -9,14 +9,13 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 from skimage.transform import resize
 import numpy as np
-
-
+np.set_printoptions(threshold=np.inf)
 
 class CNN_network:
 	def __init__(self):
 		self.BATCH_SIZE = 1
-		self.CLASSES = 27
-		self.EPOCHS = 1
+		self.CLASSES = 27 #Default
+		self.EPOCHS = 1 #Loops once throug all data
 		self.IMG_H = self.IMG_W = 38
 		self.CHANNELS = 1
 		self.TRAIN_X_FILE = '../../data/train_letters.npy' 
@@ -26,7 +25,7 @@ class CNN_network:
 		self.MODEL_SAVE = '../../data/backup_model.model'
 		#Hyperparameters
 		self.CONV_KERNELSIZES = [(3,3), (3,3), (5,5)]
-		self.CONV_FILTERS = [32, 64, 64]
+		self.CONV_FILTERS = [8, 16, 16]
 		self.POOL_KERNELSIZE = [(2,2)]
 		self.DENSE = [128]
 		self.DENSE_ACTIV = ['relu']
@@ -56,6 +55,10 @@ class CNN_network:
 		print("Loading data...")
 		self.trainX = np.load(self.TRAIN_X_FILE, allow_pickle=True)
 		self.trainY = np.load(self.TRAIN_Y_FILE, allow_pickle=True)
+		self.CLASSES = len(self.trainY[0]) #Get real number of classes, default 27
+		self.trainX = self.trainX[1:20]
+		self.trainY = self.trainY[1:20]
+		print(self.trainX[0])
 		print("Train data loaded...")
 		self.testX = np.load(self.TEST_X_FILE, allow_pickle=True)
 		self.testY = np.load(self.TEST_Y_FILE, allow_pickle=True)
@@ -82,7 +85,7 @@ class CNN_network:
 			epochs=self.EPOCHS, 
 			verbose=1,
 			validation_data=(self.testX,self.testY),
-			callbacks=cb)
+			callbacks=[cb])
 		return model
 
 	def evaluate_model(self, model):
@@ -92,8 +95,8 @@ class CNN_network:
 
 	def run_network(self):
 		input_shape = (self.IMG_H, self.IMG_W, self.CHANNELS)
-		model = self.build_net(input_shape)
 		self.read_data()
+		model = self.build_net(input_shape)
 		model = self.compile_model(model)
 		model = self.train_model(model)
 		self.evaluate_model(model)

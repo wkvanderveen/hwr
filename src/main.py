@@ -28,9 +28,9 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 4
+num_classes = 27
 split_percentage = 20
-augment = False
+augment = True
 line_length_bounds = (12,12)
 n_training_lines = 1000
 n_testing_lines = 500
@@ -183,23 +183,23 @@ if not network_exists or retrain:
         print("Error: no weights detected! You need the pretrained " +
               f"weights in the {weights_dir} directory.")
 
-    weightconverter = WeightConverter(freeze=False,
-                                      convert=False,
-                                      num_classes=num_classes,
-                                      img_dims=img_dims,
-                                      checkpoint_dir=checkpoint_dir,
-                                      weights_dir=weights_dir,
-                                      anchors_path=anchor_file,
-                                      score_threshold=score_threshold,
-                                      iou_threshold=iou_threshold,
-                                      n_filt_yolo=n_filt_yolo,
-                                      ksizes_yolo=n_ksizes_yolo,
-                                      n_strides_yolo=n_strides_yolo,
-                                      n_filters_dn=n_filters_dn,
-                                      n_strides_dn=n_strides_dn,
-                                      n_ksizes_dn=n_ksizes_dn)
-    print("Converting weights...")
-    weightconverter.convert_weights()
+    # weightconverter = WeightConverter(freeze=False,
+    #                                   convert=False,
+    #                                   num_classes=num_classes,
+    #                                   img_dims=img_dims,
+    #                                   checkpoint_dir=checkpoint_dir,
+    #                                   weights_dir=weights_dir,
+    #                                   anchors_path=anchor_file,
+    #                                   score_threshold=score_threshold,
+    #                                   iou_threshold=iou_threshold,
+    #                                   n_filt_yolo=n_filt_yolo,
+    #                                   ksizes_yolo=n_ksizes_yolo,
+    #                                   n_strides_yolo=n_strides_yolo,
+    #                                   n_filters_dn=n_filters_dn,
+    #                                   n_strides_dn=n_strides_dn,
+    #                                   n_ksizes_dn=n_ksizes_dn)
+    # print("Converting weights...")
+    # weightconverter.convert_weights()
 
     trainer = Trainer(num_classes=num_classes,
                       batch_size=batch_size,

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from keras.models import load_model
 from matplotlib import pyplot as plt
+import matplotlib.image as mpimg
 np.set_printoptions(threshold=np.inf)
 
 
@@ -10,14 +11,17 @@ class SlidingWindow:
         self.characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
                       "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
                       "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
-        self.model = load_model("../../data/backup_model.model")
+        self.model = load_model("../data/models/backup_model.model")
+        self.image_file = "../data/backup_val_lines/line1.png"
+        self.save_kernel_path = "../data/"
+        self.txtfile = open("../../data/softmax.txt", "w")
         self.final_yaxis = False
         self.final_xaxis = False
         self.stop = False
         self.i = 0
 
-        self.image = cv2.imread("../../data/backup_val_lines/line2.png", cv2.IMREAD_GRAYSCALE)  # your image path
-        self.txtfile = open("../../data/softmax.txt", "w")
+        self.image = cv2.imread(self.image_file, cv2.IMREAD_GRAYSCALE)  # your image path
+        self.txtfile = open("../data/softmax.txt", "w")
         self.aspect = self.image.shape[1] / self.image.shape[0]
         self.reshape_height = 60
         self.reshape_width = int(60 * self.aspect)
@@ -42,7 +46,7 @@ class SlidingWindow:
         for idx in range(width):
             for idx2 in range(height):
                 if x[idx, idx2] > 0:
-                    print(x[idx, idx2])
+                    #print(x[idx, idx2])
                     if (idx2 - last_saved_idx) < self.PEAK_CONCAT_DIST:
                         x[idx, last_saved_idx:idx2] = x[idx, last_saved_idx]
                     last_saved_idx = idx2
@@ -55,8 +59,8 @@ class SlidingWindow:
         length = len(x)
         width, height = x.shape # shape: [27, n]
         
-        for idx2 in range(height): 
-            mean1 = self.find_mean(np.unique(x)) #unique since there are a lot of 0s
+        for idx2 in range(height): #Loop over the histogram heights
+            mean1 = self.find_mean(np.unique(x)) #unique since there are a lot of 0s; count the mean hist count of all letters
             last_saved_idx = 0 #used to concat same character peaks with small distance
             if mean1 != 0:
                 for idx in range(width):
@@ -94,16 +98,17 @@ class SlidingWindow:
                 if self.stop is False:
                     window = self.image[y:y + self.w_height, x:x + self.w_width]
                     temp = window.reshape((1, 38, 38, 1))
-                    predict = self.model.predict(temp)
+                    temp = np.interp(temp, (temp.min(), temp.max()), (0, 1)) #Normalize image between 0 and 1
+                    predict = self.model.predict_proba(temp)
                     softmaxes = [np.where(predict[0] != 0.0)[0]][0]
-                    # txtfile.write(str(i) + " - ")
+                    self.txtfile.write(str(self.i) + " - ")
                     for softmax in softmaxes:
                         self.classificationMatrix[softmax][x] += 1
                         filename += self.characters[softmax]
-                        # txtfile.write(characters[softmax] + " " + str(predict[0][softmax]) + " ")
-                    # txtfile.write('\n')
-                    # filename = "../../data/" + str(i) + "-" + filename + ".png"
-                    # cv2.imwrite(filename, window)
+                        self.txtfile.write(self.characters[softmax] + " " + str(predict[0][softmax]) + " ")
+                    self.txtfile.write('\n')
+                    filename = self.save_kernel_path + str(self.i) + "-" + filename + ".png"
+                    cv2.imwrite(filename, window)
 
                 if self.final_yaxis and self.final_xaxis:
                     self.stop = True
@@ -112,11 +117,15 @@ class SlidingWindow:
                     break
         self.txtfile.close()
         ret = self.find_peaks(self.classificationMatrix).tolist()
-        ret = self.merge_peaks(np.array(ret)).tolist()
+        #ret = self.merge_peaks(np.array(ret)).tolist()
+        plt.subplot(2, 1, 1)
         for idx in range(0, 27):
             if any(item > 0 for item in ret[idx]) is True:
                 plt.plot(ret[idx], label=self.characters[idx])
-        plt.legend()
+                plt.legend()
+        plt.subplot(2, 1, 2)
+        img=mpimg.imread(self.image_file)
+        plt.imshow(img)
         plt.show()
 
         #TODO: implement program to go from histogram to Hebrew character output
