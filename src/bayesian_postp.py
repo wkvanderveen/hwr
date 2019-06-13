@@ -102,12 +102,16 @@ class Bayesian_processor():
                 previous_letter = previous_softmax.index(previous_prior)
 
                 for jdx, unigram_prob in enumerate(self.unigrams):
+                    probs = []
+                    for kdx in range(len(self.unigrams)):
+                        bigram_prob = self.bigrams[previous_softmax[kdx], jdx]
+                        if bigram_prob == 0.: ##might not be correct
+                            bigram_prob = unigram_prob ## very naive approach. improve later
+                        prob = bigram_prob * prior_softmax[jdx] / previous_prior
+                        probs.append(prob)
 
-                    bigram_prob = self.bigrams[previous_letter, jdx]
-                    if bigram_prob == 0.:
-                        bigram_prob = unigram_prob ## very naive approach. improve later
 
-                    posterior_word[idx, jdx] += bigram_prob * prior_softmax[jdx] / previous_prior
+                    posterior_word[idx, jdx] += max(probs)
 
         ## backward pass
         for idx in range(len(predicted_word) - 2, -1, -1):

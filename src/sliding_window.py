@@ -32,6 +32,8 @@ class SlidingWindow:
 
         self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
 
+    def reset_classificationMatrix(self):
+        self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
 
     def find_mean(self, x):
         length = len(x)
@@ -53,10 +55,10 @@ class SlidingWindow:
         return x
 
     def find_peaks(self, x):
-        peaks = []
-        upper_arr = []
-        max = np.max(x)
-        length = len(x)
+        # peaks = []
+        # upper_arr = []
+        # max = np.max(x)
+        # length = len(x)
         width, height = x.shape # shape: [27, n]
         
         for idx2 in range(height): #Loop over the histogram heights
@@ -68,8 +70,8 @@ class SlidingWindow:
                     if item <= mean1:
                         x[idx, idx2] = 0.0
                         
-                    if item > mean1:
-                        upper_arr.append(item)
+                    # if item > mean1:
+                    #     upper_arr.append(item)
                 # mean2 = self.find_mean(np.unique(np.array(upper_arr))) #unique since there are a lot of 0s
                 # for idx in range(width):
                 #     item = x[idx, idx2]
@@ -80,6 +82,8 @@ class SlidingWindow:
         return x
 
     def get_letters(self):
+        self.final_xaxis = False
+        self.reset_classificationMatrix()
         for x in range(0, self.image.shape[1], self.stepSize):
             self.final_yaxis = False
 
