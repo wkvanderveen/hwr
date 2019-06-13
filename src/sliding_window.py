@@ -12,7 +12,7 @@ class SlidingWindow:
                       "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
                       "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
         self.model = load_model("../data/models/old_backup_model.model")
-        self.image_file = "../data/backup_val_lines/line1.png"
+        self.image_file = "../data/backup_val_lines/line4.png"
         self.save_kernel_path = "../data/"
         self.txtfile = open("../../data/softmax.txt", "w")
         self.final_yaxis = False
@@ -31,6 +31,7 @@ class SlidingWindow:
         self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
 
         self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
+        self.CONFIDENCE_THRESHOLD = 0.8
 
 
     def find_mean(self, x):
@@ -82,7 +83,9 @@ class SlidingWindow:
     def probs_to_one_hot(self, arr):
         arr_len = arr.shape[1]
         new = np.zeros(arr_len, dtype = int)
-        new[np.argmax(arr)] = 1
+        maxim = np.max(arr)
+        if maxim > self.CONFIDENCE_THRESHOLD: 
+            new[np.argmax(arr)] = 1
         return new
 
     def get_letters(self):
