@@ -56,9 +56,6 @@ class CNN_network:
 		self.trainX = np.load(self.TRAIN_X_FILE, allow_pickle=True)
 		self.trainY = np.load(self.TRAIN_Y_FILE, allow_pickle=True)
 		self.CLASSES = len(self.trainY[0]) #Get real number of classes, default 27
-		self.trainX = self.trainX[1:20]
-		self.trainY = self.trainY[1:20]
-		print(self.trainX[0])
 		print("Train data loaded...")
 		self.testX = np.load(self.TEST_X_FILE, allow_pickle=True)
 		self.testY = np.load(self.TEST_Y_FILE, allow_pickle=True)
