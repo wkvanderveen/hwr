@@ -11,7 +11,7 @@ class SlidingWindow:
         self.characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
                       "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
                       "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
-        self.model = load_model("../data/models/backup_model.model")
+        self.model = load_model("../data/models/old_backup_model.model")
         self.image_file = "../data/backup_val_lines/line1.png"
         self.save_kernel_path = "../data/"
         self.txtfile = open("../../data/softmax.txt", "w")
@@ -32,8 +32,6 @@ class SlidingWindow:
 
         self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
 
-    def reset_classificationMatrix(self):
-        self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
 
     def find_mean(self, x):
         length = len(x)
@@ -55,10 +53,10 @@ class SlidingWindow:
         return x
 
     def find_peaks(self, x):
-        # peaks = []
-        # upper_arr = []
-        # max = np.max(x)
-        # length = len(x)
+        peaks = []
+        upper_arr = []
+        max = np.max(x)
+        length = len(x)
         width, height = x.shape # shape: [27, n]
         
         for idx2 in range(height): #Loop over the histogram heights
@@ -70,8 +68,8 @@ class SlidingWindow:
                     if item <= mean1:
                         x[idx, idx2] = 0.0
                         
-                    # if item > mean1:
-                    #     upper_arr.append(item)
+                    if item > mean1:
+                        upper_arr.append(item)
                 # mean2 = self.find_mean(np.unique(np.array(upper_arr))) #unique since there are a lot of 0s
                 # for idx in range(width):
                 #     item = x[idx, idx2]
@@ -81,10 +79,13 @@ class SlidingWindow:
         #print(x)
         return x
 
+    def probs_to_one_hot(self, arr):
+        arr_len = arr.shape[1]
+        new = np.zeros(arr_len, dtype = int)
+        new[np.argmax(arr)] = 1
+        return new
+
     def get_letters(self):
-        self.final_xaxis = False
-        self.stop = False
-        self.reset_classificationMatrix()
         for x in range(0, self.image.shape[1], self.stepSize):
             self.final_yaxis = False
 
@@ -104,13 +105,15 @@ class SlidingWindow:
                     window = self.image[y:y + self.w_height, x:x + self.w_width]
                     temp = window.reshape((1, 38, 38, 1))
                     temp = np.interp(temp, (temp.min(), temp.max()), (0, 1)) #Normalize image between 0 and 1
-                    predict = self.model.predict_proba(temp)
-                    softmaxes = [np.where(predict[0] != 0.0)[0]][0]
+                    predict = self.model.predict(temp)
+                    onehot = self.probs_to_one_hot(predict)
+                    idxes = [np.where(onehot != 0.0)[0]][0]
+                    #softmaxes = [np.where(predict[0] != 0.0)[0]][0]
                     self.txtfile.write(str(self.i) + " - ")
-                    for softmax in softmaxes:
-                        self.classificationMatrix[softmax][x] += 1
-                        filename += self.characters[softmax]
-                        self.txtfile.write(self.characters[softmax] + " " + str(predict[0][softmax]) + " ")
+                    for idx in idxes: #loop, in case 2 or more characters have same probability
+                        self.classificationMatrix[idx][x] += 1
+                        filename += self.characters[idx]
+                        self.txtfile.write(self.characters[idx] + " " + str(predict) + " ")
                     self.txtfile.write('\n')
                     filename = self.save_kernel_path + str(self.i) + "-" + filename + ".png"
                     cv2.imwrite(filename, window)
@@ -122,9 +125,9 @@ class SlidingWindow:
                     break
         self.txtfile.close()
         ret = self.find_peaks(self.classificationMatrix).tolist()
-        #ret = self.merge_peaks(np.array(ret)).tolist()
+        ret = self.merge_peaks(np.array(ret)).tolist()
         plt.subplot(2, 1, 1)
-        for idx in range(27):
+        for idx in range(0, 27):
             if any(item > 0 for item in ret[idx]) is True:
                 plt.plot(ret[idx], label=self.characters[idx])
                 plt.legend()
