@@ -23,7 +23,7 @@ class Tester(object):
     """docstring for Tester"""
     def __init__(self, img_dims, num_classes, source_dir, score_threshold,
         iou_threshold, size_threshold, checkpoint_dir, letters_test_dir,
-        max_boxes, remove_overlap_half, remove_overlap_full, filters):
+        max_boxes, filters):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
@@ -37,8 +37,6 @@ class Tester(object):
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
-        self.remove_overlap_half = remove_overlap_half
-        self.remove_overlap_full = remove_overlap_full
 
     def test(self):
         image_name = choice(os.listdir(self.source_dir))
@@ -130,8 +128,6 @@ class Tester(object):
                 classes,
                 [self.img_h, self.img_w],
                 show=True,
-                size_threshold=self.size_threshold,
-                remove_overlap_half=self.remove_overlap_half,
-                remove_overlap_full=self.remove_overlap_full)
+                size_threshold=self.size_threshold)
 
         return results

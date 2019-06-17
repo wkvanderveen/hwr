@@ -10,9 +10,14 @@ from convert_weight import WeightConverter
 from quick_train import Trainer
 from show_input_image import ExampleDisplayer
 from quick_test import Tester
-from numpy import prod, asarray
+from numpy import prod
 
-## PARAMETERS ##
+# # PARAMETERS # #
+
+# tensorboard --logdir train:./train_summary,eval:./test_summary
+
+# Latest problem: YOLO converges to finding zero boxes.
+# Apparently this is lowest loss. Why? Maybe add minimal box constraint.
 
 # File structure parameters
 orig_letters_dir = "../../data/original_letters/"
@@ -31,44 +36,44 @@ anchor_file = "../../data/anchors.txt"
 num_classes = 27
 split_percentage = 20
 augment = True
-line_length_bounds = (12,12)
-n_training_lines = 1000
+line_length_bounds = (6, 10)
+n_training_lines = 30000
 n_testing_lines = 500
-max_overlap_train = 5
-max_overlap_test = 5
-max_boxes = 16
+max_overlap_train = 10
+max_overlap_test = 10
+max_boxes = 12
 test_on_train = True
 
 
 # Network parameters (darknet)
-n_filters_dn = (128,)
-n_strides_dn = (3,)
-n_ksizes_dn = (12,)
+n_filters_dn = (64, 48, 32)
+n_strides_dn = (2, 2, 1)
+n_ksizes_dn = (6, 6, 6)
 
 # Network parameters (yolo)
-n_filt_yolo = (256,)
-n_strides_yolo = (1,)
-n_ksizes_yolo = (12,)
-cluster_num = 8
+n_filt_yolo = (512, 384, 256)
+n_strides_yolo = (2, 2, 1)
+n_ksizes_yolo = (16, 16, 8)
+cluster_num = 2
 
 # Thresholds and filters
 filters = True
 iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0  # doesn't do anything
-size_threshold = (20,25)  # in pixels
-remove_overlap_half = True
-remove_overlap_full = True  # redundant if `remove_overlap_half == True'
+size_threshold = (20, 20)  # in pixels
+# remove_overlap_half = True
+# remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
-batch_size = 1
-steps = 2000
-learning_rate = 1e-4
-decay_steps = 100
-decay_rate = 0.3
-shuffle_size = 20
-eval_internal = 1e4
-save_internal = 500
-print_every_n = 50
+batch_size = 3
+steps = 1000
+learning_rate = 1e-2
+decay_steps = 250
+decay_rate = 0.5
+shuffle_size = 200
+eval_internal = 100
+save_internal = 100
+print_every_n = 5
 cell_size = prod(list(n_strides_yolo))
 
 
@@ -81,7 +86,6 @@ test_example = True
 # [preprocessing here]
 
 
-
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
 
 if not network_exists or retrain:
@@ -92,24 +96,23 @@ if not network_exists or retrain:
                             train_dir=letters_train_dir,
                             test_dir=letters_test_dir,
                             percentage=split_percentage)
-        print(f"Splitting {splitter.percentage}% of the data "+
+        print(f"Splitting {splitter.percentage}% of the data " +
               f"found in {splitter.source_dir}...")
 
         sleep(0.2)
         num_classes = splitter.split()
         if augment:
-          print(f"Augmenting training letters...")
-          augmenter = Augmenter(source_dir=letters_train_dir,
-                                shear=True,
-                                coarse_dropout=(0.10, 0.5))
-          augmenter.augment()
+            print(f"Augmenting training letters...")
+            augmenter = Augmenter(source_dir=letters_train_dir,
+                                  shear=True,
+                                  coarse_dropout=(0.10, 0.5))
+            augmenter.augment()
 
     else:  # if training letters exist
         print("Training dataset detected! " +
               "Skipping splitting & augmenting.")
         sleep(0.2)
         num_classes = len(os.listdir(letters_train_dir))
-
 
     if not os.path.exists(lines_train_dir):
         linemaker = Linemaker(set_type="train",
@@ -143,7 +146,6 @@ if not network_exists or retrain:
             print(f"{max_h} {max_w}", file=filename)
         img_dims = (max_h, max_w)
 
-
     else:
         print("Line data detected! Skipping linemaking.")
         sleep(0.2)
@@ -151,7 +153,6 @@ if not network_exists or retrain:
         with open(dimensions_file, "r") as max_dimensions:
             img_h, img_w = [int(x) for x in max_dimensions.read().split()]
         img_dims = (img_h, img_w)
-
 
     if not os.path.isfile(os.path.normpath(lines_train_dir) + ".tfrecords"):
         print("Making tfrecords...")
@@ -233,7 +234,7 @@ if not network_exists or retrain:
 
     network_exists = True
 
-else: # if network already exists and not retraining
+else:  # if network already exists and not retraining
     print("Network already trained!")
     sleep(0.2)
 
@@ -271,21 +272,21 @@ if network_exists and test_example:
         score_threshold=score_threshold,
         iou_threshold=iou_threshold,
         convert=False,
-        checkpoint_step=steps-(steps%save_internal))
+        checkpoint_step=steps - (steps % save_internal))
 
     weightconverter.convert_weights()
 
-    tester = Tester(source_dir=(lines_train_dir if test_on_train else lines_test_dir),
+    tester = Tester(source_dir=(lines_train_dir if test_on_train
+                                else lines_test_dir),
                     num_classes=num_classes,
                     score_threshold=score_threshold,
                     iou_threshold=iou_threshold,
                     size_threshold=size_threshold,
                     img_dims=img_dims,
                     checkpoint_dir=checkpoint_dir,
-                    letters_test_dir=(letters_train_dir if test_on_train else letters_test_dir),
+                    letters_test_dir=(letters_train_dir if test_on_train
+                                      else letters_test_dir),
                     max_boxes=max_boxes,
-                    remove_overlap_half=remove_overlap_half,
-                    remove_overlap_full=remove_overlap_full,
                     filters=filters)
     results = tester.test()
 
@@ -294,7 +295,7 @@ if network_exists and test_example:
     if not results:
         print("No characters were detected!")
     else:
-        [print(f"x={int(x)}:\t{c}\t(p = {p:.3f})") for (x,c,p) in results]
+        [print(f"x={int(x)}:\t{c}\t(p = {p:.3f})") for (x, c, p) in results]
 
     print('\n'*5)
 
@@ -334,7 +335,7 @@ if network_exists and test_example:
         else:
             return '?'
 
-    print(''.join([convert_to_uni(c) for (_,c,_) in results]))
+    print(''.join([convert_to_uni(c) for (_, c, _) in results]))
 
     print('\n'*5)
 
