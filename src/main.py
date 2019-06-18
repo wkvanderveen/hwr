@@ -33,12 +33,12 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 27
+num_classes = 5
 split_percentage = 20
-augment = True
+augment = False
 line_length_bounds = (6, 10)
-n_training_lines = 30000
-n_testing_lines = 500
+n_training_lines = 100
+n_testing_lines = 100
 max_overlap_train = 10
 max_overlap_test = 10
 max_boxes = 12
@@ -46,40 +46,40 @@ test_on_train = True
 
 
 # Network parameters (darknet)
-n_filters_dn = (64, 48, 32)
-n_strides_dn = (2, 2, 1)
-n_ksizes_dn = (6, 6, 6)
+n_filters_dn = (128,)
+n_strides_dn = (1, )
+n_ksizes_dn = (8, )
 
 # Network parameters (yolo)
-n_filt_yolo = (512, 384, 256)
-n_strides_yolo = (2, 2, 1)
-n_ksizes_yolo = (16, 16, 8)
-cluster_num = 2
+n_filt_yolo = (128,)
+n_strides_yolo = (1,)
+n_ksizes_yolo = (6,)
+cluster_num = 12
 
 # Thresholds and filters
-filters = True
+filters = False
 iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0  # doesn't do anything
-size_threshold = (20, 20)  # in pixels
+size_threshold = (0, 0)  # in pixels
 # remove_overlap_half = True
 # remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
-batch_size = 3
-steps = 1000
-learning_rate = 1e-2
-decay_steps = 250
+batch_size = 5
+steps = 500
+learning_rate = 1e-3
+decay_steps = 100
 decay_rate = 0.5
-shuffle_size = 200
+shuffle_size = None
 eval_internal = 100
 save_internal = 100
-print_every_n = 5
+print_every_n = 10
 cell_size = prod(list(n_strides_yolo))
 
 
 # Other parameters
 retrain = False
-show_tfrecord_example = False
+show_tfrecord_example = True
 test_example = True
 
 

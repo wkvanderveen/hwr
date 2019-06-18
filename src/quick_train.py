@@ -25,6 +25,7 @@ class Trainer(object):
         self.eval_internal = eval_internal
         self.size_threshold = size_threshold
         self.save_internal = save_internal
+        self.iou_threshold = 1.0  # lower is stricter
         self.print_every_n = print_every_n
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
@@ -59,6 +60,7 @@ class Trainer(object):
                           shuffle=None)
 
         is_training = tf.placeholder(tf.bool)
+
         example = tf.cond(is_training,
                           lambda: trainset.get_next(),
                           lambda: testset.get_next())
@@ -68,6 +70,9 @@ class Trainer(object):
         model = yolov3.yolov3(self.num_classes, ANCHORS)
 
         with tf.variable_scope('yolov3'):
+
+            # Give the images to the network, and receive a prediction
+            # feature map
             pred_feature_map = model.forward(
                 images,
                 is_training=is_training,
@@ -78,7 +83,8 @@ class Trainer(object):
                 ksizes_yolo=self.ksizes_yolo,
                 n_strides_yolo=self.n_strides_yolo)
 
-            loss = model.compute_loss(pred_feature_map, y_true)
+            loss = model.compute_loss(
+                pred_feature_map, y_true, self.iou_threshold)
             y_pred = model.predict(pred_feature_map)
 
         tf.summary.scalar("loss/coord_loss",   loss[1])
@@ -87,7 +93,8 @@ class Trainer(object):
         tf.summary.scalar("loss/class_loss",   loss[4])
 
         global_step = tf.Variable(
-            0, trainable=False, collections=[tf.GraphKeys.LOCAL_VARIABLES])
+            0, trainable=True, collections=[tf.GraphKeys.LOCAL_VARIABLES])
+
         write_op = tf.summary.merge_all()
         writer_train = tf.summary.FileWriter("../../data/train_summary",
                                              sess.graph)
@@ -95,6 +102,7 @@ class Trainer(object):
 
         update_vars = tf.contrib.framework.get_variables_to_restore(
             include=["yolov3/yolo-v3"])
+
         lr = tf.train.exponential_decay(self.learning_rate,
                                         global_step,
                                         decay_steps=self.decay_steps,

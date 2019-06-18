@@ -16,7 +16,6 @@ import os
 import numpy as np
 import tensorflow as tf
 from core import utils
-from PIL import Image
 from core.dataset import Parser, dataset
 
 class ExampleDisplayer(object):
@@ -32,41 +31,38 @@ class ExampleDisplayer(object):
 
     def show_example(self):
         sess = tf.Session()
-        classes = os.listdir(self.source_dir[:-len(".tfrecords") or None])
 
         train_tfrecord = self.source_dir
-        anchors        = utils.get_anchors(self.anchor_dir, self.img_h, self.img_w)
+        anchors = utils.get_anchors(self.anchor_dir, self.img_h, self.img_w)
 
-        parser   = Parser(image_h=self.img_h,
-                          image_w=self.img_w,
-                          anchors=anchors,
-                          num_classes=self.num_classes,
-                          cell_size=self.cell_size,
-                          debug=True)
+        parser = Parser(image_h=self.img_h,
+                        image_w=self.img_w,
+                        anchors=anchors,
+                        num_classes=self.num_classes,
+                        cell_size=self.cell_size,
+                        debug=True)
         trainset = dataset(parser, train_tfrecord, 1, shuffle=1)
 
-        is_training = tf.placeholder(tf.bool)
         example = trainset.get_next()
 
         image, boxes = sess.run(example)
         image, boxes = image[0], boxes[0]
+        image = np.uint8(image*255)
 
         n_box = len(boxes)
-        print(boxes)
 
         for i in range(n_box):
             image = cv2.rectangle(image,(int(float(boxes[i][0])),
                                          int(float(boxes[i][1]))),
                                         (int(float(boxes[i][2])),
-                                         int(float(boxes[i][3]))), (255,0,0), 1)
+                                         int(float(boxes[i][3]))), (255, 0, 0), 1)
             label = str(int(float(boxes[i][4])))
-            #label = classes[int(float(boxes[i][4]))]
+
             image = cv2.putText(image, label, (int(float(boxes[i][0])),int(float(boxes[i][1]))),
                                 cv2.FONT_HERSHEY_SIMPLEX,  .6, (0, 255, 0), 1, 2)
 
-
-        image = Image.fromarray(np.uint8(image*255))
-        image.show()
+        cv2.imshow('Example train image from TFRecords', image)
+        cv2.waitKey(0)
 
 
 if __name__ == "__main__":

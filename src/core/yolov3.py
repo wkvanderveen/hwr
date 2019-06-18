@@ -1,26 +1,13 @@
-#! /usr/bin/env python3
-# coding=utf-8
-#================================================================
-#   Copyright (C) 2018 * Ltd. All rights reserved.
-#
-#   Editor      : VIM
-#   File name   : yolov3.py
-#   Author      : YunYang1994
-#   Created date: 2018-11-21 18:41:35
-#   Description : YOLOv3: An Incremental Improvement
-#
-#================================================================
-
 import tensorflow as tf
 from core import common
 slim = tf.contrib.slim
+
 
 class darknet53(object):
     """network for performing feature extraction"""
 
     def __init__(self, inputs, n_filters, n_strides, n_ksizes):
         self.outputs = self.forward(inputs, n_filters, n_strides, n_ksizes)
-
 
     def forward(self, inputs, n_filters, n_strides, n_ksizes):
 
@@ -48,7 +35,7 @@ class yolov3(object):
 
         for i in range(min(len(filters), len(ksizes))):
             inputs = common._conv2d_fixed_padding(inputs,
-                                                  filters=filters[i] * 1,
+                                                  filters=filters[i],
                                                   kernel_size=ksizes[i],
                                                   strides=strides[i])
 
@@ -57,12 +44,13 @@ class yolov3(object):
     def _detection_layer(self, inputs, anchors):
         num_anchors = len(anchors)
 
-        feature_map = slim.conv2d(inputs, num_anchors * (5 + self._NUM_CLASSES),
-                                kernel_size=1,
-                                stride=1,
-                                normalizer_fn=None,
-                                activation_fn=None,
-                                biases_initializer=tf.zeros_initializer())
+        feature_map = slim.conv2d(inputs,
+                                  num_anchors * (5 + self._NUM_CLASSES),
+                                  kernel_size=1,
+                                  stride=1,
+                                  normalizer_fn=None,
+                                  activation_fn=None,
+                                  biases_initializer=tf.zeros_initializer())
 
         return feature_map
 
@@ -71,8 +59,14 @@ class yolov3(object):
         num_anchors = len(anchors)
         grid_size = feature_map.shape.as_list()[1:3]
         # the downscale image in height and weight
-        stride = tf.cast(self.img_size // grid_size, tf.float32) # [h,w] -> [y,x]
-        feature_map = tf.reshape(feature_map, [-1, grid_size[0], grid_size[1], num_anchors, 5 + self._NUM_CLASSES])
+        # [h,w] -> [y,x]
+        stride = tf.cast(self.img_size // grid_size, tf.float32)
+        feature_map = tf.reshape(feature_map,
+                                 [-1,
+                                  grid_size[0],
+                                  grid_size[1],
+                                  num_anchors,
+                                  5 + self._NUM_CLASSES])
 
         box_centers, box_sizes, conf_logits, prob_logits = tf.split(
             feature_map, [2, 2, 1, self._NUM_CLASSES], axis=-1)
@@ -83,8 +77,8 @@ class yolov3(object):
         grid_y = tf.range(grid_size[0], dtype=tf.int32)
 
         a, b = tf.meshgrid(grid_x, grid_y)
-        x_offset   = tf.reshape(a, (-1, 1))
-        y_offset   = tf.reshape(b, (-1, 1))
+        x_offset = tf.reshape(a, (-1, 1))
+        y_offset = tf.reshape(b, (-1, 1))
         x_y_offset = tf.concat([x_offset, y_offset], axis=-1)
         x_y_offset = tf.reshape(x_y_offset, [grid_size[0], grid_size[1], 1, 2])
         x_y_offset = tf.cast(x_y_offset, tf.float32)
@@ -92,11 +86,14 @@ class yolov3(object):
         box_centers = box_centers + x_y_offset
         box_centers = box_centers * stride[::-1]
 
-        box_sizes = tf.exp(box_sizes) * anchors # anchors -> [w, h]
+        box_sizes = tf.exp(box_sizes) * anchors  # anchors -> [w, h]
         boxes = tf.concat([box_centers, box_sizes], axis=-1)
         return x_y_offset, boxes, conf_logits, prob_logits
 
-    def forward(self, inputs, n_filters_dn, n_strides_dn, n_ksizes_dn, n_filt_yolo, ksizes_yolo, n_strides_yolo, is_training=False, reuse=False):
+    def forward(self, inputs, n_filters_dn, n_strides_dn, n_ksizes_dn,
+                n_filt_yolo, ksizes_yolo, n_strides_yolo, is_training=False,
+                reuse=False):
+
         self.img_size = tf.shape(inputs)[1:3]
 
         batch_norm_params = {
@@ -108,16 +105,34 @@ class yolov3(object):
         }
 
         # Set activation_fn and parameters for conv2d, batch_norm.
-        with slim.arg_scope([slim.conv2d, slim.batch_norm, common._fixed_padding],reuse=reuse):
-            with slim.arg_scope([slim.conv2d], normalizer_fn=slim.batch_norm,
+        with slim.arg_scope([slim.conv2d,
+                             slim.batch_norm,
+                             common._fixed_padding],
+                            reuse=reuse):
+
+            with slim.arg_scope([slim.conv2d],
+                                normalizer_fn=slim.batch_norm,
                                 normalizer_params=batch_norm_params,
                                 biases_initializer=None,
-                                activation_fn=lambda x: tf.nn.leaky_relu(x, alpha=self._LEAKY_RELU)):
+                                activation_fn=lambda x: tf.nn.leaky_relu(
+                                    x, alpha=self._LEAKY_RELU)):
+
                 with tf.variable_scope('darknet-53'):
-                    inputs = darknet53(inputs, n_filters=n_filters_dn, n_strides=n_strides_dn, n_ksizes=n_ksizes_dn).outputs
+
+                    # Convolve in darknet
+                    inputs = darknet53(inputs,
+                                       n_filters=n_filters_dn,
+                                       n_strides=n_strides_dn,
+                                       n_ksizes=n_ksizes_dn).outputs
 
                 with tf.variable_scope('yolo-v3'):
-                    inputs = self._yolo_block(inputs, filters=n_filt_yolo, ksizes=ksizes_yolo, strides=n_strides_yolo)
+
+                    # Convolve in yolo
+                    inputs = self._yolo_block(inputs,
+                                              filters=n_filt_yolo,
+                                              ksizes=ksizes_yolo,
+                                              strides=n_strides_yolo)
+
                     feature_map = self._detection_layer(inputs, self._ANCHORS)
                     feature_map = tf.identity(feature_map, name='feature_map')
 
@@ -127,9 +142,20 @@ class yolov3(object):
 
         grid_size = x_y_offset.shape.as_list()[:2]
 
-        boxes = tf.reshape(boxes, [-1, grid_size[0]*grid_size[1]*len(self._ANCHORS), 4])
-        confs = tf.reshape(confs, [-1, grid_size[0]*grid_size[1]*len(self._ANCHORS), 1])
-        probs = tf.reshape(probs, [-1, grid_size[0]*grid_size[1]*len(self._ANCHORS), self._NUM_CLASSES])
+        boxes = tf.reshape(boxes,
+                           [-1,
+                            grid_size[0] * grid_size[1] * len(self._ANCHORS),
+                            4])
+
+        confs = tf.reshape(confs,
+                           [-1,
+                            grid_size[0] * grid_size[1] * len(self._ANCHORS),
+                            1])
+
+        probs = tf.reshape(probs,
+                           [-1,
+                            grid_size[0] * grid_size[1] * len(self._ANCHORS),
+                            self._NUM_CLASSES])
 
         return boxes, confs, probs
 
@@ -140,7 +166,9 @@ class yolov3(object):
         """
         feature_map_anchors = [(feature_map, self._ANCHORS)]
 
-        results = [self._reorg_layer(feature_map, anchors) for (feature_map, anchors) in feature_map_anchors]
+        results = [self._reorg_layer(feature_map, anchors)
+                   for (feature_map, anchors) in feature_map_anchors]
+
         boxes_list, confs_list, probs_list = [], [], []
 
         for result in results:
@@ -157,37 +185,34 @@ class yolov3(object):
         confs = tf.concat(confs_list, axis=1)
         probs = tf.concat(probs_list, axis=1)
 
-        center_x, center_y, width, height = tf.split(boxes, [1,1,1,1], axis=-1)
-        x0 = center_x - width   / 2.
-        y0 = center_y - height  / 2.
-        x1 = center_x + width   / 2.
-        y1 = center_y + height  / 2.
+        center_x, center_y, width, height = tf.split(boxes,
+                                                     [1, 1, 1, 1],
+                                                     axis=-1)
+        x0 = center_x - width / 2.
+        y0 = center_y - height / 2.
+        x1 = center_x + width / 2.
+        y1 = center_y + height / 2.
 
         boxes = tf.concat([x0, y0, x1, y1], axis=-1)
         return boxes, confs, probs
 
-    def compute_loss(self, pred_feature_map, y_true):
-        """
-        Note: compute the loss
-        Arguments: y_pred, list -> [feature_map_1, feature_map_2, feature_map_3]
-                                        the shape of [None, 13, 13, 3*85]. etc
-        """
+    def compute_loss(self, pred_feature_map, y_true, iou_threshold):
 
         loss_xy, loss_wh, loss_conf, loss_class = 0., 0., 0., 0.
         total_loss = 0.
 
-        result = self.loss_layer(pred_feature_map, y_true, self._ANCHORS)
+        result = self.loss_layer(
+            pred_feature_map, y_true, self._ANCHORS, iou_threshold)
 
-        loss_xy    += result[0]
-        loss_wh    += result[1]
-        loss_conf  += result[2]
+        loss_xy += result[0]
+        loss_wh += result[1]
+        loss_conf += result[2]
         loss_class += result[3]
 
         total_loss = loss_xy + loss_wh + loss_conf + loss_class
         return [total_loss, loss_xy, loss_wh, loss_conf, loss_class]
 
-
-    def loss_layer(self, feature_map, y_true, anchors):
+    def loss_layer(self, feature_map, y_true, anchors, iou_threshold):
         # size in [h, w] format! don't get messed up!
 
         grid_size = tf.shape(feature_map)[1:3]
@@ -201,6 +226,7 @@ class yolov3(object):
 
         # the downscale ratio in height and weight
         ratio = tf.cast(self.img_size / grid_size, tf.float32)
+
         # N: batch_size
         N = tf.cast(tf.shape(feature_map)[0], tf.float32)
 
@@ -209,7 +235,6 @@ class yolov3(object):
 
         object_mask = y_true[..., 4:5]
 
-        # V: num of true gt box
         valid_true_boxes = tf.boolean_mask(y_true[..., 0:4],
                                            tf.cast(object_mask[..., 0],
                                                    'bool'))
@@ -221,25 +246,29 @@ class yolov3(object):
         pred_box_wh = pred_boxes[..., 2:4]
 
         # calc iou
+
         iou = self._broadcast_iou(valid_true_box_xy,
                                   valid_true_box_wh,
                                   pred_box_xy,
                                   pred_box_wh)
 
         best_iou = tf.reduce_max(iou, axis=-1)
+
         # get_ignore_mask
-        ignore_mask = tf.cast(best_iou < 0.5, tf.float32)
+        ignore_mask = tf.cast(best_iou < iou_threshold, tf.float32)
 
         ignore_mask = tf.expand_dims(ignore_mask, -1)
+
         # get xy coordinates in one cell from the feature_map
         # numerical range: 0 ~ 1
         true_xy = y_true[..., 0:2] / ratio[::-1] - x_y_offset
-        pred_xy = pred_box_xy      / ratio[::-1] - x_y_offset
+        pred_xy = pred_box_xy / ratio[::-1] - x_y_offset
 
         # get_tw_th, numerical range: 0 ~ 1
 
         true_tw_th = y_true[..., 2:4] / anchors
-        pred_tw_th = pred_box_wh      / anchors
+        pred_tw_th = pred_box_wh / anchors
+
         # for numerical stability
         true_tw_th = tf.where(condition=tf.equal(true_tw_th, 0),
                               x=tf.ones_like(true_tw_th), y=true_tw_th)
@@ -250,31 +279,43 @@ class yolov3(object):
         pred_tw_th = tf.log(tf.clip_by_value(pred_tw_th, 1e-9, 1e9))
 
         # box size punishment:
-        # box with smaller area has bigger weight. This is taken from the yolo darknet C source code.
+        # box with smaller area has bigger weight.
 
-        box_loss_scale = 2. - (y_true[..., 2:3] / tf.cast(self.img_size[1], tf.float32)) * (y_true[..., 3:4] / tf.cast(self.img_size[0], tf.float32))
+        box_loss_scale = 2. - ((y_true[..., 2:3]
+                                / tf.cast(self.img_size[1], tf.float32))
+                               * (y_true[..., 3:4]
+                                  / tf.cast(self.img_size[0], tf.float32)))
 
-        xy_loss = tf.reduce_sum(tf.square(true_xy    - pred_xy) * object_mask * box_loss_scale) / N
-        wh_loss = tf.reduce_sum(tf.square(true_tw_th - pred_tw_th) * object_mask * box_loss_scale) / N
-
-
+        xy_loss = tf.reduce_sum(tf.square(true_xy - pred_xy)
+                                * object_mask * box_loss_scale) / N
+        wh_loss = tf.reduce_sum(tf.square(true_tw_th - pred_tw_th)
+                                * object_mask * box_loss_scale) / N
 
         conf_pos_mask = object_mask
         conf_neg_mask = (1 - object_mask) * ignore_mask
-        conf_loss_pos = conf_pos_mask * tf.nn.sigmoid_cross_entropy_with_logits(labels=object_mask, logits=pred_conf_logits)
-        conf_loss_neg = conf_neg_mask * tf.nn.sigmoid_cross_entropy_with_logits(labels=object_mask, logits=pred_conf_logits)
+
+        conf_loss_pos = conf_pos_mask \
+            * tf.nn.sigmoid_cross_entropy_with_logits(labels=object_mask,
+                                                      logits=pred_conf_logits)
+        conf_loss_neg = conf_neg_mask \
+            * tf.nn.sigmoid_cross_entropy_with_logits(labels=object_mask,
+                                                      logits=pred_conf_logits)
+
         conf_loss = tf.reduce_sum(conf_loss_pos + conf_loss_neg) / N
 
+        class_loss = object_mask \
+            * tf.nn.sigmoid_cross_entropy_with_logits(labels=y_true[..., 5:],
+                                                      logits=pred_prob_logits)
 
-        class_loss = object_mask * tf.nn.sigmoid_cross_entropy_with_logits(labels=y_true[..., 5:], logits=pred_prob_logits)
         class_loss = tf.reduce_sum(class_loss) / N
-
 
         return xy_loss, wh_loss, conf_loss, class_loss
 
-    def _broadcast_iou(self, true_box_xy, true_box_wh, pred_box_xy, pred_box_wh):
+    def _broadcast_iou(self, true_box_xy, true_box_wh, pred_box_xy,
+                       pred_box_wh):
         '''
-        maintain an efficient way to calculate the ios matrix between ground truth true boxes and the predicted boxes
+        maintain an efficient way to calculate the ios matrix between
+        ground truth true boxes and the predicted boxes
         note: here we only care about the size match
         '''
 
@@ -285,23 +326,19 @@ class yolov3(object):
         true_box_xy = tf.expand_dims(true_box_xy, 0)
         true_box_wh = tf.expand_dims(true_box_wh, 0)
 
-        # [N, 13, 13, 3, 1, 2] & [1, V, 2] ==> [N, 13, 13, 3, V, 2]
         intersect_mins = tf.maximum(pred_box_xy - pred_box_wh / 2.,
                                     true_box_xy - true_box_wh / 2.)
         intersect_maxs = tf.minimum(pred_box_xy + pred_box_wh / 2.,
                                     true_box_xy + true_box_wh / 2.)
+
         intersect_wh = tf.maximum(intersect_maxs - intersect_mins, 0.)
 
-        # shape: [N, 13, 13, 3, V]
         intersect_area = intersect_wh[..., 0] * intersect_wh[..., 1]
-        # shape: [N, 13, 13, 3, 1]
-        pred_box_area  = pred_box_wh[..., 0]  * pred_box_wh[..., 1]
-        # shape: [1, V]
-        true_box_area  = true_box_wh[..., 0]  * true_box_wh[..., 1]
-        # [N, 13, 13, 3, V]
+
+        pred_box_area = pred_box_wh[..., 0] * pred_box_wh[..., 1]
+
+        true_box_area = true_box_wh[..., 0] * true_box_wh[..., 1]
+
         iou = intersect_area / (pred_box_area + true_box_area - intersect_area)
 
         return iou
-
-
-

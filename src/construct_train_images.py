@@ -124,7 +124,7 @@ class Linemaker(object):
                     if rand.random() < 0.2:
                         line = np.concatenate((line, 255*np.ones(shape=chars[char_idx].shape)), axis=1)
             else:
-                for char_idx in range(1,line_length):
+                for char_idx in range(1, line_length):
                     # Take a random overlap distance
                     overlap_pix = min(rand.randint(
                         1,self.max_overlap), min(chars[char_idx].shape[1], line.shape[1]))
@@ -156,6 +156,7 @@ class Linemaker(object):
                     0,
                     rand.randint(5, max_paddings[3]),
                     cv2.BORDER_REPLICATE)
+            line = line / 255
 
             for char_idx, char in enumerate(chars):
                 with open(self.label_dir, "a") as file:
