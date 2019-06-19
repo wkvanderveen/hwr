@@ -77,6 +77,9 @@ class CNN_network:
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
 			newImage = cv2.resize(newImage, (49,19))
+			cv2.imshow('train',newImage)
+			cv2.waitKey(0)
+			cv2.destroyAllWindows()
 			temp.append(newImage)
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)
@@ -91,6 +94,9 @@ class CNN_network:
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
 			newImage = cv2.resize(newImage, (49,19))
+			cv2.imshow('test',newImage)
+			cv2.waitKey(0)
+			cv2.destroyAllWindows()
 			temp.append(newImage)
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)
