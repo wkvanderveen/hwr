@@ -1,5 +1,7 @@
 import os
 from os.path import abspath, join
+import sys
+import cv2
 from time import sleep
 from split import Splitter
 from data_augmenter import Augmenter
@@ -12,6 +14,9 @@ from quick_train import Trainer
 from show_input_image import ExampleDisplayer
 from quick_test import Tester
 from numpy import prod
+
+sys.path.append('preprocessing/')
+from preprocessor import preprocess_image
 
 # # PARAMETERS # #
 
@@ -34,6 +39,10 @@ checkpoint_dir    = join(core_data_path, "checkpoint")
 dimensions_file   = join(core_data_path, "dimensions.txt")
 weights_dir       = join(core_data_path, "weights/")
 anchor_file       = join(core_data_path, "anchors.txt")
+image_dir         = join(core_data_path, "image-data")
+processed_image_dir=join(core_data_path, "new-lines") #change later
+
+
 
 # Data parameters
 num_classes = 2
@@ -87,6 +96,19 @@ test_example = True
 
 
 # [preprocessing here]
+if not os.path.isdir(processed_image_dir):
+    print("Preprocessing images")
+    files = [join(image_dir, fn) for fn in os.listdir(image_dir) if os.path.isfile(join(image_dir, fn))]
+    os.mkdir(processed_image_dir)
+    idx = 0
+    for file in files:
+          extracted_lines = preprocess_image(cv2.imread(file))
+          for line in extracted_lines:
+              cv2.imwrite(join(processed_image_dir, "%d.png" % (idx)), line)
+              idx += 1
+
+else:
+    print("Preprocessed images detected!\nSkipping preprocessing.")
 
 
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
