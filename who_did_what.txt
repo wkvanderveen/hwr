@@ -1,0 +1,22 @@
+Emile: 		Sliding window for backup_cnn; 
+			overall pipeline for yolo (splitting data, augmenting data, making training lines, training and testing pipeline, etc)
+			Data reader for backup_cnn
+			Training networks
+
+Roberts:	Write_to_file
+
+Tomas:		Preprocessing (all of it); 
+			post processing
+
+Werner:		Changing Yolo to trian well on our data (a lot); 
+			post processing (Naive Bayes); 
+			overall pipeline for yolo (splitting data, augmenting data, making training lines, training and testing pipeline, etc)
+			Finding correct configuration hyperparameters and network layout (largest contribution)
+			Training networks
+
+Ruben: 		Initial setup Yolo; 
+			backup_cnn & data reader; 
+			sliding window approach for backup cnn
+			Finding correct configuration hyperparameters and network layout (smaller contribution)
+			overall pipeline for yolo (splitting data, augmenting data, making training lines, training and testing pipeline, etc) (smaller contribution)
+			Training networks
