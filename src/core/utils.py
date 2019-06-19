@@ -174,6 +174,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     :param image,
     :param classes, the return list from the function `read_coco_names`
     """
+
     if boxes is None:
         return (image, tuple())
 
@@ -212,7 +213,6 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     colors = list(map(lambda x: (int(x[0] * 255),
                                  int(x[1] * 255),
                                  int(x[2] * 255)),
-
                       colors))
 
     results = []
@@ -236,7 +236,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
         results.append((x_center, label, score))
 
     results.sort(key=lambda tup: tup[0])
-    image.show() if show else None
+    image.show(title="Prediction image") if show else None
     return (image, results)
 
 
@@ -366,7 +366,6 @@ def bbox_iou(A, B):
 
 
 def evaluate(y_pred, y_true, iou_thresh=0.5, score_thresh=0.3):
-
     num_images = y_true[0].shape[0]
     num_classes = y_true[0][0][..., 5:].shape[-1]
     true_labels_dict = {i: 0 for i in range(num_classes)}  # {class: count}
