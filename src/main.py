@@ -1,4 +1,7 @@
 import os
+from os.path import abspath, join
+import sys
+import cv2
 from time import sleep
 from split import Splitter
 from data_augmenter import Augmenter
@@ -12,6 +15,9 @@ from show_input_image import ExampleDisplayer
 from quick_test import Tester
 from numpy import prod
 
+sys.path.append('preprocessing/')
+from preprocessor import preprocess_image
+
 # # PARAMETERS # #
 
 # tensorboard --logdir train:./train_summary,eval:./test_summary
@@ -20,17 +26,23 @@ from numpy import prod
 # Apparently this is lowest loss. Why? Maybe add minimal box constraint.
 
 # File structure parameters
-orig_letters_dir = "../../data/original_letters/"
-letters_train_dir = "../../data/letters-train/"
-letters_test_dir = "../../data/letters-test/"
-lines_train_dir = "../../data/lines-train/"
-lines_test_dir = "../../data/lines-test/"
-label_train_path = "../../data/labels-train.txt"
-label_test_dir = "../../data/labels-test.txt"
-checkpoint_dir = "../../data/checkpoint/"
-dimensions_file = "../../data/dimensions.txt"
-weights_dir = "../../data/weights/"
-anchor_file = "../../data/anchors.txt"
+core_data_path =  join(join(abspath(".."), ".."), "data")
+
+orig_letters_dir  = join(core_data_path, "original_letters")
+letters_train_dir = join(core_data_path, "letters-train")
+letters_test_dir  = join(core_data_path, "letters-test")
+lines_train_dir   = join(core_data_path, "lines-train")
+lines_test_dir    = join(core_data_path, "lines-test")
+label_train_path  = join(core_data_path, "labels-train.txt")
+label_test_dir    = join(core_data_path, "labels-test.txt")
+checkpoint_dir    = join(core_data_path, "checkpoint")
+dimensions_file   = join(core_data_path, "dimensions.txt")
+weights_dir       = join(core_data_path, "weights/")
+anchor_file       = join(core_data_path, "anchors.txt")
+image_dir         = join(core_data_path, "image-data")
+processed_image_dir=join(core_data_path, "new-lines") #change later
+
+
 
 # Data parameters
 num_classes = 27
@@ -88,6 +100,19 @@ test_example = True
 
 
 # [preprocessing here]
+if not os.path.isdir(processed_image_dir):
+    print("Preprocessing images")
+    files = [join(image_dir, fn) for fn in os.listdir(image_dir) if os.path.isfile(join(image_dir, fn))]
+    os.mkdir(processed_image_dir)
+    idx = 0
+    for file in files:
+          extracted_lines = preprocess_image(cv2.imread(file))
+          for line in extracted_lines:
+              cv2.imwrite(join(processed_image_dir, "%d.png" % (idx)), line)
+              idx += 1
+
+else:
+    print("Preprocessed images detected!\nSkipping preprocessing.")
 
 
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))

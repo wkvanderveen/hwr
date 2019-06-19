@@ -159,7 +159,6 @@ class Linemaker(object):
                     0,
                     rand.randint(5, max_paddings[3]),
                     cv2.BORDER_REPLICATE)
-            # line = line / 255.
 
             for char_idx, char in enumerate(chars):
                 with open(self.label_dir, "a") as file:
