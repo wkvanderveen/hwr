@@ -86,8 +86,6 @@ class Tester(object):
             boxes = boxes[mask]
             scores = scores[mask]
 
-
-
             if self.filters:
                 # Harder filters
                 print(f"Test: Boxes before filtering:\t{boxes.shape[0]}")
@@ -120,7 +118,7 @@ class Tester(object):
                 iou_thresh=self.iou_threshold,
                 max_boxes=self.max_boxes)
 
-            img = np.uint8(img*255)
+            # img = np.uint8(img*255)
 
             (image, results) = utils.draw_boxes(
                 img,
