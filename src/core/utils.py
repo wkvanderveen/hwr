@@ -366,7 +366,6 @@ def bbox_iou(A, B):
 
 
 def evaluate(y_pred, y_true, iou_thresh=0.5, score_thresh=0.3):
-
     num_images = y_true[0].shape[0]
     num_classes = y_true[0][0][..., 5:].shape[-1]
     true_labels_dict = {i: 0 for i in range(num_classes)}  # {class: count}

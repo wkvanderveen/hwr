@@ -1,4 +1,5 @@
 import os
+from os.path import abspath, join
 from time import sleep
 from split import Splitter
 from data_augmenter import Augmenter
@@ -20,17 +21,19 @@ from numpy import prod
 # Apparently this is lowest loss. Why? Maybe add minimal box constraint.
 
 # File structure parameters
-orig_letters_dir = "../../data/original_letters/"
-letters_train_dir = "../../data/letters-train/"
-letters_test_dir = "../../data/letters-test/"
-lines_train_dir = "../../data/lines-train/"
-lines_test_dir = "../../data/lines-test/"
-label_train_path = "../../data/labels-train.txt"
-label_test_dir = "../../data/labels-test.txt"
-checkpoint_dir = "../../data/checkpoint/"
-dimensions_file = "../../data/dimensions.txt"
-weights_dir = "../../data/weights/"
-anchor_file = "../../data/anchors.txt"
+core_data_path =  join(join(abspath(".."), ".."), "data")
+
+orig_letters_dir  = join(core_data_path, "original_letters")
+letters_train_dir = join(core_data_path, "letters-train")
+letters_test_dir  = join(core_data_path, "letters-test")
+lines_train_dir   = join(core_data_path, "lines-train")
+lines_test_dir    = join(core_data_path, "lines-test")
+label_train_path  = join(core_data_path, "labels-train.txt")
+label_test_dir    = join(core_data_path, "labels-test.txt")
+checkpoint_dir    = join(core_data_path, "checkpoint")
+dimensions_file   = join(core_data_path, "dimensions.txt")
+weights_dir       = join(core_data_path, "weights/")
+anchor_file       = join(core_data_path, "anchors.txt")
 
 # Data parameters
 num_classes = 2

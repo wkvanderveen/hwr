@@ -20,7 +20,7 @@ class Linemaker(object):
 
     def make_lines(self):
 
-        classes     = os.listdir(self.source_dir)
+        classes = os.listdir(self.source_dir)
         num_classes = len(classes)
 
         max_h, max_w = 0, 0
@@ -165,8 +165,6 @@ class Linemaker(object):
                              f"{positions['y2'][char_idx]} " +
                              f"{classes.index(labels[char_idx])} ")
                     file.write(str(label).rstrip('\n'))
-
-
 
             with open(self.label_dir, "a") as file:
                 file.write('\n')
