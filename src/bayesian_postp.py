@@ -86,14 +86,7 @@ class Bayesian_processor():
     def process_word(self, predicted_word):
 
         """
-        P(letter | surrounding letters) = P(surrounding letters | letter)
-                                          * p(letter) / P(surrounding letters)
-
-                                        = P(previous letter | letter)
-                                          * p(letter) / p(previous letter)
-                                          +
-                                          P(next letter | letter)
-                                          * p(letter) / p(next letter)
+        P( z | xy) = lambda * P(xyz) / P(xy) + mu * P(yz) / P(y) + (1.0 - lambda - mu) * P(z) / P(sum unigrams) 
         """
         posterior_word = np.zeros((len(predicted_word), len(self.unigrams)), dtype=np.double)
 
@@ -149,19 +142,6 @@ class Bayesian_processor():
 
                         letter_probs.append(prob)
                 posterior_word[idx, first_letter] += max(letter_probs)
-
-        # for idx in range(len(predicted_word) - 2, -1, -1):
-        #     prior_softmax = predicted_word[idx]
-        #     next_softmax = predicted_word[idx+1]  # or posterior word?
-        #     ## get index of next letter
-        #     next_prior = max(next_softmax)
-        #     next_letter = next_softmax.index(next_prior)
-
-        #     for jdx, unigram_prob in enumerate(self.unigrams):
-        #         bigram_prob = self.bigrams[jdx, next_letter]
-        #         if bigram_prob == 0.:
-        #             bigram_prob = unigram_prob
-        #         posterior_word[idx, jdx] += bigram_prob * prior_softmax[jdx] / next_prior
         return posterior_word
 
     def normalize_posteriors(self, word):
@@ -187,6 +167,19 @@ class Bayesian_processor():
         wordstring = ''.join([hebrew_map[letter.index(max(letter))]
                               for letter in word])
 
+    def apply_postprocessing(self, probabilities):
+        posteriors = self.process_word(probabilities)
+        posteriors = self.normalize_posteriors(posteriors)
+
+        final_sentence = ""
+        for letter_probs in posteriors:
+            best_letter_val = max(letter_probs)
+            best_letter_index = letter_probs.index(best_letter_val)
+
+            final_sentence += hebrew_map[best_letter_index]
+
+        return final_sentence
+
 
 
 
@@ -203,8 +196,12 @@ if __name__ == "__main__":
     ]
 
     processor = Bayesian_processor()
-    posterior_word = processor.process_word(predicted_word)
-    posterior_word = processor.normalize_posteriors(posterior_word)
+    # posterior_word = processor.process_word(predicted_word)
+    # posterior_word = processor.normalize_posteriors(posterior_word)
 
-    processor.print_word(predicted_word, "Predicted word (network output)")
-    processor.print_word(posterior_word, "Normalized word (after bigrams)")
+    # print(posterior_word)
+
+    # processor.print_word(predicted_word, "Predicted word (network output)")
+    # processor.print_word(posterior_word, "Normalized word (after bigrams)")
+
+    print(processor.apply_postprocessing(predicted_word))
