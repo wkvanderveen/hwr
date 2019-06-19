@@ -182,7 +182,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     picked_labels = []
     picked_scores = []
 
-    min_dist = 20
+    min_dist = 30
 
     for i, box in enumerate(boxes):
         for io, other in enumerate(picked_boxes):
@@ -236,7 +236,11 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
         results.append((x_center, label, score))
 
     results.sort(key=lambda tup: tup[0])
+
+    image = image.resize(size=(2*image.size[0], 2*image.size[1]))
+
     image.show(title="Prediction image") if show else None
+
     return (image, results)
 
 
