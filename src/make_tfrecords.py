@@ -29,7 +29,6 @@ class TfRecordMaker(object):
                 increase=0
 
             for line in f.readlines():
-                print("LINE: ", line)
                 example = line.split(' ')
                 # example = [float(item) for item in example[1:]]
                 if increase == 0:
@@ -38,7 +37,6 @@ class TfRecordMaker(object):
                     image_path = str(example[0]+" "+example[increase])
                 boxes_num = len(example[(increase+1):]) // 5
                 boxes = np.zeros([boxes_num, 5], dtype=np.float32)
-                print(boxes.shape, boxes_num)
                 for i in range(boxes_num):
                     boxes[i] = example[increase+(1+i*5):increase+(6+i*5)]
                 dataset[image_path] = boxes
@@ -51,7 +49,6 @@ class TfRecordMaker(object):
             for line in f.readlines():
                 image_path = line.split('.jpeg')[0] + ".jpeg" ## fixes for possible spaces in file path
                 example = line.split(' ') ## fn will be filtered out later
-                print(image_path)
                 clean_example = []
                 for item in example:
                     try:
