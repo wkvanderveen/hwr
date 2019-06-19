@@ -87,6 +87,9 @@ class DataReader:
             print("Letters saved as npy file in: ", self.save_file_train)
             np.save(self.save_file_train_labels, classes)
             print("Classes saved as npy file in: ", self.save_file_train_labels)
+            with open(self.save_file_dimensions, "w") as filename:
+                print("{} {}".format(self.max_height, self.max_width), file=filename)
+        if mode == 'test':
             if self.augment:
                 letters = [] #Empty for memory space
                 classes = [] #Empty for memory space
