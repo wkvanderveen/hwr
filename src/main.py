@@ -33,7 +33,7 @@ weights_dir = "../../data/weights/"
 anchor_file = "../../data/anchors.txt"
 
 # Data parameters
-num_classes = 5
+num_classes = 2
 split_percentage = 20
 augment = False
 line_length_bounds = (6, 10)
@@ -42,19 +42,19 @@ n_testing_lines = 100
 max_overlap_train = 10
 max_overlap_test = 10
 max_boxes = 12
-test_on_train = True
+test_on_train = False
 
 
 # Network parameters (darknet)
-n_filters_dn = (128,)
+n_filters_dn = (256,)
 n_strides_dn = (1, )
-n_ksizes_dn = (8, )
+n_ksizes_dn = (6, )
 
 # Network parameters (yolo)
-n_filt_yolo = (128,)
+n_filt_yolo = (256,)
 n_strides_yolo = (1,)
 n_ksizes_yolo = (6,)
-cluster_num = 12
+cluster_num = 18
 
 # Thresholds and filters
 filters = False
@@ -65,11 +65,11 @@ size_threshold = (0, 0)  # in pixels
 # remove_overlap_half = True
 # remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
-batch_size = 5
-steps = 500
+batch_size = 1
+steps = 100
 learning_rate = 1e-3
 decay_steps = 100
-decay_rate = 0.5
+decay_rate = 0.3
 shuffle_size = None
 eval_internal = 100
 save_internal = 100

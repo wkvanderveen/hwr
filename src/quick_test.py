@@ -119,6 +119,7 @@ class Tester(object):
                 score_thresh=self.score_threshold,
                 iou_thresh=self.iou_threshold,
                 max_boxes=self.max_boxes)
+
             img = np.uint8(img*255)
 
             (image, results) = utils.draw_boxes(
