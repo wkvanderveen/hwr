@@ -1,10 +1,9 @@
-import cv2
 import numpy as np
 from PIL import Image
 from skimage import io
 import os
 import sys
-
+from skimage.transform import AffineTransform
 np.set_printoptions(threshold=sys.maxsize)
 TRAIN_X_PATH = '../../data/letters-train'
 TEST_X_PATH = '../../data/letters-test'
@@ -24,6 +23,11 @@ class DataReader:
         self.save_file_test_labes = self.save_path + "test_labels"
         self.save_file_dimensions = self.save_path + "max_dimensions"
         self.threshold = 200
+
+    def extra_augmentation(self):
+        augmented_list = []
+
+        return augmented_list
 
     def read_letters(self, mode):
         letters = []
@@ -46,6 +50,10 @@ class DataReader:
                     onehot[class_num] = 1
                     letters.append(io.imread(img_path, as_gray=True))
                     classes.append(onehot)
+                    augmented = io.imread(img_path, as_gray=True)
+                    for image in augmented:
+                        letters.append(image)
+                        classes.append(onehot)
             letters = np.array(letters)
             classes = np.array(classes)
             print("Number of letters found in dataset:", letters.shape[0])
