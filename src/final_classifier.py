@@ -14,6 +14,7 @@ import cv2 	# for reading in the image
 ## import own code
 sys.path.append('preprocessing/')
 from preprocessor import preprocess_image
+from bayesian_postp import Bayesian_processor
 
 if __name__ == '__main__':
 
@@ -47,17 +48,21 @@ if __name__ == '__main__':
 		img = cv2.imread(join(path, file))
 		croppings = preprocess_image(img)
 
-		## transcribe croppings
+		## transcribe croppings 
+		## neural network call here
 
 		transcribed_lines = None
 
+		## postprocessing here
+		postp = Bayesian_processor()
+		final_sentence = postp.apply_postprocessing(transcribed_lines)
 
 		## write croppings to file
 
 		outfile = file.split('.')[0] #get root filename
 		outfile += '.txt'
 		## Example call:
-		# write_to_file(transcribed_lines, outfile)
+		# write_to_file(final_sentence, outfile)
 
 		print("Succesfully transcribed \"%s\" to \"%s\"." % (file, outfile))
 
