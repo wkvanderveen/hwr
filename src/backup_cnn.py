@@ -20,6 +20,8 @@ class CNN_network:
 		self.CHANNELS = 1
 		self.TRAIN_X_FILE = '../../data/train_letters.npy' 
 		self.TRAIN_Y_FILE = '../../data/train_labels.npy'
+		self.TRAIN_X_FILE_AUG = '../../data/train_letters_aug.npy' 
+		self.TRAIN_Y_FILE_AUG = '../../data/train_labels_aug.npy'
 		self.TEST_X_FILE = '../../data/test_letters.npy' 
 		self.TEST_Y_FILE = '../../data/test_labels.npy'
 		self.MODEL_SAVE = '../../data/backup_model.model'
@@ -32,6 +34,7 @@ class CNN_network:
 		self.OUTPUT_ACTIV = ['softmax']
 		self.DROPOUT_1 = 0.1
 		self.DROPOUT_2 = 0.2
+		self.TRAIN_ON_AUGMENT = True
 
 		self.SAVE_EVERY = 1000 #steps
 
@@ -96,6 +99,13 @@ class CNN_network:
 		model = self.build_net(input_shape)
 		model = self.compile_model(model)
 		model = self.train_model(model)
+		if self.TRAIN_ON_AUGMENT:
+			print("Loading augmented data...")
+			self.trainX = np.load(self.TRAIN_X_FILE_AUG, allow_pickle=True)
+			self.trainY = np.load(self.TRAIN_Y_FILE_AUG, allow_pickle=True)
+			print("Reshaping augmented data")
+			self.trainX = [resize(image, (self.IMG_H,self.IMG_W, self.CHANNELS)) for image in self.trainX]
+			model = self.train_model(model)
 		self.evaluate_model(model)
 		model.save(self.MODEL_SAVE)
 
