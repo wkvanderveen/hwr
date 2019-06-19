@@ -33,11 +33,11 @@ class yolov3(object):
 
     def _yolo_block(self, inputs, filters, ksizes, strides):
 
-        for i in range(min(len(filters), len(ksizes))):
-            inputs = common._conv2d_fixed_padding(inputs,
-                                                  filters=filters[i],
-                                                  kernel_size=ksizes[i],
-                                                  strides=strides[i])
+        # for i in range(min(len(filters), len(ksizes))):
+        #     inputs = common._conv2d_fixed_padding(inputs,
+        #                                           filters=filters[i],
+        #                                           kernel_size=ksizes[i],
+        #                                           strides=strides[i])
 
         return inputs
 

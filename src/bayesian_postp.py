@@ -76,7 +76,12 @@ class Bayesian_processor():
         self.ngrams = np.load(fn)
         self.unigrams = self.ngrams['unigrams']
         self.bigrams = self.ngrams['bigrams']
+        self.trigrams = self.ngrams['trigrams']
 
+        ## parameters for simple interpolation
+        self.TRIGRAM_IMPORTANCE = 0.33
+        self.BIGRAM_IMPORTANCE = 0.33
+        self.UNIGRAM_IMPORTANCE = 1.0 - self.TRIGRAM_IMPORTANCE - self.BIGRAM_IMPORTANCE
 
     def process_word(self, predicted_word):
 
@@ -94,38 +99,69 @@ class Bayesian_processor():
 
         ## forward pass
         for idx, prior_softmax in enumerate(predicted_word):
-
-            if idx > 0:
-                previous_softmax = predicted_word[idx-1]  # or posterior word?
-                ## get index of previous letter
-                previous_prior = max(previous_softmax)
-                previous_letter = previous_softmax.index(previous_prior)
-
-                for jdx, unigram_prob in enumerate(self.unigrams):
-                    probs = []
-                    for kdx in range(len(self.unigrams)):
-                        bigram_prob = self.bigrams[previous_softmax[kdx], jdx]
-                        if bigram_prob == 0.: ##might not be correct
-                            bigram_prob = unigram_prob ## very naive approach. improve later
-                        prob = bigram_prob * prior_softmax[jdx] / previous_prior
-                        probs.append(prob)
+            if idx > 1: ## use trigrams
+                first_softmax = predicted_word[idx-2]
+                second_softmax = predicted_word[idx-1]
+                nr_classes = len(self.unigrams)
 
 
-                    posterior_word[idx, jdx] += max(probs)
+                for third_letter in range(nr_classes):
+                    letter_probs = []
+                    for second_letter in range(nr_classes):
+                        for first_letter in range(nr_classes):
+                            trigram_divisor = self.bigrams[first_letter, second_letter] ## bigram-prob used for division
+
+                            trigram_prob = self.trigrams[first_letter, second_letter, third_letter] / trigram_divisor
+                            bigram_prob = self.bigrams[second_letter, third_letter] / self.unigrams[second_letter]
+                            unigram_prob = self.unigrams[third_letter] / np.sum(self.unigrams)
+
+                            prob = trigram_prob * self.TRIGRAM_IMPORTANCE + bigram_prob * self.BIGRAM_IMPORTANCE +\
+                                 unigram_prob * self.UNIGRAM_IMPORTANCE
+
+                            # take priors of all letters into account
+                            prob *= prior_softmax[third_letter] * second_softmax[second_letter] * first_softmax[first_letter]
+
+                            letter_probs.append(prob)
+                    posterior_word[idx, third_letter] += max(letter_probs)
 
         ## backward pass
-        for idx in range(len(predicted_word) - 2, -1, -1):
+        for idx in range(len(predicted_word) - 3, -1, -1):
             prior_softmax = predicted_word[idx]
-            next_softmax = predicted_word[idx+1]  # or posterior word?
-            ## get index of next letter
-            next_prior = max(next_softmax)
-            next_letter = next_softmax.index(next_prior)
+            third_softmax = predicted_word[idx+2]
+            second_softmax = predicted_word[idx+1]
+            nr_classes = len(self.unigrams)
 
-            for jdx, unigram_prob in enumerate(self.unigrams):
-                bigram_prob = self.bigrams[jdx, next_letter]
-                if bigram_prob == 0.:
-                    bigram_prob = unigram_prob
-                posterior_word[idx, jdx] += bigram_prob * prior_softmax[jdx] / next_prior
+
+            for first_letter in range(nr_classes):
+                letter_probs = []
+                for second_letter in range(nr_classes):
+                    for third_letter in range(nr_classes):
+                        trigram_divisor = self.bigrams[second_letter, third_letter] ## bigram-prob used for division
+
+                        trigram_prob = self.trigrams[first_letter, second_letter, third_letter] / trigram_divisor
+                        bigram_prob = self.bigrams[first_letter, second_letter] / self.unigrams[second_letter]
+                        unigram_prob = self.unigrams[first_letter] / np.sum(self.unigrams)
+
+                        prob = trigram_prob * self.TRIGRAM_IMPORTANCE + bigram_prob * self.BIGRAM_IMPORTANCE +\
+                             unigram_prob * self.UNIGRAM_IMPORTANCE
+
+                        prob *= prior_softmax[first_letter] * second_softmax[second_letter] * third_softmax[third_letter]
+
+                        letter_probs.append(prob)
+                posterior_word[idx, first_letter] += max(letter_probs)
+
+        # for idx in range(len(predicted_word) - 2, -1, -1):
+        #     prior_softmax = predicted_word[idx]
+        #     next_softmax = predicted_word[idx+1]  # or posterior word?
+        #     ## get index of next letter
+        #     next_prior = max(next_softmax)
+        #     next_letter = next_softmax.index(next_prior)
+
+        #     for jdx, unigram_prob in enumerate(self.unigrams):
+        #         bigram_prob = self.bigrams[jdx, next_letter]
+        #         if bigram_prob == 0.:
+        #             bigram_prob = unigram_prob
+        #         posterior_word[idx, jdx] += bigram_prob * prior_softmax[jdx] / next_prior
         return posterior_word
 
     def normalize_posteriors(self, word):

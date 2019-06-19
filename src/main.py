@@ -1,5 +1,7 @@
 import os
 from os.path import abspath, join
+import sys
+import cv2
 from time import sleep
 from split import Splitter
 from data_augmenter import Augmenter
@@ -12,6 +14,9 @@ from quick_train import Trainer
 from show_input_image import ExampleDisplayer
 from quick_test import Tester
 from numpy import prod
+
+sys.path.append('preprocessing/')
+from preprocessor import preprocess_image
 
 # # PARAMETERS # #
 
@@ -34,14 +39,18 @@ checkpoint_dir    = join(core_data_path, "checkpoint")
 dimensions_file   = join(core_data_path, "dimensions.txt")
 weights_dir       = join(core_data_path, "weights/")
 anchor_file       = join(core_data_path, "anchors.txt")
+image_dir         = join(core_data_path, "image-data")
+processed_image_dir=join(core_data_path, "new-lines") #change later
+
+
 
 # Data parameters
-num_classes = 2
+num_classes = 27
 split_percentage = 20
 augment = False
-line_length_bounds = (6, 10)
-n_training_lines = 100
-n_testing_lines = 100
+line_length_bounds = (10, 10)
+n_training_lines = 2000
+n_testing_lines = 500
 max_overlap_train = 10
 max_overlap_test = 10
 max_boxes = 12
@@ -49,31 +58,35 @@ test_on_train = False
 
 
 # Network parameters (darknet)
-n_filters_dn = (256,)
-n_strides_dn = (1, )
-n_ksizes_dn = (6, )
+n_filters_dn = (16384,)  # More is better
+n_strides_dn = (1, )  # Only increase beyond 1 if needed for memory savings
+n_ksizes_dn = (40, )  # Optimally: half of the usual letter width and height
 
-# Network parameters (yolo)
+# Network parameters (yolo) (INACTIVE)
 n_filt_yolo = (256,)
 n_strides_yolo = (1,)
-n_ksizes_yolo = (6,)
-cluster_num = 18
+n_ksizes_yolo = (5,)
+
+# Number of anchors (the final conv layer in yolo.detection_layer()
+#   has cluster_num+5 filters)
+cluster_num = num_classes  # This is a heuristic, not sure if best
 
 # Thresholds and filters
-filters = False
+filters = True
 iou_threshold = 0.0
 score_threshold = 0.0
 ignore_threshold = 0.0  # doesn't do anything
-size_threshold = (0, 0)  # in pixels
+size_threshold = (10, 10)  # in pixels
+# Also remember the min_dist parameter in utils and iou_threshold in quick_train!
 # remove_overlap_half = True
 # remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
-batch_size = 1
-steps = 100
+batch_size = 2
+steps = 1400
 learning_rate = 1e-3
-decay_steps = 100
-decay_rate = 0.3
-shuffle_size = None
+decay_steps = 50
+decay_rate = 0.95
+shuffle_size = 20
 eval_internal = 100
 save_internal = 100
 print_every_n = 10
@@ -82,11 +95,24 @@ cell_size = prod(list(n_strides_yolo))
 
 # Other parameters
 retrain = False
-show_tfrecord_example = True
+show_tfrecord_example = False
 test_example = True
 
 
 # [preprocessing here]
+if not os.path.isdir(processed_image_dir):
+    print("Preprocessing images")
+    files = [join(image_dir, fn) for fn in os.listdir(image_dir) if os.path.isfile(join(image_dir, fn))]
+    os.mkdir(processed_image_dir)
+    idx = 0
+    for file in files:
+          extracted_lines = preprocess_image(cv2.imread(file))
+          for line in extracted_lines:
+              cv2.imwrite(join(processed_image_dir, "%d.png" % (idx)), line)
+              idx += 1
+
+else:
+    print("Preprocessed images detected!\nSkipping preprocessing.")
 
 
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))

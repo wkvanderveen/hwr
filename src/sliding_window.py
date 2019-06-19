@@ -11,9 +11,9 @@ class SlidingWindow:
         self.characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
                       "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
                       "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
-        self.model = load_model("../data/models/old_backup_model.model")
-        self.image_file = "../data/backup_val_lines/line4.png"
-        self.save_kernel_path = "../data/"
+        self.model = load_model("../../data/models/backup_model.model")
+        self.image_file = "../../data/backup_val_lines/Testline.jpg"
+        self.save_kernel_path = "../../data/"
         self.txtfile = open("../../data/softmax.txt", "w")
         self.final_yaxis = False
         self.final_xaxis = False
@@ -21,7 +21,6 @@ class SlidingWindow:
         self.i = 0
 
         self.image = cv2.imread(self.image_file, cv2.IMREAD_GRAYSCALE)  # your image path
-        self.txtfile = open("../data/softmax.txt", "w")
         self.aspect = self.image.shape[1] / self.image.shape[0]
         self.reshape_height = 60
         self.reshape_width = int(60 * self.aspect)

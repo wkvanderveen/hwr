@@ -60,6 +60,9 @@ class Linemaker(object):
                 pathname = os.path.join(pathname, rand.choice(x))
 
                 img = cv2.imread(pathname)
+
+                img = cv2.resize(src=img, dsize=(0, 0), fx=1/2, fy=1/2)
+
                 chars.append(img)
                 labels.append(char_name)
 

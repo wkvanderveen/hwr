@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 from skimage import io
 import os
 import sys
@@ -13,11 +14,13 @@ AUGMENTATION_FACTOR = 1
 SHOW_AUGMENT = False
 AUGMENT = True
 
+
 # Reads train and test data and converts data to numpy array
 class DataReader:
     def __init__(self):
         self.data = []
-        self.path_train = TRAIN_X_PATH #'../../data/letters/' #define path of example letter images
+        self.max_width = self.max_height = 0
+        self.path_train = TRAIN_X_PATH  # '../../data/letters/' #define path of example letter images
         self.path_test = TEST_X_PATH
         self.save_path = '../../data/'
         self.save_file_train = self.save_path + "train_letters"
@@ -26,6 +29,7 @@ class DataReader:
         self.save_file_train_labels = self.save_path + "train_labels_aug"
         self.save_file_test = self.save_path + "test_letters"
         self.save_file_test_labes = self.save_path + "test_labels"
+        self.save_file_dimensions = self.save_path + "max_dimensions"
         self.threshold = 200
         self.show_augment = SHOW_AUGMENT
         self.augment = AUGMENT
@@ -63,8 +67,13 @@ class DataReader:
                 sub_path = self.path_train+'/'+filepath
                 print('current letter: ', filepath)
                 for sub_file in os.listdir(sub_path):
-                    img_path = sub_path+'/'+sub_file
-                    #print(img_path)
+                    img_path = sub_path + '/' + sub_file
+                    with Image.open(img_path) as img:
+                        width, height = img.size
+                        if width > self.max_width:
+                            self.max_width = width
+                        if height > self.max_height:
+                            self.max_height = height
                     onehot = np.zeros(num_classes)
                     onehot[class_num] = 1
                     image = io.imread(img_path, as_gray=True)
@@ -102,8 +111,8 @@ class DataReader:
                 sub_path = self.path_test+'/'+filepath
                 print('current letter: ', filepath)
                 for sub_file in os.listdir(sub_path):
-                    img_path = sub_path+'/'+sub_file
-                    #print(img_path)
+                    img_path = sub_path + '/' + sub_file
+                    # print(img_path)
                     onehot = np.zeros(num_classes)
                     onehot[class_num] = 1
                     letters_list.append(io.imread(img_path, as_gray=True))
@@ -116,8 +125,9 @@ class DataReader:
             np.save(self.save_file_test_labes, classes)
             print("Classes saved as npy file in: ", self.save_file_test_labes)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     reader = DataReader()
-    #Select mode to read train or test data
+    # Select mode to read train or test data
     reader.read_letters('train')
     reader.read_letters('test')
