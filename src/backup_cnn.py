@@ -16,9 +16,9 @@ class CNN_network:
 	def __init__(self):
 		self.BATCH_SIZE = 10
 		self.CLASSES = 27  # Default
-		self.EPOCHS = 200  # Loops once throug all data
-		self.IMG_H = 19
-		self.IMG_W = 49
+		self.EPOCHS = 1  # Loops once throug all data
+		self.IMG_H = 39
+		self.IMG_W = 39
 		self.CHANNELS = 1
 		self.TRAIN_X_FILE = '../../data/train_letters.npy'
 		self.TRAIN_Y_FILE = '../../data/train_labels.npy'
@@ -66,7 +66,7 @@ class CNN_network:
 		self.testY = np.load(self.TEST_Y_FILE, allow_pickle=True)
 		print("Test data loaded...")
 		print("Reshaping data...")
-		max_dims = (77, 196)
+		max_dims = (77, 77)
 		temp = []
 		for image in self.trainX:
 			heightPadding = max_dims[0] - image.shape[0]
@@ -76,7 +76,7 @@ class CNN_network:
 			newImage = copyMakeBorder(image, int(heightPadding / 2), int(heightPadding / 2) + extraHeight,
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
-			newImage = cv2.resize(newImage, (49,19))
+			newImage = cv2.resize(newImage, (39,39))
 			temp.append(newImage)
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)
@@ -90,7 +90,7 @@ class CNN_network:
 			newImage = copyMakeBorder(image, int(heightPadding / 2), int(heightPadding / 2) + extraHeight,
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
-			newImage = cv2.resize(newImage, (49,19))
+			newImage = cv2.resize(newImage, (39, 39))
 			temp.append(newImage)
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)

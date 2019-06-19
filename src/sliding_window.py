@@ -12,7 +12,7 @@ class SlidingWindow:
                       "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
                       "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
         self.model = load_model("../../data/models/backup_model.model")
-        self.image_file = "../../data/backup_val_lines/Testline.jpg"
+        self.image_file = "../../data/backup_val_lines/TESTLINE.jpg"
         self.save_kernel_path = "../../data/"
         self.txtfile = open("../../data/softmax.txt", "w")
         self.final_yaxis = False
@@ -26,7 +26,7 @@ class SlidingWindow:
         self.reshape_width = int(60 * self.aspect)
         self.image = cv2.resize(self.image, (self.reshape_width, self.reshape_height))
         self.stepSize = 4
-        (self.w_width, self.w_height) = (38, 38)  # window size
+        (self.w_width, self.w_height) = (39, 39)  # window size
         self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
 
         self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
@@ -105,7 +105,7 @@ class SlidingWindow:
 
                 if self.stop is False:
                     window = self.image[y:y + self.w_height, x:x + self.w_width]
-                    temp = window.reshape((1, 38, 38, 1))
+                    temp = window.reshape((1, self.w_height, self.w_width, 1))
                     temp = np.interp(temp, (temp.min(), temp.max()), (0, 1)) #Normalize image between 0 and 1
                     predict = self.model.predict(temp)
                     onehot = self.probs_to_one_hot(predict)
