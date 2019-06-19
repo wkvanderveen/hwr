@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import cv2
 import keras
 from PIL import Image
@@ -18,8 +17,8 @@ class CNN_network:
 		self.BATCH_SIZE = 10
 		self.CLASSES = 27  # Default
 		self.EPOCHS = 200  # Loops once throug all data
-		self.IMG_H = 77
-		self.IMG_W = 196
+		self.IMG_H = 19
+		self.IMG_W = 49
 		self.CHANNELS = 1
 		self.TRAIN_X_FILE = '../../data/train_letters.npy'
 		self.TRAIN_Y_FILE = '../../data/train_labels.npy'
@@ -37,9 +36,10 @@ class CNN_network:
 		self.OUTPUT_ACTIV = ['softmax']
 		self.DROPOUT_1 = 0.1
 		self.DROPOUT_2 = 0.2
-		self.TRAIN_ON_AUGMENT = True
+		self.TRAIN_ON_AUGMENT = False
 
 		self.SAVE_EVERY = 1000  # steps
+		self.EARLY_STOPPING_PATIENCE = 3 # Epochs
 
 	def build_net(self, input_shape):
 		model = Sequential()
@@ -76,6 +76,7 @@ class CNN_network:
 			newImage = copyMakeBorder(image, int(heightPadding / 2), int(heightPadding / 2) + extraHeight,
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
+			newImage = cv2.resize(newImage, (49,19))
 			temp.append(newImage)
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)
@@ -89,6 +90,7 @@ class CNN_network:
 			newImage = copyMakeBorder(image, int(heightPadding / 2), int(heightPadding / 2) + extraHeight,
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
+			newImage = cv2.resize(newImage, (49,19))
 			temp.append(newImage)
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)
@@ -100,19 +102,20 @@ class CNN_network:
 
 	def compile_model(self, model):
 		model.compile(loss=keras.losses.categorical_crossentropy,
-					  optimizer=keras.optimizers.Adadelta(),
+					  optimizer=keras.optimizers.Adam(),#keras.optimizers.Adadelta(),
 					  metrics=['accuracy'])
 		return model
 
 	def train_model(self, model):
 		cb = keras.callbacks.ModelCheckpoint('../../data/weights{epoch:08d}.h5',
 											 save_weights_only=True, period=self.SAVE_EVERY)
+		es = keras.callbacks.EarlyStopping(monitor='val_loss', patience=self.EARLY_STOPPING_PATIENCE, restore_best_weights=True)
 		model.fit(self.trainX, self.trainY,
 				  batch_size=self.BATCH_SIZE,
 				  epochs=self.EPOCHS,
 				  verbose=1,
 				  validation_data=(self.testX, self.testY),
-				  callbacks=[cb])
+				  callbacks=[cb, es])
 		return model
 
 	def evaluate_model(self, model):

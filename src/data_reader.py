@@ -12,7 +12,7 @@ TRAIN_X_PATH = '../../data/letters-train'
 TEST_X_PATH = '../../data/letters-test'
 AUGMENTATION_FACTOR = 1
 SHOW_AUGMENT = False
-AUGMENT = True
+AUGMENT = False
 
 
 # Reads train and test data and converts data to numpy array
@@ -25,8 +25,8 @@ class DataReader:
         self.save_path = '../../data/'
         self.save_file_train = self.save_path + "train_letters"
         self.save_file_train_labels = self.save_path + "train_labels"
-        self.save_file_train = self.save_path + "train_letters_aug"
-        self.save_file_train_labels = self.save_path + "train_labels_aug"
+        self.save_file_train_aug = self.save_path + "train_letters_aug"
+        self.save_file_train_labels_aug = self.save_path + "train_labels_aug"
         self.save_file_test = self.save_path + "test_letters"
         self.save_file_test_labes = self.save_path + "test_labels"
         self.save_file_dimensions = self.save_path + "max_dimensions"
@@ -68,6 +68,7 @@ class DataReader:
                 print('current letter: ', filepath)
                 for sub_file in os.listdir(sub_path):
                     img_path = sub_path + '/' + sub_file
+                    # Get max sizes of images
                     with Image.open(img_path) as img:
                         width, height = img.size
                         if width > self.max_width:
@@ -78,9 +79,7 @@ class DataReader:
                     onehot[class_num] = 1
                     image = io.imread(img_path, as_gray=True)
                     letters_list.append(image)
-                    classes_list.append(onehot)
-                    
-                    
+                    classes_list.append(onehot) 
             letters = np.array(letters_list)
             classes = np.array(classes_list)
             print("Number of letters found in dataset:", letters.shape[0])
@@ -99,10 +98,10 @@ class DataReader:
                 letters = np.array(letters)
                 classes = np.array(classes)
                 print("Number of letters found in dataset:", letters.shape[0])
-                np.save(self.save_file_train, letters)
-                print("Letters saved as npy file in: ", self.save_file_train)
-                np.save(self.save_file_train_labels, classes)
-                print("Classes saved as npy file in: ", self.save_file_train_labels)
+                np.save(self.save_file_train_aug, letters)
+                print("Letters saved as npy file in: ", self.save_file_train_aug)
+                np.save(self.save_file_train_labels_aug, classes)
+                print("Classes saved as npy file in: ", self.save_file_train_labels_aug)
 
         if mode == 'test':
             print("Reading test letters from dataset")
