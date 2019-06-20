@@ -8,13 +8,15 @@ np.set_printoptions(threshold=np.inf)
 
 class SlidingWindow:
     def __init__(self):
-        self.characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
-                      "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
-                      "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
-        self.model = load_model("../../data/models/backup_model.model")
-        self.image_file = "../../data/backup_val_lines/TESTLINE.jpg"
-        self.save_kernel_path = "../../data/"
-        self.txtfile = open("../../data/softmax.txt", "w")
+        # self.characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
+        #               "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
+        #               "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
+        self.characters = ["Alef","Ayin","Bet","Dalet","Gimel","He","Het","Kaf","Kaf-final","Lamed","Mem","Mem-medial","Nun-final",
+        "Nun-medial","Pe","Pe-final","Qof","Resh","Samekh","Shin","Taw","Tet","Tsadi-final","Tsadi-medial","Waw","Yod","Zayin"]
+        self.model = load_model("../data/models/backup_model.model")
+        self.image_file = "../data/backup_val_lines/line4.png"
+        self.save_kernel_path = "../data/"
+        self.txtfile = open("../data/softmax.txt", "w")
         self.final_yaxis = False
         self.final_xaxis = False
         self.stop = False

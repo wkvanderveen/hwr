@@ -12,7 +12,7 @@ TRAIN_X_PATH = '../../data/letters-train'
 TEST_X_PATH = '../../data/letters-test'
 AUGMENTATION_FACTOR = 1
 SHOW_AUGMENT = False
-AUGMENT = False
+AUGMENT = True
 
 
 # Reads train and test data and converts data to numpy array
@@ -89,11 +89,12 @@ class DataReader:
             print("Classes saved as npy file in: ", self.save_file_train_labels)
             with open(self.save_file_dimensions, "w") as filename:
                 print("{} {}".format(self.max_height, self.max_width), file=filename)
-        if mode == 'test':
+            
             if self.augment:
                 letters = [] #Empty for memory space
                 classes = [] #Empty for memory space
-                for idx, letter in enumerate(letters_list):
+                print("Number of letters to agument: ", len(letters_list))
+                for idx, image in enumerate(letters_list):
                     augmented = self.extra_augmentation(image)
                     for image_aug in augmented:
                         letters.append(image_aug)
@@ -117,7 +118,10 @@ class DataReader:
                     # print(img_path)
                     onehot = np.zeros(num_classes)
                     onehot[class_num] = 1
-                    letters_list.append(io.imread(img_path, as_gray=True))
+                    image = io.imread(img_path, as_gray=True)
+                    # Normalize image
+                    image = image/255.
+                    letters_list.append(image)
                     classes_list.append(onehot)
             letters = np.array(letters_list)
             classes = np.array(classes_list)
