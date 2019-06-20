@@ -7,6 +7,7 @@ from keras.models import Sequential
 from keras.layers import Input, Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from skimage.transform import resize
+from skimage.util import pad
 import numpy as np
 
 np.set_printoptions(threshold=np.inf)
@@ -16,7 +17,7 @@ class CNN_network:
 	def __init__(self):
 		self.BATCH_SIZE = 10
 		self.CLASSES = 27  # Default
-		self.EPOCHS = 1  # Loops once throug all data
+		self.EPOCHS = 20  # Loops once throug all data
 		self.IMG_H = 39
 		self.IMG_W = 39
 		self.CHANNELS = 1
@@ -39,7 +40,7 @@ class CNN_network:
 		self.TRAIN_ON_AUGMENT = False
 
 		self.SAVE_EVERY = 1000  # steps
-		self.EARLY_STOPPING_PATIENCE = 3 # Epochs
+		self.EARLY_STOPPING_PATIENCE = 5 # Epochs
 
 	def build_net(self, input_shape):
 		model = Sequential()
@@ -68,22 +69,28 @@ class CNN_network:
 		print("Reshaping data...")
 		max_dims = (77, 77)
 		temp = []
+		#counter = 0
 		for image in self.trainX:
+			
 			heightPadding = max_dims[0] - image.shape[0]
 			extraHeight = heightPadding % 2
 			widthPadding = max_dims[1] - image.shape[1]
 			extraWidth = widthPadding % 2
 			newImage = copyMakeBorder(image, int(heightPadding / 2), int(heightPadding / 2) + extraHeight,
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
-									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
+									  cv2.BORDER_CONSTANT, value=[1, 1, 1])
 			newImage = cv2.resize(newImage, (39,39))
-			cv2.imshow('train',newImage)
-			cv2.waitKey(0)
-			cv2.destroyAllWindows()
+			# if counter % 500 == 0:
+			# 	cv2.imshow('train',newImage)
+			# 	cv2.waitKey(0)
+			# 	cv2.destroyAllWindows()
+			# counter += 1
 			temp.append(newImage)
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)
 		self.trainX = temp
+
+		print(type(self.trainX[0]))
 		temp = []
 		for image in self.testX:
 			heightPadding = max_dims[0] - image.shape[0]
@@ -92,12 +99,14 @@ class CNN_network:
 			extraWidth = widthPadding % 2
 			newImage = copyMakeBorder(image, int(heightPadding / 2), int(heightPadding / 2) + extraHeight,
 									  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
-									  cv2.BORDER_CONSTANT, value=[255, 255, 255])
+									  cv2.BORDER_CONSTANT, value=[1, 1, 1])
 			newImage = cv2.resize(newImage, (39,39))
-			cv2.imshow('test',newImage)
-			cv2.waitKey(0)
-			cv2.destroyAllWindows()
+			# print(self.testY[count])
+			# cv2.imshow('train',newImage)
+			# cv2.waitKey(0)
+			# cv2.destroyAllWindows()
 			temp.append(newImage)
+
 		temp = np.expand_dims(temp, axis=3)
 		print(temp.shape)
 		self.testX = temp
