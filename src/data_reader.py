@@ -93,7 +93,8 @@ class DataReader:
             if self.augment:
                 letters = [] #Empty for memory space
                 classes = [] #Empty for memory space
-                for idx, letter in enumerate(letters_list):
+                print("Number of letters to agument: ", len(letters_list))
+                for idx, image in enumerate(letters_list):
                     augmented = self.extra_augmentation(image)
                     for image_aug in augmented:
                         letters.append(image_aug)
