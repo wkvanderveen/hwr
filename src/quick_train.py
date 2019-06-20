@@ -8,8 +8,7 @@ sess = tf.Session()
 class Trainer(object):
     """docstring for Trainer"""
     def __init__(self, num_classes, batch_size, n_filters_dn, size_threshold,
-                 n_strides_dn, n_ksizes_dn, cell_size, n_filt_yolo,
-                 ksizes_yolo, n_strides_yolo, ignore_threshold, steps,
+                 n_strides_dn, n_ksizes_dn, cell_size, ignore_threshold, steps,
                  img_dims, learning_rate, decay_steps, decay_rate,
                  shuffle_size, eval_internal, save_internal, print_every_n,
                  anchors_path, train_records, test_records, checkpoint_path):
@@ -29,9 +28,6 @@ class Trainer(object):
         self.print_every_n = print_every_n
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
-        self.n_filt_yolo = n_filt_yolo
-        self.ksizes_yolo = ksizes_yolo
-        self.n_strides_yolo = n_strides_yolo
         self.n_filters_dn = n_filters_dn
         self.n_strides_dn = n_strides_dn
         self.n_ksizes_dn = n_ksizes_dn
@@ -78,10 +74,7 @@ class Trainer(object):
                 is_training=is_training,
                 n_filters_dn=self.n_filters_dn,
                 n_strides_dn=self.n_strides_dn,
-                n_ksizes_dn=self.n_ksizes_dn,
-                n_filt_yolo=self.n_filt_yolo,
-                ksizes_yolo=self.ksizes_yolo,
-                n_strides_yolo=self.n_strides_yolo)
+                n_ksizes_dn=self.n_ksizes_dn)
 
             loss = model.compute_loss(
                 pred_feature_map, y_true, self.iou_threshold)

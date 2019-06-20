@@ -2,7 +2,7 @@ import colorsys, sys
 import numpy as np
 import tensorflow as tf
 from collections import Counter
-from PIL import ImageFont, ImageDraw, Image
+from PIL import ImageFont, ImageDraw, Image, ImageChops
 np.set_printoptions(threshold=sys.maxsize)
 
 #  Discard all boxes with low scores and high IOU
@@ -224,8 +224,19 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
 
     results.sort(key=lambda tup: tup[0])
 
-    image = image.resize(size=(2*image.size[0], 2*image.size[1]))
+    image = image.resize(size=(2*image.size[0],
+                               2*image.size[1]))
 
+    def trim(im):
+        bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
+        diff = ImageChops.difference(im, bg)
+        diff = ImageChops.add(diff, diff, 2.0, -100)
+        bbox = diff.getbbox()
+        if bbox:
+            return im.crop(bbox)
+
+    # Trim white borders
+    image = trim(image)
     image.show(title="Prediction image") if show else None
 
     return (image, results)
