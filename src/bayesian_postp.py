@@ -2,6 +2,10 @@ import os
 from os.path import join, abspath
 from sliding_window import SlidingWindow
 import numpy as np
+from write_to_file import write_to_file
+
+FINAL_OUTPUT_SAVE_PATH = "../data/program_output/"
+FINAL_NAME = "output"
 
 fn = join(abspath('..'), 'ngrams.npz')
 char_map = {'Alef' : 0, 
@@ -230,4 +234,6 @@ if __name__ == "__main__":
     # processor.print_word(predicted_word, "Predicted word (network output)")
     # processor.print_word(posterior_word, "Normalized word (after bigrams)")
     predicted_sentence = sw.get_letters()
-    print(processor.apply_postprocessing(predicted_sentence))
+    sentence = processor.apply_postprocessing(predicted_sentence)
+    write_to_file(sentence, FINAL_OUTPUT_SAVE_PATH, FINAL_NAME)
+    print(sentence)

@@ -16,6 +16,7 @@ sys.path.append('preprocessing/')
 from preprocessor import preprocess_image
 from bayesian_postp import Bayesian_processor
 from write_to_file import write_to_file
+from sliding_window import SlidingWindow
 
 if __name__ == '__main__':
 
@@ -51,8 +52,8 @@ if __name__ == '__main__':
 
 		## transcribe croppings 
 		## neural network call here
-
-		transcribed_lines = None
+		sw = SlidingWindow()
+		transcribed_lines = sw.get_letters()
 
 		## postprocessing here
 		postp = Bayesian_processor()
@@ -61,7 +62,6 @@ if __name__ == '__main__':
 		## write croppings to file
 
 		outfile = file.split('.')[0] #get root filename
-		outfile += '.txt'
 		## Example call:
 		write_to_file(final_sentence, path, outfile)
 
