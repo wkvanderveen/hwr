@@ -9,8 +9,8 @@ from random import choice
 class Tester(object):
     """docstring for Tester"""
     def __init__(self, img_dims, num_classes, source_dir, score_threshold,
-        iou_threshold, size_threshold, checkpoint_dir, letters_test_dir,
-        max_boxes, filters):
+                 iou_threshold, size_threshold, checkpoint_dir,
+                 letters_test_dir, max_boxes, filters, rescale_test):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
@@ -24,12 +24,24 @@ class Tester(object):
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
+        self.rescale_test = rescale_test
 
     def test(self):
         image_name = choice(os.listdir(self.source_dir))
         image_path = os.path.join(self.source_dir, image_name)
 
         img = cv2.imread(image_path, 0)
+        # if self.rescale_test:
+        img = cv2.resize(src=img, dsize=(0, 0), fx=1/2, fy=1/2)
+        if img.shape[0] < self.img_h and img.shape[1] < self.img_w:
+            img = cv2.copyMakeBorder(src=img,
+                                     top=(self.img_h-img.shape[0])//2,
+                                     bottom=(self.img_h-img.shape[0])//2,
+                                     left=(self.img_w-img.shape[1])//2,
+                                     right=(self.img_w-img.shape[1])//2,
+                                     borderType=cv2.BORDER_CONSTANT,
+                                     value=[255, 255, 255])
+
         img = cv2.resize(img, (self.img_w, self.img_h))
         img = expand_dims(img, axis=2)
 
@@ -50,7 +62,7 @@ class Tester(object):
             scores = scores.reshape(-1, self.num_classes)
 
             min_wh, max_wh = -10000, 10000
-            min_ratio = 1/3  # 0 -- 1
+            min_ratio = 1/4  # 0 -- 1
 
             mask = np.logical_and(boxes[:,0] >= min_wh, boxes[:,0] <= max_wh)
             mask = np.logical_and(mask, boxes[:,1] >= min_wh)
@@ -104,8 +116,6 @@ class Tester(object):
                 score_thresh=self.score_threshold,
                 iou_thresh=self.iou_threshold,
                 max_boxes=self.max_boxes)
-
-            # img = np.uint8(img*255)
 
             (image, results) = utils.draw_boxes(
                 img,

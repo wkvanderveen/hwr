@@ -31,16 +31,6 @@ class yolov3(object):
         self._NUM_CLASSES = num_classes
         self.feature_maps = []
 
-    def _yolo_block(self, inputs, filters, ksizes, strides):
-
-        # for i in range(min(len(filters), len(ksizes))):
-        #     inputs = common._conv2d_fixed_padding(inputs,
-        #                                           filters=filters[i],
-        #                                           kernel_size=ksizes[i],
-        #                                           strides=strides[i])
-
-        return inputs
-
     def _detection_layer(self, inputs, anchors):
         num_anchors = len(anchors)
 
@@ -91,8 +81,7 @@ class yolov3(object):
         return x_y_offset, boxes, conf_logits, prob_logits
 
     def forward(self, inputs, n_filters_dn, n_strides_dn, n_ksizes_dn,
-                n_filt_yolo, ksizes_yolo, n_strides_yolo, is_training=False,
-                reuse=False):
+                is_training=False, reuse=False):
 
         self.img_size = tf.shape(inputs)[1:3]
 
@@ -126,12 +115,6 @@ class yolov3(object):
                                        n_ksizes=n_ksizes_dn).outputs
 
                 with tf.variable_scope('yolo-v3'):
-
-                    # Convolve in yolo
-                    inputs = self._yolo_block(inputs,
-                                              filters=n_filt_yolo,
-                                              ksizes=ksizes_yolo,
-                                              strides=n_strides_yolo)
 
                     feature_map = self._detection_layer(inputs, self._ANCHORS)
                     feature_map = tf.identity(feature_map, name='feature_map')

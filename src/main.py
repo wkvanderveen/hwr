@@ -13,59 +13,51 @@ from convert_weight import WeightConverter
 from quick_train import Trainer
 from show_input_image import ExampleDisplayer
 from quick_test import Tester
-from numpy import prod
 
-sys.path.append('preprocessing/')
+sys.path.append(f'{os.path.dirname(os.path.realpath(__file__))}' +
+                f'/preprocessing/')
+
 from preprocessor import preprocess_image
 
 # # PARAMETERS # #
 
 # tensorboard --logdir train:./train_summary,eval:./test_summary
 
-# Latest problem: YOLO converges to finding zero boxes.
-# Apparently this is lowest loss. Why? Maybe add minimal box constraint.
-
 # File structure parameters
-core_data_path =  join(join(abspath(".."), ".."), "data")
+core_data_path = join(join(abspath(".."), ".."), "data")
 
-orig_letters_dir  = join(core_data_path, "original_letters")
+orig_letters_dir = join(core_data_path, "original_letters")
 letters_train_dir = join(core_data_path, "letters-train")
-letters_test_dir  = join(core_data_path, "letters-test")
-lines_train_dir   = join(core_data_path, "lines-train")
-lines_test_dir    = join(core_data_path, "lines-test")
-label_train_path  = join(core_data_path, "labels-train.txt")
-label_test_dir    = join(core_data_path, "labels-test.txt")
-checkpoint_dir    = join(core_data_path, "checkpoint")
-dimensions_file   = join(core_data_path, "dimensions.txt")
-weights_dir       = join(core_data_path, "weights/")
-anchor_file       = join(core_data_path, "anchors.txt")
-image_dir         = join(core_data_path, "image-data")
-processed_image_dir=join(core_data_path, "new-lines") #change later
-
+letters_test_dir = join(core_data_path, "letters-test")
+lines_train_dir = join(core_data_path, "lines-train")
+lines_test_dir = join(core_data_path, "lines-test")
+label_train_path = join(core_data_path, "labels-train.txt")
+label_test_dir = join(core_data_path, "labels-test.txt")
+checkpoint_dir = join(core_data_path, "checkpoint")
+dimensions_file = join(core_data_path, "dimensions.txt")
+weights_dir = join(core_data_path, "weights/")
+anchor_file = join(core_data_path, "anchors.txt")
+image_dir = join(core_data_path, "image-data")
+processed_image_dir = join(core_data_path, "new-lines") #change later
 
 
 # Data parameters
-num_classes = 27
+num_classes = 4
 split_percentage = 20
 augment = False
-line_length_bounds = (10, 10)
+line_length_bounds = (10, 30)
 n_training_lines = 2000
 n_testing_lines = 500
 max_overlap_train = 10
 max_overlap_test = 10
 max_boxes = 12
 test_on_train = False
-
+test_on_scrolls = True
 
 # Network parameters (darknet)
-n_filters_dn = (16384,)  # More is better
+n_filters_dn = (1024*1024,)  # More is better
 n_strides_dn = (1, )  # Only increase beyond 1 if needed for memory savings
-n_ksizes_dn = (40, )  # Optimally: half of the usual letter width and height
-
-# Network parameters (yolo) (INACTIVE)
-n_filt_yolo = (256,)
-n_strides_yolo = (1,)
-n_ksizes_yolo = (5,)
+n_ksizes_dn = (30, )  # Optimally: half of the usual letter width and height
 
 # Number of anchors (the final conv layer in yolo.detection_layer()
 #   has cluster_num+5 filters)
@@ -78,19 +70,17 @@ score_threshold = 0.0
 ignore_threshold = 0.0  # doesn't do anything
 size_threshold = (10, 10)  # in pixels
 # Also remember the min_dist parameter in utils and iou_threshold in quick_train!
-# remove_overlap_half = True
-# remove_overlap_full = True  # redundant if `remove_overlap_half == True'
 
-batch_size = 2
-steps = 1400
-learning_rate = 1e-3
+batch_size = 3
+steps = 200
+learning_rate = 1e-5
 decay_steps = 50
 decay_rate = 0.95
 shuffle_size = 20
 eval_internal = 100
 save_internal = 100
 print_every_n = 10
-cell_size = prod(list(n_strides_yolo))
+cell_size = 1
 
 
 # Other parameters
@@ -102,14 +92,15 @@ test_example = True
 # [preprocessing here]
 if not os.path.isdir(processed_image_dir):
     print("Preprocessing images")
-    files = [join(image_dir, fn) for fn in os.listdir(image_dir) if os.path.isfile(join(image_dir, fn))]
+    files = [join(image_dir, fn) for fn in os.listdir(image_dir)
+             if os.path.isfile(join(image_dir, fn))]
     os.mkdir(processed_image_dir)
     idx = 0
     for file in files:
-          extracted_lines = preprocess_image(cv2.imread(file))
-          for line in extracted_lines:
-              cv2.imwrite(join(processed_image_dir, "%d.png" % (idx)), line)
-              idx += 1
+        extracted_lines = preprocess_image(cv2.imread(file))
+        for line in extracted_lines:
+            cv2.imwrite(join(processed_image_dir, "%d.png" % (idx)), line)
+            idx += 1
 
 else:
     print("Preprocessed images detected!\nSkipping preprocessing.")
@@ -213,24 +204,6 @@ if not network_exists or retrain:
         print("Error: no weights detected! You need the pretrained " +
               f"weights in the {weights_dir} directory.")
 
-    # weightconverter = WeightConverter(freeze=False,
-    #                                   convert=False,
-    #                                   num_classes=num_classes,
-    #                                   img_dims=img_dims,
-    #                                   checkpoint_dir=checkpoint_dir,
-    #                                   weights_dir=weights_dir,
-    #                                   anchors_path=anchor_file,
-    #                                   score_threshold=score_threshold,
-    #                                   iou_threshold=iou_threshold,
-    #                                   n_filt_yolo=n_filt_yolo,
-    #                                   ksizes_yolo=n_ksizes_yolo,
-    #                                   n_strides_yolo=n_strides_yolo,
-    #                                   n_filters_dn=n_filters_dn,
-    #                                   n_strides_dn=n_strides_dn,
-    #                                   n_ksizes_dn=n_ksizes_dn)
-    # print("Converting weights...")
-    # weightconverter.convert_weights()
-
     trainer = Trainer(num_classes=num_classes,
                       batch_size=batch_size,
                       steps=steps,
@@ -240,9 +213,6 @@ if not network_exists or retrain:
                       n_filters_dn=n_filters_dn,
                       n_strides_dn=n_strides_dn,
                       n_ksizes_dn=n_ksizes_dn,
-                      n_filt_yolo=n_filt_yolo,
-                      ksizes_yolo=n_ksizes_yolo,
-                      n_strides_yolo=n_strides_yolo,
                       size_threshold=size_threshold,
                       ignore_threshold=ignore_threshold,
                       shuffle_size=shuffle_size,
@@ -294,9 +264,6 @@ if network_exists and test_example:
         n_filters_dn=n_filters_dn,
         n_strides_dn=n_strides_dn,
         n_ksizes_dn=n_ksizes_dn,
-        n_filt_yolo=n_filt_yolo,
-        ksizes_yolo=n_ksizes_yolo,
-        n_strides_yolo=n_strides_yolo,
         anchors_path=anchor_file,
         score_threshold=score_threshold,
         iou_threshold=iou_threshold,
@@ -305,18 +272,26 @@ if network_exists and test_example:
 
     weightconverter.convert_weights()
 
-    tester = Tester(source_dir=(lines_train_dir if test_on_train
-                                else lines_test_dir),
+    rescale_test = False
+    if test_on_scrolls:
+        source_dir = processed_image_dir
+        rescale_test = True
+    elif test_on_train:
+        source_dir = lines_train_dir
+    else:
+        source_dir = lines_test_dir
+
+    tester = Tester(source_dir=source_dir,
                     num_classes=num_classes,
                     score_threshold=score_threshold,
                     iou_threshold=iou_threshold,
                     size_threshold=size_threshold,
                     img_dims=img_dims,
                     checkpoint_dir=checkpoint_dir,
-                    letters_test_dir=(letters_train_dir if test_on_train
-                                      else letters_test_dir),
+                    letters_test_dir=letters_train_dir,
                     max_boxes=max_boxes,
-                    filters=filters)
+                    filters=filters,
+                    rescale_test=rescale_test)
     results = tester.test()
 
     print('\n'*5)
@@ -367,9 +342,3 @@ if network_exists and test_example:
     print(''.join([convert_to_uni(c) for (_, c, _) in results]))
 
     print('\n'*5)
-
-
-"""
-TODO:
-* Add preprocessing
-"""
