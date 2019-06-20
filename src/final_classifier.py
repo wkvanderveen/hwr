@@ -45,25 +45,28 @@ if __name__ == '__main__':
 	for file in files:
 		print("Transcribing \"%s\"." % (file) )
 
-		## preprocess image
-
+		## load in image
 		img = cv2.imread(join(path, file))
-		croppings = preprocess_image(img)
 
-		## transcribe croppings 
-		## neural network call here
-		sw = SlidingWindow()
-		transcribed_lines = sw.get_letters()
+		## preprocess image
+		preprocessed_lines = preprocess_image(img)
 
-		## postprocessing here
-		postp = Bayesian_processor()
-		final_sentence = postp.apply_postprocessing(transcribed_lines)
+		## get root filename for writing the transcribed lines
+		outfile = file.split('.')[0] 
 
-		## write croppings to file
+		## classify lines
+		for line in preprocessed_lines:
+			
+			## neural network call here
+			sw = SlidingWindow()
+			transcribed_lines = sw.get_letters()
 
-		outfile = file.split('.')[0] #get root filename
-		## Example call:
-		write_to_file(final_sentence, path, outfile)
+			## apply postprocessing
+			postp = Bayesian_processor()
+			final_sentence = postp.apply_postprocessing(transcribed_lines)
+
+			## write croppings to file
+			write_to_file(final_sentence, path, outfile)
 
 		print("Succesfully transcribed \"%s\" to \"%s\"." % (file, outfile))
 
