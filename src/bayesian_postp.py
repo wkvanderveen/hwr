@@ -180,7 +180,6 @@ class Bayesian_processor():
         return new
 
     def filter_on_seq_of_same_chars(self, probabilities):
-        print(np.shape(probabilities))
         one_hots = []
         trash_indices = []
         #convert softmax arrays to one hot arrays
@@ -196,12 +195,31 @@ class Bayesian_processor():
         one_hots = [j for i, j in enumerate(one_hots) if i not in trash_indices]
         return one_hots
 
+    def sequence_denoiser(self, probabilities):
+        one_hots = []
+        trash_indices = []
+        denoise_distance = 2
+        #convert softmax arrays to one hot arrays
+        for arr in probabilities:
+            one_hot = self.probs_to_one_hot(arr)
+            one_hots.append(one_hot)
+        for idx in range(0, len(one_hots)):
+            try:
+                if not (one_hots[idx] == one_hots[idx+1]):
+                    trash_indices.append(idx+1)
+            except:
+                pass
+        one_hots = [j for i, j in enumerate(one_hots) if i not in trash_indices]
+        return one_hots
+
     def apply_postprocessing(self, probabilities):
+        probabilities = self.sequence_denoiser(probabilities)
         probabilities = self.filter_on_seq_of_same_chars(probabilities)
         posteriors = self.process_word(probabilities)
         posteriors = self.normalize_posteriors(posteriors)
+        posteriors = self.filter_on_seq_of_same_chars(posteriors)
         final_sentence = ""
-        for letter_probs in posteriors:
+        for letter_probs in probabilities:
             best_letter_val = max(letter_probs)
             best_letter_index = letter_probs.index(best_letter_val)
 
@@ -216,14 +234,6 @@ if __name__ == "__main__":
     # When running this script standalone, use this example:
 
     # Construct mock prediction softmax (of length (n x 27) )
-    predicted_sentence = [
-        [0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1],
-        [0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3],
-        [0.4, 0.4, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3],
-        [0.4, 0.0, 0.6, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3],
-        [0.3, 0.3, 0.4, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3]
-    ]
-
     processor = Bayesian_processor()
     sw = SlidingWindow()
     # posterior_word = processor.process_word(predicted_word)
