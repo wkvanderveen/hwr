@@ -1,6 +1,11 @@
 import os
 from os.path import join, abspath
+from sliding_window import SlidingWindow
 import numpy as np
+from write_to_file import write_to_file
+
+FINAL_OUTPUT_SAVE_PATH = "../data/program_output/"
+FINAL_NAME = "output"
 
 fn = join(abspath('..'), 'ngrams.npz')
 char_map = {'Alef' : 0, 
@@ -84,7 +89,6 @@ class Bayesian_processor():
         self.UNIGRAM_IMPORTANCE = 1.0 - self.TRIGRAM_IMPORTANCE - self.BIGRAM_IMPORTANCE
 
     def process_word(self, predicted_word):
-
         """
         P( z | xy) = lambda * P(xyz) / P(xy) + mu * P(yz) / P(y) + (1.0 - lambda - mu) * P(z) / P(sum unigrams) 
         """
@@ -167,10 +171,35 @@ class Bayesian_processor():
         wordstring = ''.join([hebrew_map[letter.index(max(letter))]
                               for letter in word])
 
+    def probs_to_one_hot(self, arr):
+        arr_len = len(arr)
+        arr = np.array(arr)
+        new = np.zeros(arr_len, dtype = int)
+        new[np.argmax(arr)] = 1
+        new = new.tolist()
+        return new
+
+    def filter_on_seq_of_same_chars(self, probabilities):
+        print(np.shape(probabilities))
+        one_hots = []
+        trash_indices = []
+        #convert softmax arrays to one hot arrays
+        for arr in probabilities:
+            one_hot = self.probs_to_one_hot(arr)
+            one_hots.append(one_hot)
+        for idx in range(0, len(one_hots)):
+            try:
+                if one_hots[idx] == one_hots[idx+1]:
+                    trash_indices.append(idx+1)
+            except:
+                pass
+        one_hots = [j for i, j in enumerate(one_hots) if i not in trash_indices]
+        return one_hots
+
     def apply_postprocessing(self, probabilities):
+        probabilities = self.filter_on_seq_of_same_chars(probabilities)
         posteriors = self.process_word(probabilities)
         posteriors = self.normalize_posteriors(posteriors)
-
         final_sentence = ""
         for letter_probs in posteriors:
             best_letter_val = max(letter_probs)
@@ -187,7 +216,7 @@ if __name__ == "__main__":
     # When running this script standalone, use this example:
 
     # Construct mock prediction softmax (of length (n x 27) )
-    predicted_word = [
+    predicted_sentence = [
         [0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1, 0.8, 0.1, 0.1],
         [0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3],
         [0.4, 0.4, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.2, 0.6, 0.2, 0.8, 0.1, 0.1, 0.3, 0.1, 0.3],
@@ -196,6 +225,7 @@ if __name__ == "__main__":
     ]
 
     processor = Bayesian_processor()
+    sw = SlidingWindow()
     # posterior_word = processor.process_word(predicted_word)
     # posterior_word = processor.normalize_posteriors(posterior_word)
 
@@ -203,5 +233,7 @@ if __name__ == "__main__":
 
     # processor.print_word(predicted_word, "Predicted word (network output)")
     # processor.print_word(posterior_word, "Normalized word (after bigrams)")
-
-    print(processor.apply_postprocessing(predicted_word))
+    predicted_sentence = sw.get_letters()
+    sentence = processor.apply_postprocessing(predicted_sentence)
+    write_to_file(sentence, FINAL_OUTPUT_SAVE_PATH, FINAL_NAME)
+    print(sentence)

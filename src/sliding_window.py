@@ -8,15 +8,12 @@ np.set_printoptions(threshold=np.inf)
 
 class SlidingWindow:
     def __init__(self):
-        # self.characters = ["Kaf-final", "Gimel", "Samekh", "Tet", "Lamed", "Dalet", "Alef", "Yod", "Resh", "Shin", "Taw", "Bet",
-        #               "Pe-final", "Mem-medial", "Het", "He", "Waw", "Mem", "Qof", "Nun-final", "Tsadi-final", "Kaf",
-        #               "Nun-medial", "Pe", "Tsadi-medial", "Ayin", "Zayin"] # The order is decided by data_reader.py
         self.characters = ["Alef","Ayin","Bet","Dalet","Gimel","He","Het","Kaf","Kaf-final","Lamed","Mem","Mem-medial","Nun-final",
         "Nun-medial","Pe","Pe-final","Qof","Resh","Samekh","Shin","Taw","Tet","Tsadi-final","Tsadi-medial","Waw","Yod","Zayin"]
-        self.model = load_model("../data/models/backup_model.model")
-        self.image_file = "../data/backup_val_lines/line4.png"
-        self.save_kernel_path = "../data/"
-        self.txtfile = open("../data/softmax.txt", "w")
+        self.model = load_model("../../data/models/backup_model.model")
+        self.image_file = "../../data/backup_val_lines/TESTLINE.jpg"
+        self.save_kernel_path = "../../data/"
+        self.txtfile = open("../../data/softmax.txt", "w")
         self.final_yaxis = False
         self.final_xaxis = False
         self.stop = False
@@ -27,12 +24,13 @@ class SlidingWindow:
         self.reshape_height = 60
         self.reshape_width = int(60 * self.aspect)
         self.image = cv2.resize(self.image, (self.reshape_width, self.reshape_height))
-        self.stepSize = 4
+        self.stepSize = 1
         (self.w_width, self.w_height) = (39, 39)  # window size
         self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
 
         self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
-        self.CONFIDENCE_THRESHOLD = 0.8
+        self.CONFIDENCE_THRESHOLD = 0.6
+        self.SHOW_PLOT = False
 
 
     def find_mean(self, x):
@@ -90,6 +88,7 @@ class SlidingWindow:
         return new
 
     def get_letters(self):
+        prediction_list = []
         for x in range(0, self.image.shape[1], self.stepSize):
             self.final_yaxis = False
 
@@ -98,6 +97,7 @@ class SlidingWindow:
                 self.final_xaxis = True
 
             for y in range(0, self.image.shape[0], self.stepSize):
+                temp_prediction_list = []
                 self.i = self.i + 1
                 filename = ""
 
@@ -109,24 +109,50 @@ class SlidingWindow:
                     window = self.image[y:y + self.w_height, x:x + self.w_width]
                     temp = window.reshape((1, self.w_height, self.w_width, 1))
                     temp = np.interp(temp, (temp.min(), temp.max()), (0, 1)) #Normalize image between 0 and 1
-                    predict = self.model.predict(temp)
-                    onehot = self.probs_to_one_hot(predict)
-                    idxes = [np.where(onehot != 0.0)[0]][0]
-                    #softmaxes = [np.where(predict[0] != 0.0)[0]][0]
-                    self.txtfile.write(str(self.i) + " - ")
-                    for idx in idxes: #loop, in case 2 or more characters have same probability
-                        self.classificationMatrix[idx][x] += 1
-                        filename += self.characters[idx]
-                        self.txtfile.write(self.characters[idx] + " " + str(predict) + " ")
-                    self.txtfile.write('\n')
-                    filename = self.save_kernel_path + str(self.i) + "-" + filename + ".png"
-                    cv2.imwrite(filename, window)
+
+                    whites_top = 0
+                    for i in range(self.w_height):
+                        if np.count_nonzero(temp[0][i] == 1)/39. == 1:
+                            whites_top += 1
+                        else:
+                            break
+                    whites_bottom = 0
+                    for i in range(self.w_height):
+                        if np.count_nonzero(temp[0][i] == 1)/39. == 1:
+                            whites_bottom += 1
+                        else:
+                            whites_bottom = 0
+                            continue
+
+                    # IF WHITE LINES TOP AND BOTTOM IS EQUAL:
+                    if abs(whites_bottom - whites_top) <= 1:
+                        predict = self.model.predict(temp)
+                        onehot = self.probs_to_one_hot(predict)
+                        idxes = [np.where(onehot != 0.0)[0]][0]
+                        #softmaxes = [np.where(predict[0] != 0.0)[0]][0]
+                        self.txtfile.write(str(self.i) + " - ")
+                        for idx in idxes: #loop, in case 2 or more characters have same probability
+                            self.classificationMatrix[idx][x] += 1
+                            filename += self.characters[idx]
+                            self.txtfile.write(self.characters[idx] + " " + str(predict) + " ")
+                        self.txtfile.write('\n')
+                        filename = self.save_kernel_path + str(self.i) + "-" + filename + ".png"
+                        cv2.imwrite(filename, window)
+                        predict = predict[0]  # collapse dimensions of double list 'predict'
+                        temp_prediction_list.append(predict.tolist())
+                    #ELSE: CONTINUE
+                    else:
+                        continue
 
                 if self.final_yaxis and self.final_xaxis:
                     self.stop = True
 
                 if self.final_yaxis:
                     break
+            mean_of_column = [float(sum(col))/len(col) for col in zip(*temp_prediction_list)]
+            if not mean_of_column == []:
+                prediction_list.append(mean_of_column)
+
         self.txtfile.close()
         ret = self.find_peaks(self.classificationMatrix).tolist()
         ret = self.merge_peaks(np.array(ret)).tolist()
@@ -137,11 +163,11 @@ class SlidingWindow:
                 plt.legend()
         plt.subplot(2, 1, 2)
         img=mpimg.imread(self.image_file)
-        plt.imshow(img)
-        plt.show()
-
-        #TODO: implement program to go from histogram to Hebrew character output
+        if self.SHOW_PLOT:
+            plt.imshow(img)
+            plt.show()
+        return prediction_list
 
 if __name__ == '__main__':
     sw = SlidingWindow()
-    sw.get_letters()
+    prediction_list = sw.get_letters()
