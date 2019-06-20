@@ -15,6 +15,7 @@ import cv2 	# for reading in the image
 sys.path.append('preprocessing/')
 from preprocessor import preprocess_image
 from bayesian_postp import Bayesian_processor
+from write_to_file import write_to_file
 
 if __name__ == '__main__':
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
 		outfile = file.split('.')[0] #get root filename
 		outfile += '.txt'
 		## Example call:
-		# write_to_file(final_sentence, outfile)
+		write_to_file(final_sentence, path, outfile)
 
 		print("Succesfully transcribed \"%s\" to \"%s\"." % (file, outfile))
 

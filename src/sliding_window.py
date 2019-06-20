@@ -29,7 +29,8 @@ class SlidingWindow:
         self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
 
         self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
-        self.CONFIDENCE_THRESHOLD = 0.8
+        self.CONFIDENCE_THRESHOLD = 0.6
+        self.SHOW_PLOT = False
 
 
     def find_mean(self, x):
@@ -87,6 +88,7 @@ class SlidingWindow:
         return new
 
     def get_letters(self):
+        prediction_list = []
         for x in range(0, self.image.shape[1], self.stepSize):
             self.final_yaxis = False
 
@@ -95,6 +97,7 @@ class SlidingWindow:
                 self.final_xaxis = True
 
             for y in range(0, self.image.shape[0], self.stepSize):
+                temp_prediction_list = []
                 self.i = self.i + 1
                 filename = ""
 
@@ -135,7 +138,8 @@ class SlidingWindow:
                         self.txtfile.write('\n')
                         filename = self.save_kernel_path + str(self.i) + "-" + filename + ".png"
                         cv2.imwrite(filename, window)
-
+                        predict = predict[0]  # collapse dimensions of double list 'predict'
+                        temp_prediction_list.append(predict.tolist())
                     #ELSE: CONTINUE
                     else:
                         continue
@@ -145,6 +149,10 @@ class SlidingWindow:
 
                 if self.final_yaxis:
                     break
+            mean_of_column = [float(sum(col))/len(col) for col in zip(*temp_prediction_list)]
+            if not mean_of_column == []:
+                prediction_list.append(mean_of_column)
+
         self.txtfile.close()
         ret = self.find_peaks(self.classificationMatrix).tolist()
         ret = self.merge_peaks(np.array(ret)).tolist()
@@ -155,11 +163,11 @@ class SlidingWindow:
                 plt.legend()
         plt.subplot(2, 1, 2)
         img=mpimg.imread(self.image_file)
-        plt.imshow(img)
-        plt.show()
-
-        #TODO: implement program to go from histogram to Hebrew character output
+        if self.SHOW_PLOT:
+            plt.imshow(img)
+            plt.show()
+        return prediction_list
 
 if __name__ == '__main__':
     sw = SlidingWindow()
-    sw.get_letters()
+    prediction_list = sw.get_letters()
