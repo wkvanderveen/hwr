@@ -5,9 +5,12 @@ from collections import Counter
 from PIL import ImageFont, ImageDraw, Image, ImageChops
 np.set_printoptions(threshold=sys.maxsize)
 
+IOU = 0.001
+SCORE = 0.001
+
 #  Discard all boxes with low scores and high IOU
-def gpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.0,
-            iou_thresh=0.1):
+def gpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=SCORE,
+            iou_thresh=IOU):
     """
 
     Arguments:
@@ -55,7 +58,7 @@ def gpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.0,
     return boxes, score, label
 
 
-def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.1):
+def py_nms(boxes, scores, max_boxes=50, iou_thresh=IOU):
     """
     Pure Python NMS baseline.
 
@@ -101,8 +104,8 @@ def py_nms(boxes, scores, max_boxes=50, iou_thresh=0.1):
     return keep[:max_boxes]
 
 
-def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=0.0,
-            iou_thresh=0.1):
+def cpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=SCORE,
+            iou_thresh=IOU):
     """
     Arguments:
         boxes ==> shape [1, 10647, 4]
@@ -367,7 +370,7 @@ def bbox_iou(A, B):
     return iou
 
 
-def evaluate(y_pred, y_true, iou_thresh=0.1, score_thresh=0.0):
+def evaluate(y_pred, y_true, iou_thresh=IOU, score_thresh=SCORE):
     num_images = y_true[0].shape[0]
     num_classes = y_true[0][0][..., 5:].shape[-1]
     true_labels_dict = {i: 0 for i in range(num_classes)}  # {class: count}
