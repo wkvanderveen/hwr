@@ -35,10 +35,11 @@ if __name__ == '__main__':
 		# cv2.imshow("original", preprocessed_img)
 		# cv2.waitKey(0)
 
-		for idx, c in enumerate(croppings):
-			cv2.imwrite(join(OUTPATH, "%d_%d_%d.png" % (fidx, idx, sum_black_pixels(c))), c)
-		# 	cv2.imshow("cropping%d" % idx, c)
-		# 	cv2.waitKey(0)
-		# cv2.destroyAllWindows()
-		print("saved %d croppings!" % (len(croppings)))
+		for line_idx, chars in enumerate(croppings):
+			for idx, c in enumerate(chars):
+				cv2.imwrite(join(OUTPATH, "%d_%d_%d_%d.png" % (fidx, line_idx, idx, sum_black_pixels(c))), c)
+			# 	cv2.imshow("cropping%d" % idx, c)
+			# 	cv2.waitKey(0)
+			# cv2.destroyAllWindows()
+			print("saved %d croppings!" % (len(chars)))
 
