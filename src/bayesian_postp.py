@@ -271,9 +271,9 @@ class Bayesian_processor():
         for idx, letter_probs in enumerate(posteriors):
             best_letter_val = max(letter_probs)
             best_letter_index = letter_probs.index(best_letter_val)
-            print(probabilities[idx][np.array(probabilities[idx]).argmax()])
-            print(hebrew_map[best_letter_index])
-            print("\n")
+            # print(probabilities[idx][np.array(probabilities[idx]).argmax()])
+            # print(hebrew_map[best_letter_index])
+            # print("\n")
             final_sentence += hebrew_map[best_letter_index]
 
         return final_sentence

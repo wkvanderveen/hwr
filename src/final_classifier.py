@@ -56,20 +56,29 @@ if __name__ == '__main__':
 
 		## classify lines
 		for line in preprocessed_lines:
+			sentence = ''
+			for letter in line:
 			
-			## neural network call here
-			sw = SlidingWindow()
-			sw.WRITE_WINDOWS = False # If True, the input images of the cnn will be written to a file
-			sw.load_image_final_pipeline(line)
-			transcribed_lines = sw.get_letters()
+				## neural network call here
+				sw = SlidingWindow()
+				sw.WRITE_WINDOWS = False # If True, the input images of the cnn will be written to a file
+				sw.load_image_final_pipeline(letter)
+				# cv2.imshow('image',letter)
+				# cv2.waitKey(0)
+				# cv2.destroyAllWindows()
+				try:
+					transcribed_lines = sw.get_letters()
 
-			## apply postprocessing
-			postp = Bayesian_processor()
-			final_sentence = postp.apply_postprocessing(transcribed_lines)
-			print(final_sentence)
+					## apply postprocessing
+					postp = Bayesian_processor()
+					final_letter = postp.apply_postprocessing(transcribed_lines)
+					print(final_letter)
+					sentence = sentence+str(final_letter)
+				except:
+					print("SKIPPING")
 
-			## write croppings to file
-			write_to_file(final_sentence, path, outfile)
+				## write croppings to file
+			write_to_file(sentence, path, outfile)
 
 		print("Succesfully transcribed \"%s\" to \"%s\"." % (file, outfile))
 
