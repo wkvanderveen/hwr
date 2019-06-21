@@ -194,8 +194,8 @@ class Bayesian_processor():
                     trash_indices.append(idx+1)
             except:
                 pass
-        one_hots = [j for i, j in enumerate(one_hots) if i not in trash_indices]
-        return one_hots
+        probabilities = [j for i, j in enumerate(probabilities) if i not in trash_indices]
+        return probabilities
 
     # This function filters the character sequence on single occuring characters in a sequence.
     # These characters are regarded as noise. E.g. in the ence AAABAACCCCCC, B would be regarded as noise
@@ -216,8 +216,8 @@ class Bayesian_processor():
                         trash_indices.append(idx+kernel_idx+1)
             except:
                 pass
-        one_hots = [j for i, j in enumerate(one_hots) if i not in trash_indices]
-        return one_hots
+        probabilities = [j for i, j in enumerate(probabilities) if i not in trash_indices]
+        return probabilities
 
     def apply_postprocessing(self, probabilities):
         probabilities = self.sequence_denoiser(probabilities)
@@ -226,15 +226,17 @@ class Bayesian_processor():
         posteriors = self.normalize_posteriors(posteriors)
         posteriors = self.filter_on_seq_of_same_chars(posteriors) # Filter on same-char-sequences, these may be produced by the n-grams post processing
         final_sentence = ""
-        for letter_probs in posteriors:
+        for idx, letter_probs in enumerate(posteriors):
             best_letter_val = max(letter_probs)
             best_letter_index = letter_probs.index(best_letter_val)
-
+            # print(posteriors[idx][np.array(posteriors[idx]).argmax()])
+            # print(np.array(posteriors[idx]).argmax())
+            # print(hebrew_map[best_letter_index])
+            # print("\n")
             final_sentence += hebrew_map[best_letter_index]
 
         return final_sentence
-
-
+            
 
 
 if __name__ == "__main__":
@@ -243,7 +245,7 @@ if __name__ == "__main__":
     # Construct mock prediction softmax (of length (n x 27) )
     processor = Bayesian_processor()
     sw = SlidingWindow()
-    image_file = "../data/backup_val_lines/line5.jpg"
+    image_file = "../data/backup_val_lines/line1.png"
     sw.load_image(image_file)
     # posterior_word = processor.process_word(predicted_word)
     # posterior_word = processor.normalize_posteriors(posterior_word)
