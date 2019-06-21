@@ -3,9 +3,11 @@ from os.path import join, abspath
 from sliding_window import SlidingWindow
 import numpy as np
 from write_to_file import write_to_file
+import statistics
 
 FINAL_OUTPUT_SAVE_PATH = "../data/program_output/"
 FINAL_NAME = "output"
+CHAR_PROB_THRESHOLD = 0.6
 
 fn = join(abspath('..'), 'ngrams.npz')
 char_map = {'Alef' : 0, 
@@ -181,6 +183,37 @@ class Bayesian_processor():
         return new
 
     # This function will produce output such that each character in a same character sequence only occurs once. 
+    # This function takes the mean of the same char sequence
+    def filter_on_seq_of_same_chars_2(self, probabilities):
+        first_char_flag = False # Flag to determine first char of same char sequence
+        one_hots = []
+        trash_indices = []
+        out_probs = []
+        #convert softmax arrays to one hot arrays
+        for arr in probabilities:
+            one_hot = self.probs_to_one_hot(arr)
+            one_hots.append(one_hot)
+        first_char_mean = probabilities[0]
+        for idx in range(0, len(one_hots)):
+            try:
+                if one_hots[idx] == one_hots[idx+1]: #Next char is the same as current one
+                    trash_indices.append(idx+1)
+                    first_char_flag = True
+                    #probabilities[idx] = [statistics.mean(k) for k in zip(probabilities[idx],probabilities[idx+1])]
+                else:
+                    first_char_flag = False
+                    first_char_mean = probabilities[idx]
+
+                if first_char_flag:
+                    first_char_mean = [statistics.mean(k) for k in zip(first_char_mean,probabilities[idx+1])] # Compute mean of first char of same char seq. and the char ahead
+                else:
+                    out_probs.append(first_char_mean)    
+            except:
+                pass
+        #probabilities = [j for i, j in enumerate(probabilities) if i not in trash_indices]
+        return out_probs
+
+    # This function will produce output such that each character in a same character sequence only occurs once. 
     def filter_on_seq_of_same_chars(self, probabilities):
         one_hots = []
         trash_indices = []
@@ -194,8 +227,8 @@ class Bayesian_processor():
                     trash_indices.append(idx+1)
             except:
                 pass
-        one_hots = [j for i, j in enumerate(one_hots) if i not in trash_indices]
-        return one_hots
+        probabilities = [j for i, j in enumerate(probabilities) if i not in trash_indices]
+        return probabilities
 
     # This function filters the character sequence on single occuring characters in a sequence.
     # These characters are regarded as noise. E.g. in the ence AAABAACCCCCC, B would be regarded as noise
@@ -204,7 +237,6 @@ class Bayesian_processor():
     def sequence_denoiser(self, probabilities):
         one_hots = []
         trash_indices = []
-        denoise_distance = 2
         #convert softmax arrays to one hot arrays
         for arr in probabilities:
             one_hot = self.probs_to_one_hot(arr)
@@ -216,25 +248,36 @@ class Bayesian_processor():
                         trash_indices.append(idx+kernel_idx+1)
             except:
                 pass
-        one_hots = [j for i, j in enumerate(one_hots) if i not in trash_indices]
-        return one_hots
+        probabilities = [j for i, j in enumerate(probabilities) if i not in trash_indices]
+        return probabilities
+
+    def apply_threshold(self, probabilities):
+        new_probs = []
+        for softmax in probabilities:
+            if softmax[np.array(softmax).argmax()] > CHAR_PROB_THRESHOLD:
+                new_probs.append(softmax)
+        return new_probs
 
     def apply_postprocessing(self, probabilities):
         probabilities = self.sequence_denoiser(probabilities)
         probabilities = self.filter_on_seq_of_same_chars(probabilities)
+        probabilities = self.apply_threshold(probabilities)
+        probabilities.reverse() # This way the n-grams will be applied from right to left
         posteriors = self.process_word(probabilities)
         posteriors = self.normalize_posteriors(posteriors)
         posteriors = self.filter_on_seq_of_same_chars(posteriors) # Filter on same-char-sequences, these may be produced by the n-grams post processing
+        posteriors.reverse() # This way the n-grams will be applied from right to left
         final_sentence = ""
-        for letter_probs in posteriors:
+        for idx, letter_probs in enumerate(posteriors):
             best_letter_val = max(letter_probs)
             best_letter_index = letter_probs.index(best_letter_val)
-
+            print(probabilities[idx][np.array(probabilities[idx]).argmax()])
+            print(hebrew_map[best_letter_index])
+            print("\n")
             final_sentence += hebrew_map[best_letter_index]
 
         return final_sentence
-
-
+            
 
 
 if __name__ == "__main__":
@@ -243,7 +286,7 @@ if __name__ == "__main__":
     # Construct mock prediction softmax (of length (n x 27) )
     processor = Bayesian_processor()
     sw = SlidingWindow()
-    image_file = "../data/backup_val_lines/line5.jpg"
+    image_file = "../data/backup_val_lines/line1.png"
     sw.load_image(image_file)
     # posterior_word = processor.process_word(predicted_word)
     # posterior_word = processor.normalize_posteriors(posterior_word)
@@ -254,5 +297,4 @@ if __name__ == "__main__":
     # processor.print_word(posterior_word, "Normalized word (after bigrams)")
     predicted_sentence = sw.get_letters()
     sentence = processor.apply_postprocessing(predicted_sentence)
-    write_to_file(sentence, FINAL_OUTPUT_SAVE_PATH, FINAL_NAME)
     print(sentence)

@@ -21,7 +21,9 @@ class SlidingWindow:
         self.SHOW_PLOT = False
         self.WRITE_WINDOWS = False
 
+
     def load_image(self, image_path):
+        self.run_final = False
         self.image_file = image_path
         self.image = cv2.imread(self.image_file, cv2.IMREAD_GRAYSCALE)  # your image path
         self.aspect = self.image.shape[1] / self.image.shape[0]
@@ -172,16 +174,17 @@ class SlidingWindow:
                 plt.plot(ret[idx], label=self.characters[idx])
                 plt.legend()
         plt.subplot(2, 1, 2)
-        if self.run_final:
-            self.image_file = "../data/backup_val_lines/line5.jpg"
-        img=mpimg.imread(self.image_file)
-        if self.SHOW_PLOT:
-            plt.imshow(img)
-            plt.show()
+        try:
+            img=mpimg.imread(self.image_file)
+            if self.SHOW_PLOT:
+                plt.imshow(img)
+                plt.show()
+        except:
+            pass
         return prediction_list
 
 if __name__ == '__main__':
     sw = SlidingWindow()
-    image_file = "../data/backup_val_lines/line5.jpg"
+    image_file = "../data/backup_val_lines/line1.png"
     sw.load_image(image_file)
     prediction_list = sw.get_letters()
