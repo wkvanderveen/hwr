@@ -172,12 +172,13 @@ class SlidingWindow:
                 plt.plot(ret[idx], label=self.characters[idx])
                 plt.legend()
         plt.subplot(2, 1, 2)
-        if self.run_final:
-            self.image_file = "../data/backup_val_lines/line5.jpg"
-        img=mpimg.imread(self.image_file)
-        if self.SHOW_PLOT:
-            plt.imshow(img)
-            plt.show()
+        try:
+            img=mpimg.imread(self.image_file)
+            if self.SHOW_PLOT:
+                plt.imshow(img)
+                plt.show()
+        except:
+            pass
         return prediction_list
 
 if __name__ == '__main__':

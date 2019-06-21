@@ -254,5 +254,4 @@ if __name__ == "__main__":
     # processor.print_word(posterior_word, "Normalized word (after bigrams)")
     predicted_sentence = sw.get_letters()
     sentence = processor.apply_postprocessing(predicted_sentence)
-    write_to_file(sentence, FINAL_OUTPUT_SAVE_PATH, FINAL_NAME)
     print(sentence)
