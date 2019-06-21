@@ -1,21 +1,17 @@
 import os
-import sys
-import wget
-import time
-import argparse
 import tensorflow as tf
 from core import yolov3, utils
 
 class WeightConverter(object):
     """docstring for WeightConverter"""
-    def __init__(self, freeze, convert, num_classes, n_filters_dn, n_strides_dn, n_ksizes_dn, img_dims, checkpoint_dir, weights_dir, anchors_path, score_threshold, iou_threshold, checkpoint_step=None):
+    def __init__(self, freeze, convert, num_classes, n_filters_dn,
+                 n_strides_dn, n_ksizes_dn, img_dims, checkpoint_dir,
+                 weights_dir, anchors_path, checkpoint_step=None):
         super(WeightConverter, self).__init__()
         self.freeze = freeze
         self.convert = convert
         self.num_classes = num_classes
         self.anchors_path = anchors_path
-        self.score_threshold = score_threshold
-        self.iou_threshold = iou_threshold
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
         self.n_filters_dn = n_filters_dn
@@ -53,9 +49,7 @@ class WeightConverter(object):
             scores = confs * probs
             print("=>", boxes.name[:-2], scores.name[:-2])
             cpu_out_node_names = [boxes.name[:-2], scores.name[:-2]]
-            boxes, scores, labels = utils.gpu_nms(boxes, scores, self.num_classes,
-                                                  score_thresh=self.score_threshold,
-                                                  iou_thresh=self.iou_threshold)
+            boxes, scores, labels = utils.gpu_nms(boxes, scores, self.num_classes)
             print("=>", boxes.name[:-2], scores.name[:-2], labels.name[:-2])
             gpu_out_node_names = [boxes.name[:-2], scores.name[:-2], labels.name[:-2]]
 
@@ -77,6 +71,7 @@ class WeightConverter(object):
                 print('=> checkpoint file restored from ', ckpt_idx)
                 utils.freeze_graph(sess, '../../data/checkpoint/yolov3_cpu_nms.pb', cpu_out_node_names)
                 utils.freeze_graph(sess, '../../data/checkpoint/yolov3_gpu_nms.pb', gpu_out_node_names)
+
 
 if __name__ == "__main__":
     weightconverter = WeightConverter(freeze=True,

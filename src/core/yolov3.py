@@ -179,7 +179,7 @@ class yolov3(object):
         boxes = tf.concat([x0, y0, x1, y1], axis=-1)
         return boxes, confs, probs
 
-    def compute_loss(self, pred_feature_map, y_true, iou_threshold):
+    def compute_loss(self, pred_feature_map, y_true, iou_threshold=1.0):
 
         loss_xy, loss_wh, loss_conf, loss_class = 0., 0., 0., 0.
         total_loss = 0.

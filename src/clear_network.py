@@ -13,10 +13,11 @@ for the_file in os.listdir(folder):
         if os.path.isdir(file_path):
             if not file_path == folder + "original_letters" and \
                not file_path == folder + "weights" and \
-               not file_path == folder + "new-lines" and \
+               not file_path == folder + "image-data" and \
+               not file_path == folder + "new-lines-sorted" and \
                not (file_path == folder + "lines-test" and not clear_lines) and \
                not (file_path == folder + "lines-train" and not clear_lines) and \
                not file_path == folder:
-               shutil.rmtree(file_path)
+                shutil.rmtree(file_path)
     except Exception as e:
         print(e)

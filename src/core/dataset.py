@@ -5,15 +5,13 @@ import tensorflow as tf
 
 
 class Parser(object):
-    def __init__(self, image_h, image_w, anchors, cell_size, num_classes,
-                 debug=False):
+    def __init__(self, image_h, image_w, anchors, num_classes, debug=False):
 
         self.anchors = anchors
         self.num_classes = num_classes
         self.image_h = image_h
         self.image_w = image_w
         self.debug = debug
-        self.cell_size = cell_size
 
     def flip_left_right(self, image, gt_boxes):
 
@@ -109,8 +107,6 @@ class Parser(object):
     def preprocess_true_boxes(self, gt_boxes):
 
         anchor_mask = list(range(0, len(self.anchors)))
-        grid_sizes = [self.image_h // self.cell_size,
-                      self.image_w // self.cell_size]
 
         box_centers = (gt_boxes[:, 0:2] + gt_boxes[:, 2:4]) / 2  # center
         box_sizes = gt_boxes[:, 2:4] - gt_boxes[:, 0:2]  # h & w
@@ -118,8 +114,8 @@ class Parser(object):
         gt_boxes[:, 0:2] = box_centers
         gt_boxes[:, 2:4] = box_sizes
 
-        y_true = np.zeros(shape=[grid_sizes[0],
-                                 grid_sizes[1],
+        y_true = np.zeros(shape=[self.image_h,
+                                 self.image_w,
                                  len(self.anchors),
                                  5 + self.num_classes],
                           dtype=np.float32)
@@ -152,9 +148,9 @@ class Parser(object):
                 continue
 
             i = np.floor(gt_boxes[t, 0]
-                         / self.image_w*grid_sizes[1]).astype('int32')
+                         / self.image_w*self.image_w).astype('int32')
             j = np.floor(gt_boxes[t, 1]
-                         / self.image_h*grid_sizes[0]).astype('int32')
+                         / self.image_h*self.image_h).astype('int32')
 
             k = anchor_mask.index(n)
             c = gt_boxes[t, 4].astype('int32')

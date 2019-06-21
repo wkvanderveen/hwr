@@ -2,13 +2,15 @@ import tensorflow as tf
 import os
 from core import utils, yolov3
 from core.dataset import dataset, Parser
+tf.logging.set_verbosity(tf.logging.ERROR)
 sess = tf.Session()
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 
 class Trainer(object):
     """docstring for Trainer"""
     def __init__(self, num_classes, batch_size, n_filters_dn, size_threshold,
-                 n_strides_dn, n_ksizes_dn, cell_size, ignore_threshold, steps,
+                 n_strides_dn, n_ksizes_dn, steps,
                  img_dims, learning_rate, decay_steps, decay_rate,
                  shuffle_size, eval_internal, save_internal, print_every_n,
                  anchors_path, train_records, test_records, checkpoint_path):
@@ -19,7 +21,6 @@ class Trainer(object):
         self.learning_rate = learning_rate
         self.decay_steps = decay_steps
         self.decay_rate = decay_rate
-        self.ignore_thresh = ignore_threshold
         self.shuffle_size = shuffle_size
         self.eval_internal = eval_internal
         self.size_threshold = size_threshold
@@ -31,11 +32,18 @@ class Trainer(object):
         self.n_filters_dn = n_filters_dn
         self.n_strides_dn = n_strides_dn
         self.n_ksizes_dn = n_ksizes_dn
-        self.cell_size = cell_size
         self.anchors_path = anchors_path
         self.train_records = train_records
         self.test_records = test_records
         self.checkpoint_path = os.path.join(checkpoint_path, "yolov3.ckpt")
+
+        def deprecated(date, instructions, warn_once=False):
+            def deprecated_wrapper(func):
+                return func
+            return deprecated_wrapper
+
+        from tensorflow.python.util import deprecation
+        deprecation.deprecated = deprecated
 
     def train(self):
         ANCHORS = utils.get_anchors(self.anchors_path, self.img_h, self.img_w)
@@ -43,8 +51,7 @@ class Trainer(object):
         parser = Parser(image_h=self.img_h,
                         image_w=self.img_w,
                         anchors=ANCHORS,
-                        num_classes=self.num_classes,
-                        cell_size=self.cell_size)
+                        num_classes=self.num_classes)
 
         trainset = dataset(parser,
                            self.train_records,
