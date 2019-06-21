@@ -59,11 +59,13 @@ if __name__ == '__main__':
 			
 			## neural network call here
 			sw = SlidingWindow()
+			sw.load_image_final_pipeline(line)
 			transcribed_lines = sw.get_letters()
 
 			## apply postprocessing
 			postp = Bayesian_processor()
 			final_sentence = postp.apply_postprocessing(transcribed_lines)
+			print(final_sentence)
 
 			## write croppings to file
 			write_to_file(final_sentence, path, outfile)
