@@ -163,12 +163,12 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 					for m in minima:
 						linedict_old = deepcopy(linedict)
 						linedict = {}
-						# line = a.acid_drop(c, 0, m, xmax-1, m, 9000)
+						line = a.acid_drop(c, 0, m, xmax-1, m, 9000)
 
-						# for (x, y) in line:
-						# 	linedict[x] = y
-						for x in range(xmax):
-							linedict[x] = m
+						for (x, y) in line:
+							linedict[x] = y
+						# for x in range(xmax):
+						# 	linedict[x] = m
 
 						out = np.full_like(c, 255, dtype=np.uint8) 
 						
