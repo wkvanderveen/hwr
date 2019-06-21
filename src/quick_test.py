@@ -6,32 +6,39 @@ import os
 from numpy import expand_dims
 from random import choice
 
+tf.logging.set_verbosity(tf.logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+
+
 class Tester(object):
     """docstring for Tester"""
-    def __init__(self, img_dims, num_classes, source_dir, score_threshold,
-                 iou_threshold, size_threshold, checkpoint_dir,
-                 letters_test_dir, max_boxes, filters, rescale_test):
+    def __init__(self, img_dims, num_classes, size_threshold, checkpoint_dir,
+                 letters_test_dir, max_boxes, filters):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
         self.img_w = img_dims[1]
         self.num_classes = num_classes
-        self.source_dir = source_dir
-        self.score_threshold = score_threshold
-        self.iou_threshold = iou_threshold
         self.filters = filters
         self.size_threshold = size_threshold
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
-        self.rescale_test = rescale_test
 
-    def test(self):
-        image_name = choice(os.listdir(self.source_dir))
-        image_path = os.path.join(self.source_dir, image_name)
+        def deprecated(date, instructions, warn_once=False):
+            def deprecated_wrapper(func):
+                return func
+            return deprecated_wrapper
+
+        from tensorflow.python.util import deprecation
+        deprecation.deprecated = deprecated
+
+    def test(self, source_dir=None, image_path=None):
+        if source_dir:
+            image_name = choice(os.listdir(source_dir))
+            image_path = os.path.join(source_dir, image_name)
 
         img = cv2.imread(image_path, 0)
-        # if self.rescale_test:
         img = cv2.resize(src=img, dsize=(0, 0), fx=1/2, fy=1/2)
         if img.shape[0] < self.img_h and img.shape[1] < self.img_w:
             img = cv2.copyMakeBorder(src=img,
@@ -64,21 +71,21 @@ class Tester(object):
             min_wh, max_wh = -10000, 10000
             min_ratio = 1/4  # 0 -- 1
 
-            mask = np.logical_and(boxes[:,0] >= min_wh, boxes[:,0] <= max_wh)
-            mask = np.logical_and(mask, boxes[:,1] >= min_wh)
-            mask = np.logical_and(mask, boxes[:,2] >= min_wh)
-            mask = np.logical_and(mask, boxes[:,3] >= min_wh)
-            mask = np.logical_and(mask, boxes[:,1] <= max_wh)
-            mask = np.logical_and(mask, boxes[:,2] <= max_wh)
-            mask = np.logical_and(mask, boxes[:,3] <= max_wh)
-            mask = np.logical_and(mask, boxes[:,0] < boxes[:,2])
-            mask = np.logical_and(mask, boxes[:,1] < boxes[:,3])
+            mask = np.logical_and(boxes[:, 0] >= min_wh, boxes[:, 0] <= max_wh)
+            mask = np.logical_and(mask, boxes[:, 1] >= min_wh)
+            mask = np.logical_and(mask, boxes[:, 2] >= min_wh)
+            mask = np.logical_and(mask, boxes[:, 3] >= min_wh)
+            mask = np.logical_and(mask, boxes[:, 1] <= max_wh)
+            mask = np.logical_and(mask, boxes[:, 2] <= max_wh)
+            mask = np.logical_and(mask, boxes[:, 3] <= max_wh)
+            mask = np.logical_and(mask, boxes[:, 0] < boxes[:, 2])
+            mask = np.logical_and(mask, boxes[:, 1] < boxes[:, 3])
 
             boxes = boxes[mask]
             scores = scores[mask]
 
-            h = abs(boxes[:,2]-boxes[:,0])
-            w = abs(boxes[:,3]-boxes[:,1])
+            h = abs(boxes[:, 2]-boxes[:, 0])
+            w = abs(boxes[:, 3]-boxes[:, 1])
 
             mask = np.logical_and(w/h > min_ratio, h/w > min_ratio)
 
@@ -113,8 +120,6 @@ class Tester(object):
                 boxes=boxes,
                 scores=scores,
                 num_classes=self.num_classes,
-                score_thresh=self.score_threshold,
-                iou_thresh=self.iou_threshold,
                 max_boxes=self.max_boxes)
 
             (image, results) = utils.draw_boxes(
@@ -124,7 +129,7 @@ class Tester(object):
                 labels,
                 classes,
                 [self.img_h, self.img_w],
-                show=True,
+                show=(source_dir is not None),
                 size_threshold=self.size_threshold)
 
         return results

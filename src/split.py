@@ -1,8 +1,7 @@
-#python3 tools/split.py -d ../data/letters -o imagesTest -i imagesTrain -p 20
-import argparse
 import os
 from shutil import copyfile
 from random import sample
+
 
 class Splitter(object):
     """docstring for Splitter"""

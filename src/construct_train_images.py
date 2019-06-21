@@ -5,9 +5,11 @@ from tqdm import tqdm
 import random as rand
 from math import ceil
 
+
 class Linemaker(object):
     """docstring for Linemaker"""
-    def __init__(self, set_type, source_dir, target_dir, cell_size, label_dir, line_length_bounds, n_lines, max_overlap):
+    def __init__(self, set_type, source_dir, target_dir, label_dir,
+                 line_length_bounds, n_lines, max_overlap):
         super(Linemaker, self).__init__()
         self.set_type = set_type
         self.label_dir = label_dir
@@ -16,16 +18,13 @@ class Linemaker(object):
         self.line_length_bounds = line_length_bounds
         self.n_lines = n_lines
         self.max_overlap = max_overlap
-        self.cell_size = cell_size
 
     def make_lines(self):
 
         classes = os.listdir(self.source_dir)
-        num_classes = len(classes)
 
         max_h, max_w = 0, 0
-        max_paddings = [5, 5, 5, 5] # L,T,R,B  (min 5)
-
+        max_paddings = [5, 5, 5, 5]  # L,T,R,B  (min 5)
 
         if not os.path.isdir(self.target_dir):
             os.mkdir(self.target_dir)

@@ -1,4 +1,5 @@
 import os
+import shutil
 from os.path import abspath, join
 import sys
 import cv2
@@ -6,7 +7,6 @@ from time import sleep
 from split import Splitter
 from data_augmenter import Augmenter
 from construct_train_images import Linemaker
-from math import ceil
 from make_tfrecords import TfRecordMaker
 from kmeans import AnchorMaker
 from convert_weight import WeightConverter
@@ -19,9 +19,12 @@ sys.path.append(f'{os.path.dirname(os.path.realpath(__file__))}' +
 
 from preprocessor import preprocess_image
 
-# # PARAMETERS # #
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
-# tensorboard --logdir train:./train_summary,eval:./test_summary
+# To run tensorboard, type the following in the data folder:
+#   tensorboard --logdir train:./train_summary,eval:./test_summary
+
+# # PARAMETERS # #
 
 # File structure parameters
 core_data_path = join(join(abspath(".."), ".."), "data")
@@ -38,77 +41,77 @@ dimensions_file = join(core_data_path, "dimensions.txt")
 weights_dir = join(core_data_path, "weights/")
 anchor_file = join(core_data_path, "anchors.txt")
 image_dir = join(core_data_path, "image-data")
-processed_image_dir = join(core_data_path, "new-lines") #change later
+processed_image_dir = join(core_data_path, "new-lines-sorted")
+output_file = join(core_data_path, "output_file")
 
 
 # Data parameters
 num_classes = 4
 split_percentage = 20
 augment = False
-line_length_bounds = (10, 30)
-n_training_lines = 2000
-n_testing_lines = 500
-max_overlap_train = 10
-max_overlap_test = 10
-max_boxes = 12
+line_length_bounds = (30, 30)
+n_training_lines = 500
+n_testing_lines = 200
+max_overlap_train = 0
+max_overlap_test = 0
 test_on_train = False
 test_on_scrolls = True
 
 # Network parameters (darknet)
-n_filters_dn = (1024*1024,)  # More is better
+n_filters_dn = (128*256,)  # More is better
 n_strides_dn = (1, )  # Only increase beyond 1 if needed for memory savings
 n_ksizes_dn = (30, )  # Optimally: half of the usual letter width and height
 
-# Number of anchors (the final conv layer in yolo.detection_layer()
-#   has cluster_num+5 filters)
-cluster_num = num_classes  # This is a heuristic, not sure if best
-
 # Thresholds and filters
-filters = True
-iou_threshold = 0.0
-score_threshold = 0.0
-ignore_threshold = 0.0  # doesn't do anything
-size_threshold = (10, 10)  # in pixels
-# Also remember the min_dist parameter in utils and iou_threshold in quick_train!
+filters = False
+size_threshold = (5, 5)  # in pixels
+# Also remember the min_dist in utils and iou_threshold in quick_train!
 
 batch_size = 3
-steps = 200
-learning_rate = 1e-5
+steps = 300
+learning_rate = 1e-3
 decay_steps = 50
-decay_rate = 0.95
-shuffle_size = 20
-eval_internal = 100
-save_internal = 100
+decay_rate = 0.9
+shuffle_size = 10
+eval_internal = 1000
+save_internal = 50
 print_every_n = 10
-cell_size = 1
 
 
 # Other parameters
-retrain = False
 show_tfrecord_example = False
 test_example = True
 
 
-# [preprocessing here]
-if not os.path.isdir(processed_image_dir):
-    print("Preprocessing images")
+##########################
+# PREPROCESS SCROLL DATA #
+##########################
+
+if not os.path.isdir(os.path.join(processed_image_dir, "File0")):
+    print("Preprocessing real scrolls into lines")
     files = [join(image_dir, fn) for fn in os.listdir(image_dir)
              if os.path.isfile(join(image_dir, fn))]
     os.mkdir(processed_image_dir)
-    idx = 0
-    for file in files:
+    for idx_file, file in enumerate(files):
+        print(f"Progress: {idx_file+1}{len(files)}...")
         extracted_lines = preprocess_image(cv2.imread(file))
-        for line in extracted_lines:
-            cv2.imwrite(join(processed_image_dir, "%d.png" % (idx)), line)
-            idx += 1
-
+        this_dir = os.path.join(processed_image_dir, f"File{idx_file}")
+        if not os.path.isdir(this_dir):
+            os.mkdir(this_dir)
+        for idx_line, line in enumerate(extracted_lines):
+            cv2.imwrite(join(this_dir, f"Line{idx_line}.png"),
+                        line)
 else:
     print("Preprocessed images detected!\nSkipping preprocessing.")
 
 
 network_exists = bool(os.path.isfile("../../data/checkpoint/checkpoint"))
 
-if not network_exists or retrain:
+if not network_exists:
+
+    #############################
+    # SPLIT AND AUGMENT LETTERS #
+    #############################
 
     if not os.path.exists(letters_train_dir):
         splitter = Splitter(source_dir=orig_letters_dir,
@@ -134,6 +137,10 @@ if not network_exists or retrain:
         sleep(0.2)
         num_classes = len(os.listdir(letters_train_dir))
 
+    ###################
+    # MAKE FAKE LINES #
+    ###################
+
     if not os.path.exists(lines_train_dir):
         linemaker = Linemaker(set_type="train",
                               source_dir=letters_train_dir,
@@ -141,8 +148,7 @@ if not network_exists or retrain:
                               label_dir=label_train_path,
                               line_length_bounds=line_length_bounds,
                               n_lines=n_training_lines,
-                              max_overlap=max_overlap_train,
-                              cell_size=cell_size)
+                              max_overlap=max_overlap_train)
 
         max_h1, max_w1 = linemaker.make_lines()
 
@@ -152,16 +158,18 @@ if not network_exists or retrain:
                               label_dir=label_test_dir,
                               line_length_bounds=line_length_bounds,
                               n_lines=n_testing_lines,
-                              max_overlap=max_overlap_test,
-                              cell_size=cell_size)
+                              max_overlap=max_overlap_test)
 
         max_h2, max_w2 = linemaker.make_lines()
 
-        max_h = ceil(max(max_h1, max_h2)/float(cell_size))*cell_size
-        max_w = ceil(max(max_w1, max_w2)/float(cell_size))*cell_size
+        max_h = max(max_h1, max_h2)
+        max_w = max(max_w1, max_w2)
 
         img_dims = (max_h, max_w)
 
+        # Save the width and height of the largest line file (network
+        # will adapt to this size). All testing lines will be
+        # cropped/reshaped to this size later.
         with open(dimensions_file, "w+") as filename:
             print(f"{max_h} {max_w}", file=filename)
         img_dims = (max_h, max_w)
@@ -170,9 +178,14 @@ if not network_exists or retrain:
         print("Line data detected! Skipping linemaking.")
         sleep(0.2)
 
+        # Read the width and height of the existing line data
         with open(dimensions_file, "r") as max_dimensions:
             img_h, img_w = [int(x) for x in max_dimensions.read().split()]
         img_dims = (img_h, img_w)
+
+    ###############################################
+    # MAKE TFRECORD DATA FILES FROM THE LINE DATA #
+    ###############################################
 
     if not os.path.isfile(os.path.normpath(lines_train_dir) + ".tfrecords"):
         print("Making tfrecords...")
@@ -189,20 +202,24 @@ if not network_exists or retrain:
         print("Not creating TfRecords files because they already exist!")
         sleep(0.2)
 
+    ################
+    # MAKE ANCHORS #
+    ################
+
     if not os.path.isfile(anchor_file):
         print("Making anchors...")
         anchormaker = AnchorMaker(target_file=anchor_file,
                                   label_path=label_train_path,
-                                  cluster_num=cluster_num)
+                                  cluster_num=num_classes)
         anchormaker.make_anchors()
 
     else:
         print("Not creating anchors file because it already exists!")
         sleep(0.2)
 
-    if not os.path.exists(weights_dir):
-        print("Error: no weights detected! You need the pretrained " +
-              f"weights in the {weights_dir} directory.")
+    #####################
+    # TRAIN THE NETWORK #
+    #####################
 
     trainer = Trainer(num_classes=num_classes,
                       batch_size=batch_size,
@@ -213,14 +230,12 @@ if not network_exists or retrain:
                       n_filters_dn=n_filters_dn,
                       n_strides_dn=n_strides_dn,
                       n_ksizes_dn=n_ksizes_dn,
-                      size_threshold=size_threshold,
-                      ignore_threshold=ignore_threshold,
                       shuffle_size=shuffle_size,
+                      size_threshold=size_threshold,
                       eval_internal=eval_internal,
                       save_internal=save_internal,
                       print_every_n=print_every_n,
                       img_dims=img_dims,
-                      cell_size=cell_size,
                       anchors_path=anchor_file,
                       train_records={os.path.normpath(lines_train_dir) +
                                      ".tfrecords"},
@@ -233,7 +248,7 @@ if not network_exists or retrain:
 
     network_exists = True
 
-else:  # if network already exists and not retraining
+else:  # if network already exists
     print("Network already trained!")
     sleep(0.2)
 
@@ -243,15 +258,59 @@ else:  # if network already exists and not retraining
     num_classes = len(os.listdir(letters_train_dir))
 
 
+####################################
+# OPTIONALLY SHOW TRAINING EXAMPLE #
+####################################
+
 if network_exists and show_tfrecord_example:
     example_displayer = ExampleDisplayer(
         source_dir=os.path.normpath(lines_train_dir) + ".tfrecords",
         img_dims=img_dims,
         anchor_dir=anchor_file,
-        num_classes=num_classes,
-        cell_size=cell_size)
+        num_classes=num_classes)
 
     example_displayer.show_example()
+
+
+def convert_to_uni(name):
+    hebrew = {
+        'Alef':         u'\u05D0',
+        'Ayin':         u'\u05E2',
+        'Bet':          u'\u05D1',
+        'Dalet':        u'\u05D3',
+        'Gimel':        u'\u05D2',
+        'He':           u'\u05D4',
+        'Het':          u'\u05D7',
+        'Kaf':          u'\u05DB',
+        'Kaf-final':    u'\u05DA',
+        'Lamed':        u'\u05DC',
+        'Mem':          u'\u05DD',
+        'Mem-medial':   u'\u05DE',
+        'Nun-final':    u'\u05DF',
+        'Nun-medial':   u'\u05E0',
+        'Pe':           u'\u05E4',
+        'Pe-final':     u'\u05E3',
+        'Qof':          u'\u05E7',
+        'Resh':         u'\u05E8',
+        'Samekh':       u'\u05E1',
+        'Shin':         u'\u05E9',
+        'Taw':          u'\u05EA',
+        'Tet':          u'\u05D8',
+        'Tsadi-final':  u'\u05E5',
+        'Tsadi-medial': u'\u05E6',
+        'Waw':          u'\u05D5',
+        'Yod':          u'\u05D9',
+        'Zayin':        u'\u05D6'
+    }
+    if name in hebrew:
+        return hebrew[name]
+    else:
+        return '?'
+
+####################################################
+# OPTIONALLY PREDICT FAKE TEST LINE OR SCROLL LINE #
+####################################################
+
 
 if network_exists and test_example:
 
@@ -265,80 +324,81 @@ if network_exists and test_example:
         n_strides_dn=n_strides_dn,
         n_ksizes_dn=n_ksizes_dn,
         anchors_path=anchor_file,
-        score_threshold=score_threshold,
-        iou_threshold=iou_threshold,
         convert=False,
         checkpoint_step=steps - (steps % save_internal))
 
     weightconverter.convert_weights()
 
-    rescale_test = False
-    if test_on_scrolls:
-        source_dir = processed_image_dir
-        rescale_test = True
-    elif test_on_train:
-        source_dir = lines_train_dir
-    else:
-        source_dir = lines_test_dir
-
-    tester = Tester(source_dir=source_dir,
-                    num_classes=num_classes,
-                    score_threshold=score_threshold,
-                    iou_threshold=iou_threshold,
+    #######################################################
+    # FEED ALL GIVEN SCROLL LINES TO THE NETWORK IN ORDER #
+    #######################################################
+    tester = Tester(num_classes=num_classes,
                     size_threshold=size_threshold,
                     img_dims=img_dims,
                     checkpoint_dir=checkpoint_dir,
                     letters_test_dir=letters_train_dir,
-                    max_boxes=max_boxes,
-                    filters=filters,
-                    rescale_test=rescale_test)
-    results = tester.test()
+                    max_boxes=line_length_bounds[1],
+                    filters=filters)
 
-    print('\n'*5)
+    if test_on_scrolls:
+        source_dir = processed_image_dir
+        rescale_test = True
+        file_output = str()
+        if os.path.isdir(output_file):
+            shutil.rmtree(output_file)
+        os.mkdir(output_file)
+        for file_idx in range(len(os.listdir(source_dir))):
 
-    if not results:
-        print("No characters were detected!")
+            this_dir = os.path.join(source_dir, f"File{file_idx}")
+
+            file_output = str()
+            for line_idx in range(len(os.listdir(this_dir))):
+
+                this_line = os.path.join(this_dir, f"Line{line_idx}.png")
+
+                results = tester.test(image_path=this_line)
+                results = [convert_to_uni(c) for (_, c, _) in results]
+                file_output += ''.join(results) + ('\n' if results else '')
+            print(file_output)
+
+            with open(join(output_file, f"Out{file_idx}.txt"),
+                      "a+",
+                      encoding="utf-8") as f:
+                if not file_output:
+                    file_output = "[there were no characters detected]"
+
+                for i in range(len(file_output)):
+                    f.write(str(file_output[i]))
+                # f.write("\n")
+
     else:
-        [print(f"x={int(x)}:\t{c}\t(p = {p:.3f})") for (x, c, p) in results]
 
-    print('\n'*5)
+        ############################################################
+        # SIMPLY PREDICT ON A FAKE TEST LINE AND PRINT IN TERMINAL #
+        ############################################################
 
-    def convert_to_uni(name):
-        hebrew = {
-            'Alef':         u'\u05D0',
-            'Ayin':         u'\u05E2',
-            'Bet':          u'\u05D1',
-            'Dalet':        u'\u05D3',
-            'Gimel':        u'\u05D2',
-            'He':           u'\u05D4',
-            'Het':          u'\u05D7',
-            'Kaf':          u'\u05DB',
-            'Kaf-final':    u'\u05DA',
-            'Lamed':        u'\u05DC',
-            'Mem':          u'\u05DD',
-            'Mem-medial':   u'\u05DE',
-            'Nun-final':    u'\u05DF',
-            'Nun-medial':   u'\u05E0',
-            'Pe':           u'\u05E4',
-            'Pe-final':     u'\u05E3',
-            'Qof':          u'\u05E7',
-            'Resh':         u'\u05E8',
-            'Samekh':       u'\u05E1',
-            'Shin':         u'\u05E9',
-            'Taw':          u'\u05EA',
-            'Tet':          u'\u05D8',
-            'Tsadi-final':  u'\u05E5',
-            'Tsadi-medial': u'\u05E6',
-            'Waw':          u'\u05D5',
-            'Yod':          u'\u05D9',
-            'Zayin':        u'\u05D6'
+        rescale_test = False
+        source_dir = lines_train_dir if test_on_train else lines_test_dir
 
-        }
-        if name in hebrew:
-            return hebrew[name]
+        tester = Tester(num_classes=num_classes,
+                        size_threshold=size_threshold,
+                        img_dims=img_dims,
+                        checkpoint_dir=checkpoint_dir,
+                        letters_test_dir=letters_train_dir,
+                        max_boxes=line_length_bounds[1],
+                        filters=filters)
+        results = tester.test(source_dir=source_dir)
+
+        print('\n'*5)
+
+        if not results:
+            print("No characters were detected!")
         else:
-            return '?'
+            [print(f"x={int(x)}:\t{c}\t(p = {p:.3f})")
+             for (x, c, p) in results]
 
-    print(''.join([convert_to_uni(c) for (_, c, _) in results]))
+        print('\n'*5)
 
-    print('\n'*5)
+        final_word = ''.join([convert_to_uni(c) for (_, c, _) in results])
+        print(final_word)
+        print('\n'*5)
