@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 cdef float MAX_CROPPING_HEIGHT = 130 #in px
 cdef int MIN_BLACK_PIXELS = 1200 #minimum number of black pixels in cropping of line to be saved
 cdef int MIN_BLACK_PIXELS_CHAR = 400 #minimum number of black pixels in cropping of char to be saved
-cdef char APPLY_CHARACTER_SEGMENTATION = 1 ## apply char segmentation after line segmentation
+cdef char APPLY_CHARACTER_SEGMENTATION = 0 ## apply char segmentation after line segmentation
 
 ## obtained from https://github.com/jrosebr1/imutils/blob/master/imutils/convenience.py
 def rotate_bound(np.ndarray[np.uint8_t, ndim=2] image, float angle):
