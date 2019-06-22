@@ -80,7 +80,7 @@ Ruben:
 | 05-28 | Bugfixing                       | Ruben          |
 | 05-28 | Python to cython                | Tomas          |
 | 05-28 | Remove old Yolo weights req.    | Ruben          |
-| 06-01 | Create backup CNN               | Ruben          |
+| 06-01 | Create backup CNN               | Ruben & Emile  |
 | 06-03 | Start working on Yolo filters   | Werner         |
 | 06-04 | Convert Yolo to single-channel  | Emile & Werner |
 | 06-04 | Improve Yolo normalization      | Ruben          |
@@ -95,7 +95,7 @@ Ruben:
 | 06-06 | Start on backup CNN pipeline    | Tomas          |
 | 06-06 | Add sliding window approach     | Emile          |
 | 06-06 | Add hebrew character writer     | Werner         |
-| 06-11 | Improve sliding window peaks    | Ruben          |
+| 06-11 | Improve sliding window peaks    | Ruben & Emile  |
 | 06-13 | Improve sliding window output   | Ruben          |
 | 06-13 | Add many-image functionality    | Tomas          |
 | 06-17 | Improve the Yolo filters        | Werner         |
