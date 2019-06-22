@@ -65,7 +65,8 @@ n_ksizes_dn = (30, )  # Optimally: half of the usual letter width and height
 # Thresholds and filters
 filters = False
 size_threshold = (1, 1)  # in pixels
-# Also remember the min_dist in utils and score/iou_threshold in quick_train!
+# Also remember the min_dist in utils and score/iou_threshold in quick_train
+# and quick test!
 
 batch_size = 1
 steps = 85000

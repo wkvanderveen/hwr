@@ -3,12 +3,32 @@ Repository for the Handwriting Recognition course, 2019
 
 We are the Sayaret team, and this repository contains the code of our dead sea scroll reading system.
 
-## Compile instructions
+## The Two Systems
 
-[TODO]
 ### Sliding Window
+[TODO]
 
 ### YOLO
+####To run YOLO:
+1. Make sure to have the required packages (as listed in `requirements.txt`).
+2. `cd` to the `hwr/data/` directory, and make a new folder named "image-data". Here, place one or more dead sea scroll images.
+3. Also in the `hwr/data/` directory, make a folder named "original_letters", which contains 27 subfolders, each with images of Hebrew charaters. The subfolders are named according to their character class (i.e., "Alef", "Bet", etc.)
+4. `cd` to the `hwr/src/` directory, and open the `main.py` file. You can optionally set the Yolo parameters here.
+5. Run the yolo pipeline using `python3 main.py`.
+6. To be able to train the network from scratch again, run `clear_network.py`. If you instead call run
+`main.py` again without clearing, and a checkpoint is found that corresponds to the number of steps in the parameters, then you will skip to the testing phase immediately.
+
+####What it does:
+1. The dead sea scrolls are preprocessed, and the resulting lines are placed in a new file structure in the `data/image-lines-sorted` directory.
+2. The original letters are splitted into a training set and a testing set (each in their own folder).
+3. The train letters are augmented.
+4. Fake training and testing lines are generated from the training and testing letters, respectively. The locations and classes (labels) of the letters are stored in the process.
+5. The fake lines and their labels are transformed into TfRecord files, which contain a representation of the line image and the bounding box label information.
+6. From the TfRecord files, yolo anchor data is generated.
+7. The Yolo network is initialized and trained on the fake training lines.
+8. The network is tested, on either the train or test fake lines, or on the scroll images. This can be set in the parameters.
+9. If testing on fake lines, the network outputs the result for one instance. If testing on scrolls, the network tests on all lines of all the given scrolls, and generates text files contains the lines per scroll. These text files are then located in a folder in the `hwr/data/` directory.
+
 
 ## Task Division
 Emile:
