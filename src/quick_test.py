@@ -6,8 +6,8 @@ import os
 from numpy import expand_dims
 from random import choice
 
-tf.logging.set_verbosity(tf.logging.ERROR)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+# tf.logging.set_verbosity(tf.logging.ERROR)
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 
 class Tester(object):
@@ -25,15 +25,7 @@ class Tester(object):
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
 
-        def deprecated(date, instructions, warn_once=False):
-            def deprecated_wrapper(func):
-                return func
-            return deprecated_wrapper
-
-        from tensorflow.python.util import deprecation
-        deprecation.deprecated = deprecated
-
-    def test(self, source_dir=None, image_path=None):
+    def test(self, source_dir=None, image_path=None, show=False):
         if source_dir:
             image_name = choice(os.listdir(source_dir))
             image_path = os.path.join(source_dir, image_name)
@@ -129,7 +121,7 @@ class Tester(object):
                 labels,
                 classes,
                 [self.img_h, self.img_w],
-                show=(source_dir is not None),
+                show=show,
                 size_threshold=self.size_threshold)
 
         return results

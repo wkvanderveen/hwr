@@ -2,9 +2,9 @@ import tensorflow as tf
 import os
 from core import utils, yolov3
 from core.dataset import dataset, Parser
-tf.logging.set_verbosity(tf.logging.ERROR)
 sess = tf.Session()
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+# tf.logging.set_verbosity(tf.logging.ERROR)
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 
 class Trainer(object):
@@ -36,14 +36,6 @@ class Trainer(object):
         self.train_records = train_records
         self.test_records = test_records
         self.checkpoint_path = os.path.join(checkpoint_path, "yolov3.ckpt")
-
-        def deprecated(date, instructions, warn_once=False):
-            def deprecated_wrapper(func):
-                return func
-            return deprecated_wrapper
-
-        from tensorflow.python.util import deprecation
-        deprecation.deprecated = deprecated
 
     def train(self):
         ANCHORS = utils.get_anchors(self.anchors_path, self.img_h, self.img_w)

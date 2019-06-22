@@ -19,7 +19,7 @@ sys.path.append(f'{os.path.dirname(os.path.realpath(__file__))}' +
 
 from preprocessor import preprocess_image
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 # To run tensorboard, type the following in the data folder:
 #   tensorboard --logdir train:./train_summary,eval:./test_summary
@@ -46,11 +46,11 @@ output_file = join(core_data_path, "output_file")
 
 
 # Data parameters
-num_classes = 4
+num_classes = 27
 split_percentage = 20
 augment = False
 line_length_bounds = (30, 30)
-n_training_lines = 500
+n_training_lines = 5000
 n_testing_lines = 200
 max_overlap_train = 0
 max_overlap_test = 0
@@ -58,20 +58,21 @@ test_on_train = False
 test_on_scrolls = True
 
 # Network parameters (darknet)
-n_filters_dn = (128*256,)  # More is better
+n_filters_dn = (1024*1024,)  # More is better
 n_strides_dn = (1, )  # Only increase beyond 1 if needed for memory savings
 n_ksizes_dn = (30, )  # Optimally: half of the usual letter width and height
 
 # Thresholds and filters
 filters = False
-size_threshold = (5, 5)  # in pixels
-# Also remember the min_dist in utils and iou_threshold in quick_train!
+size_threshold = (1, 1)  # in pixels
+# Also remember the min_dist in utils and score/iou_threshold in quick_train
+# and quick test!
 
-batch_size = 3
-steps = 300
+batch_size = 1
+steps = 85000
 learning_rate = 1e-3
-decay_steps = 50
-decay_rate = 0.9
+decay_steps = 100
+decay_rate = 0.95
 shuffle_size = 10
 eval_internal = 1000
 save_internal = 50
@@ -93,7 +94,7 @@ if not os.path.isdir(os.path.join(processed_image_dir, "File0")):
              if os.path.isfile(join(image_dir, fn))]
     os.mkdir(processed_image_dir)
     for idx_file, file in enumerate(files):
-        print(f"Progress: {idx_file+1}{len(files)}...")
+        print(f"Progress: {idx_file+1} of {len(files)} scrolls...")
         extracted_lines = preprocess_image(cv2.imread(file))
         this_dir = os.path.join(processed_image_dir, f"File{idx_file}")
         if not os.path.isdir(this_dir):
@@ -356,7 +357,10 @@ if network_exists and test_example:
 
                 this_line = os.path.join(this_dir, f"Line{line_idx}.png")
 
-                results = tester.test(image_path=this_line)
+                is_last = (file_idx == len(os.listdir(source_dir))
+                           and line_idx == len(os.listdir(this_dir)))
+
+                results = tester.test(image_path=this_line, show=is_last)
                 results = [convert_to_uni(c) for (_, c, _) in results]
                 file_output += ''.join(results) + ('\n' if results else '')
             print(file_output)
@@ -387,7 +391,8 @@ if network_exists and test_example:
                         letters_test_dir=letters_train_dir,
                         max_boxes=line_length_bounds[1],
                         filters=filters)
-        results = tester.test(source_dir=source_dir)
+
+        results = tester.test(source_dir=source_dir, show=True)
 
         print('\n'*5)
 
