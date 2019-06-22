@@ -3,14 +3,17 @@ import numpy as np
 from keras.models import load_model
 from matplotlib import pyplot as plt
 import matplotlib.image as mpimg
+
 np.set_printoptions(threshold=np.inf)
 
 
 class SlidingWindow:
     def __init__(self):
-        self.characters = ["Alef","Ayin","Bet","Dalet","Gimel","He","Het","Kaf","Kaf-final","Lamed","Mem","Mem-medial","Nun-final",
-        "Nun-medial","Pe","Pe-final","Qof","Resh","Samekh","Shin","Taw","Tet","Tsadi-final","Tsadi-medial","Waw","Yod","Zayin"]
-        self.model = load_model("../data/models/temp_model.model")
+        self.characters = ["Alef", "Ayin", "Bet", "Dalet", "Gimel", "He", "Het", "Kaf", "Kaf-final", "Lamed", "Mem",
+                           "Mem-medial", "Nun-final",
+                           "Nun-medial", "Pe", "Pe-final", "Qof", "Resh", "Samekh", "Shin", "Taw", "Tet", "Tsadi-final",
+                           "Tsadi-medial", "Waw", "Yod", "Zayin"]
+        self.model = load_model("../data/models/backup_model.model")
         self.save_kernel_path = "../data/"
         self.txtfile = open("../data/softmax.txt", "w")
         self.final_yaxis = False
@@ -21,7 +24,6 @@ class SlidingWindow:
         self.SHOW_PLOT = False
         self.WRITE_WINDOWS = False
 
-
     def load_image(self, image_path):
         self.run_final = False
         self.image_file = image_path
@@ -29,11 +31,15 @@ class SlidingWindow:
         self.aspect = self.image.shape[1] / self.image.shape[0]
         self.reshape_height = 60
         self.reshape_width = int(60 * self.aspect)
+        if self.reshape_width < 39:
+            print('reshaping')
+            self.reshape_width = 39
+            self.reshape_height = int(39 / self.aspect)
         self.image = cv2.resize(self.image, (self.reshape_width, self.reshape_height))
         self.stepSize = 1
         (self.w_width, self.w_height) = (39, 39)  # window size
         self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
-        self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
+        self.PEAK_CONCAT_DIST = self.image.shape[0] * 0.2
 
     def load_image_final_pipeline(self, image):
         self.run_final = True
@@ -41,26 +47,30 @@ class SlidingWindow:
         self.aspect = self.image.shape[1] / self.image.shape[0]
         self.reshape_height = 60
         self.reshape_width = int(60 * self.aspect)
+        if self.reshape_width < 39:
+            print('reshaping')
+            self.reshape_width = 39
+            self.reshape_height = int(39 / self.aspect)
         self.image = cv2.resize(self.image, (self.reshape_width, self.reshape_height))
         self.stepSize = 1
         (self.w_width, self.w_height) = (39, 39)  # window size
         self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
-        self.PEAK_CONCAT_DIST = self.image.shape[0]*0.2
+        self.PEAK_CONCAT_DIST = self.image.shape[0] * 0.2
 
     def find_mean(self, x):
         length = len(x)
         total = 0
         for i in range(length):
             total += x[i]
-        return total/length
+        return total / length
 
     def merge_peaks(self, x):
-        width, height = x.shape # shape: [27, n]
+        width, height = x.shape  # shape: [27, n]
         last_saved_idx = 0
         for idx in range(width):
             for idx2 in range(height):
                 if x[idx, idx2] > 0:
-                    #print(x[idx, idx2])
+                    # print(x[idx, idx2])
                     if (idx2 - last_saved_idx) < self.PEAK_CONCAT_DIST:
                         x[idx, last_saved_idx:idx2] = x[idx, last_saved_idx]
                     last_saved_idx = idx2
@@ -71,17 +81,18 @@ class SlidingWindow:
         upper_arr = []
         max = np.max(x)
         length = len(x)
-        width, height = x.shape # shape: [27, n]
-        
-        for idx2 in range(height): #Loop over the histogram heights
-            mean1 = self.find_mean(np.unique(x)) #unique since there are a lot of 0s; count the mean hist count of all letters
-            last_saved_idx = 0 #used to concat same character peaks with small distance
+        width, height = x.shape  # shape: [27, n]
+
+        for idx2 in range(height):  # Loop over the histogram heights
+            mean1 = self.find_mean(
+                np.unique(x))  # unique since there are a lot of 0s; count the mean hist count of all letters
+            last_saved_idx = 0  # used to concat same character peaks with small distance
             if mean1 != 0:
                 for idx in range(width):
                     item = x[idx, idx2]
                     if item <= mean1:
                         x[idx, idx2] = 0.0
-                        
+
                     if item > mean1:
                         upper_arr.append(item)
                 # mean2 = self.find_mean(np.unique(np.array(upper_arr))) #unique since there are a lot of 0s
@@ -90,14 +101,14 @@ class SlidingWindow:
                 #     if item <= mean2:
                 #         x[idx, idx2] = 0.0
                 # print(mean1, mean2)
-        #print(x)
+        # print(x)
         return x
 
     def probs_to_one_hot(self, arr):
         arr_len = arr.shape[1]
-        new = np.zeros(arr_len, dtype = int)
+        new = np.zeros(arr_len, dtype=int)
         maxim = np.max(arr)
-        if maxim > self.CONFIDENCE_THRESHOLD: 
+        if maxim > self.CONFIDENCE_THRESHOLD:
             new[np.argmax(arr)] = 1
         return new
 
@@ -110,7 +121,7 @@ class SlidingWindow:
             if (x + self.w_width) >= self.image.shape[1]:
                 x = self.image.shape[1] - self.w_width
                 self.final_xaxis = True
-            
+
             for y in range(0, self.image.shape[0], self.stepSize):
                 self.i = self.i + 1
                 filename = ""
@@ -122,17 +133,17 @@ class SlidingWindow:
                 if self.stop is False:
                     window = self.image[y:y + self.w_height, x:x + self.w_width]
                     temp = window.reshape((1, self.w_height, self.w_width, 1))
-                    temp = np.interp(temp, (temp.min(), temp.max()), (0, 1)) #Normalize image between 0 and 1
+                    temp = np.interp(temp, (temp.min(), temp.max()), (0, 1))  # Normalize image between 0 and 1
 
                     whites_top = 0
                     for i in range(self.w_height):
-                        if np.count_nonzero(temp[0][i] == 1)/39. == 1:
+                        if np.count_nonzero(temp[0][i] == 1) / 39. == 1:
                             whites_top += 1
                         else:
                             break
                     whites_bottom = 0
                     for i in range(self.w_height):
-                        if np.count_nonzero(temp[0][i] == 1)/39. == 1:
+                        if np.count_nonzero(temp[0][i] == 1) / 39. == 1:
                             whites_bottom += 1
                         else:
                             whites_bottom = 0
@@ -143,9 +154,9 @@ class SlidingWindow:
                         predict = self.model.predict(temp)
                         onehot = self.probs_to_one_hot(predict)
                         idxes = [np.where(onehot != 0.0)[0]][0]
-                        #softmaxes = [np.where(predict[0] != 0.0)[0]][0]
+                        # softmaxes = [np.where(predict[0] != 0.0)[0]][0]
                         self.txtfile.write(str(self.i) + " - ")
-                        for idx in idxes: #loop, in case 2 or more characters have same probability
+                        for idx in idxes:  # loop, in case 2 or more characters have same probability
                             self.classificationMatrix[idx][x] += 1
                             filename += self.characters[idx]
                             self.txtfile.write(self.characters[idx] + " " + str(predict) + " ")
@@ -161,7 +172,7 @@ class SlidingWindow:
                 if self.final_yaxis:
                     break
 
-            mean_of_column = [float(sum(col))/len(col) for col in zip(*temp_prediction_list)]
+            mean_of_column = [float(sum(col)) / len(col) for col in zip(*temp_prediction_list)]
             if not mean_of_column == []:
                 prediction_list.append(mean_of_column)
 
@@ -175,13 +186,14 @@ class SlidingWindow:
                 plt.legend()
         plt.subplot(2, 1, 2)
         try:
-            img=mpimg.imread(self.image_file)
+            img = mpimg.imread(self.image_file)
             if self.SHOW_PLOT:
                 plt.imshow(img)
                 plt.show()
         except:
             pass
         return prediction_list
+
 
 if __name__ == '__main__':
     sw = SlidingWindow()
