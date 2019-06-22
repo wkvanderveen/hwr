@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 cdef float MAX_CROPPING_HEIGHT = 130 #in px
 cdef int MIN_BLACK_PIXELS = 1200 #minimum number of black pixels in cropping of line to be saved
 cdef int MIN_BLACK_PIXELS_CHAR = 400 #minimum number of black pixels in cropping of char to be saved
-cdef char APPLY_CHARACTER_SEGMENTATION = 1 ## apply char segmentation after line segmentation
+cdef char APPLY_CHARACTER_SEGMENTATION = 0 ## apply char segmentation after line segmentation
 
 ## obtained from https://github.com/jrosebr1/imutils/blob/master/imutils/convenience.py
 def rotate_bound(np.ndarray[np.uint8_t, ndim=2] image, float angle):
@@ -73,14 +73,17 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	img = b.binarize_image(img)
 
 	#smear
-	(_, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
+	(_, smear, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
 
 	croppings.reverse() #order croppings from top to bot
 	smear_croppings.reverse()
 
 	final_croppings = []
-	for (c, s) in zip(croppings, smear_croppings):
-		(height, width) = np.shape(c)
+	# for (c, s) in zip(croppings, smear_croppings):
+	c = img
+	s = smear
+	if True:
+		(height, width) = np.shape(s)
 		if height > MAX_CROPPING_HEIGHT: 
 			#split further using acid drop
 			hist = l.create_v_histogram(s)
