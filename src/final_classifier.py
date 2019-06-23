@@ -58,7 +58,7 @@ if __name__ == '__main__':
             ## neural network call here
             sw = SlidingWindow()
             sw.WRITE_WINDOWS = False  # If True, the input images of the cnn will be written to a file
-            sw.load_image_final_pipeline(line)
+            sw.load_image(line)
             transcribed_lines = sw.get_letters()
 
             ## apply postprocessing

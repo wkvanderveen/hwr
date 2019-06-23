@@ -22,7 +22,7 @@ class SlidingWindow:
         self.i = 0
         self.CONFIDENCE_THRESHOLD = 0.6
         self.SHOW_PLOT = False
-        self.WRITE_WINDOWS = False
+        self.WRITE_WINDOWS = True
 
     def load_image(self, image):
         self.image = image
@@ -71,18 +71,28 @@ class SlidingWindow:
                     temp = np.interp(temp, (temp.min(), temp.max()), (0, 1))  # Normalize image between 0 and 1
 
                     whites_top = 0
+                    spickles = 0
                     for i in range(self.w_height):
-                        if np.count_nonzero(temp[0][i] == 1) / 39. == 1:
+                        whiteness = np.count_nonzero(temp[0][i] > 0.8) / 39.
+                        if whiteness == 1:
                             whites_top += 1
+                        elif 1 > whiteness > 0.8:
+                            spickles += 1
+                            break
                         else:
                             break
                     whites_bottom = 0
                     for i in range(self.w_height):
-                        if np.count_nonzero(temp[0][i] == 1) / 39. == 1:
+                        whiteness = np.count_nonzero(temp[0][i] > 0.8) / 39.
+                        if whiteness == 1:
                             whites_bottom += 1
                         else:
                             whites_bottom = 0
                             continue
+                    if whites_top > 30 or whites_bottom > 30 or spickles > 5:
+                        if self.final_xaxis and self.final_yaxis:
+                            self.stop = True
+                        continue
 
                     # IF WHITE LINES TOP AND BOTTOM IS EQUAL:
                     if abs(whites_bottom - whites_top) <= 1:
@@ -117,7 +127,7 @@ class SlidingWindow:
 
 if __name__ == '__main__':
     sw = SlidingWindow()
-    image_file = "../data/backup_val_lines/line1.png"
+    image_file = "../data/lines/0_0_6014.png"
     image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)  # your image path
     sw.load_image(image)
     prediction_list = sw.get_letters()
