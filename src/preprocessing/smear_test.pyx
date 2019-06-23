@@ -56,7 +56,6 @@ class Smear:
 		'''
 		Used for extracting the contoured image.. Mostly for testing
 		'''
-		# typedefs
 		cdef list approx, rects
 		cdef np.ndarray a
 		cdef np.ndarray[np.uint8_t, ndim=2] img_copy
@@ -84,7 +83,6 @@ class Smear:
 		contours = [cnt for (cnt, area) in zip(contours, areas) if area > thres]
 
 		removed = len(areas) - len(contours)
-		# print('removed ' + str(removed) + ' areas')
 
 		approx = []
 		for cnt in contours:
@@ -102,8 +100,6 @@ class Smear:
 		cdef int x, y, w, h, idx, h_img, w_img
 		img_original = self.padd_image(img_original, PADDING)
 		img_smear = self.padd_image(img_smear, PADDING)
-
-		# cv2.imwrite("dilated.png", img_smear)
 
 		(approx, rects) = self.get_contour_approximations(img_smear)
 
@@ -123,9 +119,6 @@ class Smear:
 			(x, y, w, h) = rects[idx]
 			out = out[y:(y+h), x:(x+w)]
 			cout = cout[y:(y+h), x:(x+w)]
-			# if w * h > AREA_THRESHOLD_2:
-			# 	(h_img, w_img) = np.shape(img_original)
-			# 	if w * h < h_img * w_img:
 			croppings.append(out)
 			smear_croppings.append(cout)
 
@@ -136,9 +129,7 @@ class Smear:
 	def split_into_lines(self, np.ndarray[np.uint8_t, ndim=2] img):
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
-		# print('start smearing')
 		img_smear = smear(img_smear)
-		# print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
 		(croppings, _) = self.get_croppings(img, img_smear)
@@ -157,9 +148,7 @@ class Smear:
 
 		img_smear = np.array(img, dtype=np.uint8) #copy image
 		img_smear = self.b.get_negative(img_smear)
-		# print('start smearing')
 		img_smear = smear(img_smear)
-		# print('finished smearing')
 		img_smear = self.b.get_negative(img_smear)
 
 		(croppings, smear_croppings) = self.get_croppings(img, img_smear)
@@ -181,7 +170,7 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	nice_img_name = 'P632-Fg002-R-C01-R01'#'P583-Fg006-R-C01-R01' 
+	nice_img_name = 'P632-Fg002-R-C01-R01' 
 	bad_img_name = 'P21-Fg006-R-C01-R01'
 	ground_truth_test_name = '124-Fg004'
 	img_name = ground_truth_test_name
