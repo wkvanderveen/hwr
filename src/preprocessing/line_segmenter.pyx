@@ -29,7 +29,6 @@ class Line_segmenter:
 		cdef np.ndarray[np.uint64_t, ndim=1] hist = np.zeros((y_max), dtype=np.uint64)
 
 		for idx in range(y_max):
-			# hist[idx] = np.sum(img[idx, :]) / 255
 			hist[idx] = (img[idx, :] == 0).sum()
 
 		return hist
@@ -49,23 +48,7 @@ class Line_segmenter:
 
 		for idx in range(numlines):
 			stroke = img[:, idx*STROKE_WIDTH:(idx*STROKE_WIDTH)+STROKE_WIDTH]
-			# cv2.imshow('stroke',stroke)
-			# cv2.waitKey(0)
-			# cv2.destroyAllWindows()
-			hist = self.create_v_histogram(stroke)#self.smooth_hist(self.create_v_histogram(img), 1001)
-			'''
-			peaks = []
-			#get peaks (very simplistic approach)
-			for idx2 in range(y_max // LINE_WIDTH):
-				hist_section = hist[idx2*LINE_WIDTH:(idx2+1)*LINE_WIDTH]
-				#max_val = np.max(hist_section)
-				#print(np.where(hist_section == hist_section.max()))
-				maxes = np.where(hist_section == hist_section.max())[0]
-				if(len(maxes) < 10):
-					peak = maxes[len(maxes)//2] #get center element
-					peak += idx2*LINE_WIDTH		#add offset
-					peaks.append(peak)			#append to set
-				'''
+			hist = self.create_v_histogram(stroke)
 			line_begin_coords = []
 			line_end_coords = []
 
@@ -87,25 +70,18 @@ class Line_segmenter:
 							line_begin_coords.pop()
 							line_end_coords.pop()
 						seek_line_end = False
-			#print(len(line_begin_coords), len(line_end_coords))
-			# line_begin_coords = np.array(line_begin_coords)
-			# line_end_coords = np.array(line_end_coords)
 			stroke = cv2.cvtColor(stroke.astype(np.uint8),cv2.COLOR_GRAY2RGB)
 			color = (0,255,0)
 			for idx in range(0, len(line_begin_coords)):
-				#print(line_begin_coords[idx], line_end_coords[idx], stroke.shape)
 				(x_start, y_start) = line_begin_coords[idx]
 				(x_end, y_end) = line_end_coords[idx]
-				#print(x_start, y_start, x_end, y_end)
 				
 				if color == (0,255,0):
 					color = (0,0,255)
 				else:
 					color = (0,255,0)
 					cv2.line(stroke, (x_start,y_start), (x_end,y_end),color,2)
-			# cv2.imshow('stroke',stroke)
-			# cv2.waitKey(0)
-			# cv2.destroyAllWindows()
+
 			#visualize
 			hist = np.array(hist, dtype=np.float)
 			hist = hist - hist.min()
@@ -113,33 +89,6 @@ class Line_segmenter:
 			hist * 1000.0 #scale to [0,n]
 			
 			segmented_images.append(stroke)
-			'''
-			if(hist.max() > 0):
-				plt.plot(hist)
-				plt.show()
-
-			fig, ax = plt.subplots()
-			ax.imshow(img, extent=[0, x_max, 0, y_max])
-			# ax.plot(hist)
-			ax.barh(range(y_max), hist)#, height=height)
-			# plt.plot(hist)
-			# peaks = np.array(peaks)
-			# print(peaks)
-			# plt.plot(np.array(peaks), np.repeat(1000, len(peaks)))
-			plt.show()
-			# peaks_arr.append(peaks)
-			'''
-
-
-		# #visualize
-		# img2 = img #np.uint8(cv2.cvtColor(img,cv2.COLOR_GRAY2BGR))
-		# for idx in range(numlines-1):
-		# 	for peak in peaks_arr[idx]:
-		# 		for pixel in range(idx*LINE_WIDTH, (idx+1)*LINE_WIDTH - 1, 1):
-		# 			img2[peak, pixel] = 155#[0, 255, 0] #make green
-
-		# cv2.imshow(img2)
-		# cv2.waitKey(0)
 		return segmented_images, hist
 
 	def show_segm_img(self, img_arr):
@@ -182,8 +131,6 @@ class Line_segmenter:
 				minima.append(temp_minima[-1])
 			elif temp_minima[-1] - minima[-1] > min_dist:
 				minima.append(temp_minima[-1])
-
-		# print("kept %d out of %d minima." % (len(minima), len(temp_minima)) )
 		return minima
 		
 
@@ -193,16 +140,9 @@ if __name__ == '__main__':
 	# Test on actual dead sea scroll image
 	for img_name in image_arr:
 		path = join(abspath('..'), 'data')
-		#img_name = 'P21-Fg006-R-C01-R01'#'P22-Fg008-R-C01-R01' #'P513-Fg001-R-C01-R01' 'P106-Fg002-R-C01-R01' 'P21-Fg006-R-C01-R01';
 		col_img = cv2.imread(join(join(path, 'image-data'), img_name + '.jpg'))
 		bw_img =  cv2.imread(join(join(path, 'image-data'), img_name + '-fused.jpg'))
 		print("converting image: " + img_name)
-
-
-		# cv2.imshow('image',bw_img)
-		# cv2.waitKey(0)
-		# cv2.destroyAllWindows()
-
 
 		bw_img = cv2.cvtColor(bw_img,cv2.COLOR_BGR2GRAY) #convert to grayscale
 
@@ -211,8 +151,5 @@ if __name__ == '__main__':
 		seg_images = l.histogram(img)
 		l.show_segm_img(seg_images)
 
-		# cv2.imshow('img', img)
-		# cv2.waitKey(0)
-		# cv2.destroyAllWindows()
 		cv2.imwrite(join(path, 'img_out.png'), img)
 		print("saved converted image \"" + img_name + "\" to \"" + join(path, 'img_out.png') + "\"")
