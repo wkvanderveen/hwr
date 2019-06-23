@@ -256,7 +256,11 @@ else:  # if network already exists
     with open(dimensions_file, "r") as max_dimensions:
         img_h, img_w = [int(x) for x in max_dimensions.read().split()]
     img_dims = (img_h, img_w)
-    num_classes = len(os.listdir(letters_train_dir))
+    try:
+        num_classes = len(os.listdir(letters_train_dir))
+    except FileNotFoundError:
+        # When using pretrained network, no training lines are generated
+        num_classes = 27
 
 
 ####################################
