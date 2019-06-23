@@ -30,7 +30,6 @@ class TfRecordMaker(object):
 
             for line in f.readlines():
                 example = line.split(' ')
-                # example = [float(item) for item in example[1:]]
                 if increase == 0:
                     image_path = example[0]
                 else:

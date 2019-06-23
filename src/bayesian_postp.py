@@ -1,8 +1,6 @@
-import os
 from os.path import join, abspath
 from sliding_window import SlidingWindow
 import numpy as np
-from write_to_file import write_to_file
 import statistics
 
 FINAL_OUTPUT_SAVE_PATH = "../data/program_output/"
@@ -199,7 +197,6 @@ class Bayesian_processor():
                 if one_hots[idx] == one_hots[idx+1]: #Next char is the same as current one
                     trash_indices.append(idx+1)
                     first_char_flag = True
-                    #probabilities[idx] = [statistics.mean(k) for k in zip(probabilities[idx],probabilities[idx+1])]
                 else:
                     first_char_flag = False
                     first_char_mean = probabilities[idx]
@@ -210,7 +207,6 @@ class Bayesian_processor():
                     out_probs.append(first_char_mean)    
             except:
                 pass
-        #probabilities = [j for i, j in enumerate(probabilities) if i not in trash_indices]
         return out_probs
 
     # This function will produce output such that each character in a same character sequence only occurs once. 
@@ -271,13 +267,8 @@ class Bayesian_processor():
         for idx, letter_probs in enumerate(posteriors):
             best_letter_val = max(letter_probs)
             best_letter_index = letter_probs.index(best_letter_val)
-            # print(probabilities[idx][np.array(probabilities[idx]).argmax()])
-            # print(hebrew_map[best_letter_index])
-            # print("\n")
             final_sentence += hebrew_map[best_letter_index]
-
         return final_sentence
-            
 
 
 if __name__ == "__main__":
@@ -288,13 +279,6 @@ if __name__ == "__main__":
     sw = SlidingWindow()
     image_file = "../data/backup_val_lines/line1.png"
     sw.load_image(image_file)
-    # posterior_word = processor.process_word(predicted_word)
-    # posterior_word = processor.normalize_posteriors(posterior_word)
 
-    # print(posterior_word)
-
-    # processor.print_word(predicted_word, "Predicted word (network output)")
-    # processor.print_word(posterior_word, "Normalized word (after bigrams)")
     predicted_sentence = sw.get_letters()
     sentence = processor.apply_postprocessing(predicted_sentence)
-    print(sentence)

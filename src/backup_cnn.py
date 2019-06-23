@@ -1,13 +1,10 @@
 from __future__ import print_function
 import cv2
 import keras
-from PIL import Image
 from cv2.cv2 import copyMakeBorder
 from keras.models import Sequential
 from keras.layers import Input, Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
-from skimage.transform import resize
-from skimage.util import pad
 import numpy as np
 
 np.set_printoptions(threshold=np.inf)
@@ -87,11 +84,6 @@ class CNN_network:
 										  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 										  cv2.BORDER_CONSTANT, value=[1, 1, 1])
 				newImage = cv2.resize(newImage, (39,39))
-				# if counter % 500 == 0:
-				# 	cv2.imshow('train',newImage)
-				# 	cv2.waitKey(0)
-				# 	cv2.destroyAllWindows()
-				# counter += 1
 				temp.append(newImage)
 			temp = np.expand_dims(temp, axis=3)
 			self.trainX = temp
@@ -107,11 +99,6 @@ class CNN_network:
 										  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 										  cv2.BORDER_CONSTANT, value=[1, 1, 1])
 				newImage = cv2.resize(newImage, (39,39))
-				# if counter % 500 == 0:
-				# 	cv2.imshow('train',newImage)
-				# 	cv2.waitKey(0)
-				# 	cv2.destroyAllWindows()
-				# counter += 1
 				temp.append(newImage)
 			temp = np.expand_dims(temp, axis=3)
 			self.trainX_AUG = temp
@@ -128,10 +115,6 @@ class CNN_network:
 										  int(widthPadding / 2), int(widthPadding / 2) + extraWidth,
 										  cv2.BORDER_CONSTANT, value=[1, 1, 1])
 				newImage = cv2.resize(newImage, (39,39))
-				# print(self.testY[count])
-				# cv2.imshow('train',newImage)
-				# cv2.waitKey(0)
-				# cv2.destroyAllWindows()
 				temp.append(newImage)
 			temp = np.expand_dims(temp, axis=3)
 			print(temp.shape)
@@ -154,8 +137,7 @@ class CNN_network:
 				  batch_size=self.BATCH_SIZE,
 				  epochs=self.EPOCHS,
 				  verbose=1,
-				  validation_data=(self.testX, self.testY))#,
-				  #callbacks=[cb, es])
+				  validation_data=(self.testX, self.testY))
 		return model
 
 	def evaluate_model(self, model):
@@ -165,7 +147,6 @@ class CNN_network:
 
 	def run_network(self):
 		input_shape = (self.IMG_H, self.IMG_W, self.CHANNELS)
-		#self.read_data()
 		self.read_data(self.TRAIN_X_FILE, self.TRAIN_Y_FILE, 'train')
 		self.read_data(self.TEST_X_FILE, self.TEST_Y_FILE, 'test')
 		model = self.build_net(input_shape)
