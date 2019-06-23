@@ -7,10 +7,10 @@ We are the Sayaret team, and this repository contains the code of our dead sea s
 Precompiled binaries are supplied and automatically available in the pipeline when cloning this repository. The binaries are located in `hwr/src/preprocessing` and have the `.so` extension for linux systems and `.pwd` extension for Windows systems. Mac binaries are not precompiled as noone in our team used a Mac computer. 
 
 ### In case the binaries do not work
-The binaries can be compiled by the used themself. The nescesssary python packages needed are located in `requirements.txt`. In addition to the packages the preprocessor needs a functioning C++ compiler available on the system. These should come pre-installed on linux as `g++` and on Windows through Visual studio.
+The binaries can be compiled by the user themself. The nescesssary python packages needed are located in `requirements.txt`. In addition to the packages the preprocessor needs a functioning C++ compiler available on the system. These should come pre-installed on linux as `g++` and on Windows through Visual studio.
 
 To compile the binaries
-1. make sure that all the files in `requirements.txt` have been installed.
+1. make sure that all the files in `requirements.txt` have been installed and a working c++ compiler is present on the system path.
 2. move to the `hwr/src/preprocessing` directory
 3. compile the binaries using the following command
 ```
