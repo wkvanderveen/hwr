@@ -73,14 +73,17 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	img = b.binarize_image(img)
 
 	#smear
-	(_, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
+	(_, smear, croppings, smear_croppings) = sm.split_into_lines_and_contour(img)
 
 	croppings.reverse() #order croppings from top to bot
 	smear_croppings.reverse()
 
 	final_croppings = []
-	for (c, s) in zip(croppings, smear_croppings):
-		(height, width) = np.shape(c)
+	# for (c, s) in zip(croppings, smear_croppings):
+	c = img
+	s = smear
+	if True:
+		(height, width) = np.shape(s)
 		if height > MAX_CROPPING_HEIGHT: 
 			#split further using acid drop
 			hist = l.create_v_histogram(s)
