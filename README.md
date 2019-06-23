@@ -11,11 +11,12 @@ We are the Sayaret team, and this repository contains the code of our dead sea s
 ### YOLO
 ####To run YOLO:
 1. Make sure to have the required packages (as listed in `requirements.txt`).
-2. `cd` to the `hwr/data/` directory, and make a new folder named "image-data". Here, place one or more dead sea scroll images.
-3. Also in the `hwr/data/` directory, make a folder named "original_letters", which contains 27 subfolders, each with images of Hebrew charaters. The subfolders are named according to their character class (i.e., "Alef", "Bet", etc.)
-4. `cd` to the `hwr/src/` directory, and open the `main.py` file. You can optionally set the Yolo parameters here.
-5. Run the yolo pipeline using `python3 main.py`.
-6. To be able to train the network from scratch again, run `clear_network.py`. If you instead call run
+2. Make a directory named `data`, and place it in the same folder as the `hwr/` folder. In this `data/` folder, make a new folder named `image-data`. Here, place one or more dead sea scroll images.
+3. Optionally: to use the pretrained weights, copy the "checkpoints-yolo" folder to the `data/` folder, and rename it to `checkpoints`. Else, run `clear_network.py`.
+4. Also in the `hwr/data/` directory, make a folder named "original_letters", which contains 27 subfolders, each with images of Hebrew charaters. The subfolders are named according to their character class (i.e., "Alef", "Bet", etc.)
+5. `cd` to the `hwr/src/` directory, and open the `main.py` file. You can optionally set the Yolo parameters here.
+6. Run the yolo pipeline using `python3 main.py`.
+7. To be able to train the network from scratch again, run `clear_network.py`. If you instead call run
 `main.py` again without clearing, and a checkpoint is found that corresponds to the number of steps in the parameters, then you will skip to the testing phase immediately.
 
 ####What it does:
