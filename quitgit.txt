@@ -1,9 +1,0 @@
-** stuff in <  > denote commands you need to type
-
-How to use Git:
-- < git pull >
-- Then change files / add files
-- < git status (to see which files have been changed) >
-- < git add > (the changes files)
-- < git commit -m "your commit message" >
-- < git push >
