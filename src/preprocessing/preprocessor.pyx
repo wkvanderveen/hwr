@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 cdef float MAX_CROPPING_HEIGHT = 130 #in px
 cdef int MIN_BLACK_PIXELS = 1200 #minimum number of black pixels in cropping of line to be saved
 cdef int MIN_BLACK_PIXELS_CHAR = 400 #minimum number of black pixels in cropping of char to be saved
-cdef char APPLY_CHARACTER_SEGMENTATION = 0 ## apply char segmentation after line segmentation
+cdef char APPLY_CHARACTER_SEGMENTATION = 1 ## apply char segmentation after line segmentation
 
 ## obtained from https://github.com/jrosebr1/imutils/blob/master/imutils/convenience.py
 def rotate_bound(np.ndarray[np.uint8_t, ndim=2] image, float angle):
@@ -54,7 +54,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 
 	#type declarations for cython
 	cdef int x, y, xmax, ymax
-	cdef np.ndarray[np.uint8_t, ndim=2] img, c, s, out
+	cdef np.ndarray[np.uint8_t, ndim=2] img, c, c2, s, out
 	cdef np.ndarray[np.uint64_t, ndim=1] hist
 	cdef list croppings, smear_croppings, final_croppings
 	cdef dict linedict, linedict_old
@@ -143,7 +143,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 	## EXPERIMENTAL CHARACTER SEGMENTATION
 	if APPLY_CHARACTER_SEGMENTATION:
 		for c2 in final_croppings:
-			c2 = rotate_bound(c2, 90) # turn sideways
+			c2 = rotate_bound(c2, 270) # turn sideways
 			(_, _, croppings, smear_croppings) = sm.split_into_lines_and_contour(c2)
 			for (c, s) in zip(croppings, smear_croppings):
 				hist = l.create_v_histogram(s)
@@ -151,7 +151,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 				minima = l.get_minima(hist)
 
 				if len(minima) == 0 and c.shape[0] > 0 and c.shape[1] > 0:
-						out = rotate_bound(c, 270) ## rotate back into place
+						out = rotate_bound(c, 90) ## rotate back into place
 						if sum_black_pixels(out) > MIN_BLACK_PIXELS_CHAR:
 							char_croppings.append(out)
 				else: 				
@@ -183,7 +183,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 
 						out = out[min(linedict_old.values()):max(linedict.values()), :] #crop vertically
 						if out.shape[0] > 0 and out.shape[1] > 0:
-							out = rotate_bound(out, 270) ## rotate back into place
+							out = rotate_bound(out, 90) ## rotate back into place
 							if sum_black_pixels(out) > MIN_BLACK_PIXELS_CHAR:
 								char_croppings.append(out)
 
@@ -195,11 +195,11 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 								out[y, x] = c[y, x] #copy the pixel from the original croppings
 					out = out[min(linedict.values()): , :] #crop vertically
 					if out.shape[0] > 0 and out.shape[1] > 0:
-						out = rotate_bound(out, 270) ## rotate back into place
+						out = rotate_bound(out, 90) ## rotate back into place
 						if sum_black_pixels(out) > MIN_BLACK_PIXELS_CHAR:
 							char_croppings.append(out)
-				char_croppings_final.append(deepcopy(char_croppings))
-				char_croppings = []
+			char_croppings_final.append(char_croppings)
+			char_croppings = []
 
 		final_croppings = char_croppings_final
 
