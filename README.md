@@ -3,22 +3,44 @@ Repository for the Handwriting Recognition course, 2019
 
 We are the Sayaret team, and this repository contains the code of our dead sea scroll reading system.
 
+## Running the preprocessing pipeline
+Precompiled binaries are supplied and automatically available in the pipeline when cloning this repository. The binaries are located in `hwr/src/preprocessing` and have the `.so` extension for linux systems and `.pwd` extension for Windows systems. Mac binaries are not precompiled as noone in our team used a Mac computer. 
+
+### In case the binaries do not work
+The binaries can be compiled by the user themself. The nescesssary python packages needed are located in `requirements.txt`. In addition to the packages the preprocessor needs a functioning C++ compiler available on the system. These should come pre-installed on linux as `g++` and on Windows through Visual studio.
+
+To compile the binaries
+1. make sure that all the files in `requirements.txt` have been installed and a working c++ compiler is present on the system path.
+2. move to the `hwr/src/preprocessing` directory
+3. compile the binaries using the following command
+```
+$ python3 setup.py build_req --inplace
+```
+4. If the compilation process executes without any errors (warnings might occur depending on your system) the system is ready for use. If it executed with errors, the problem is most likely due to the c++ compiler not being on the system path or otherwise unfindable by python.
+
+ 
 ## The Two Systems
 
 ### Sliding Window
-[TODO]
+Both the sliding window and the Yolo implementation don't have a very high accuracy in predicting the right characters given input lines. For the final system test we want to use this sliding window approach because its performance is in general better than the Yolo approach. 
+####To run Sliding Window:
+1. Make sure to have the required packages (as listed in `requirements.txt`).
+2. Make a directory named `data`, and place it in the same folder as the `hwr/` folder. In this `data/` folder, make a new folder named `image-data`. Here, place one or more dead sea scroll images. Also, place the pretrained weights in this `data/` folder. 
+3. To run the sliding window pipeline you can now use the command in the terminal: `python3 final_classifier.py ../data/input_images`.
+4. The output of the program will be in a `.txt` file in the `data/image-data/` directory. The `.txt` file will have the same filename as the input image. 
 
 ### YOLO
-####To run YOLO:
+#### To run YOLO:
 1. Make sure to have the required packages (as listed in `requirements.txt`).
-2. `cd` to the `hwr/data/` directory, and make a new folder named "image-data". Here, place one or more dead sea scroll images.
-3. Also in the `hwr/data/` directory, make a folder named "original_letters", which contains 27 subfolders, each with images of Hebrew charaters. The subfolders are named according to their character class (i.e., "Alef", "Bet", etc.)
-4. `cd` to the `hwr/src/` directory, and open the `main.py` file. You can optionally set the Yolo parameters here.
-5. Run the yolo pipeline using `python3 main.py`.
-6. To be able to train the network from scratch again, run `clear_network.py`. If you instead call run
+2. Make a directory named `data`, and place it in the same folder as the `hwr/` folder. In this `data/` folder, make a new folder named `image-data`. Here, place one or more dead sea scroll images.
+3. Optionally: to use the pretrained weights, copy the "checkpoints-yolo" folder to the `data/` folder, and rename it to `checkpoints`. Else, run `clear_network.py`.
+4. Also in the `hwr/data/` directory, make a folder named "original_letters", which contains 27 subfolders, each with images of Hebrew charaters. The subfolders are named according to their character class (i.e., "Alef", "Bet", etc.)
+5. `cd` to the `hwr/src/` directory, and open the `main.py` file. You can optionally set the Yolo parameters here.
+6. Run the yolo pipeline using `python3 main.py`.
+7. To be able to train the network from scratch again, run `clear_network.py`. If you instead call run
 `main.py` again without clearing, and a checkpoint is found that corresponds to the number of steps in the parameters, then you will skip to the testing phase immediately.
 
-####What it does:
+#### What it does:
 1. The dead sea scrolls are preprocessed, and the resulting lines are placed in a new file structure in the `data/image-lines-sorted` directory.
 2. The original letters are splitted into a training set and a testing set (each in their own folder).
 3. The train letters are augmented.
@@ -30,7 +52,7 @@ We are the Sayaret team, and this repository contains the code of our dead sea s
 9. If testing on fake lines, the network outputs the result for one instance. If testing on scrolls, the network tests on all lines of all the given scrolls, and generates text files contains the lines per scroll. These text files are then located in a folder in the `hwr/data/` directory.
 
 
-## Task Division
+## Task Division on written code
 Emile:
 * Sliding window for backup_cnn;
 * Overall pipeline for yolo (splitting data, augmenting data, etc)

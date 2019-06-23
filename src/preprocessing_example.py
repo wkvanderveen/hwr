@@ -56,11 +56,11 @@ if __name__ == '__main__':
 	print(np.shape(croppings))
 
 	for line_idx, chars in enumerate(croppings):
-		for idx, c in enumerate(chars):
-			cv2.imwrite(join(OUTPATH, "%d_%d.png" % (line_idx, idx)), c)
-			# 	cv2.imshow("cropping%d" % idx, c)
-			# 	cv2.waitKey(0)
-			# cv2.destroyAllWindows()
-			print("saved %d croppings!" % (len(chars)))
+		# for idx, c in enumerate(chars):
+		cv2.imwrite(join(OUTPATH, "%d_.png" % (line_idx)), chars)
+		# 	cv2.imshow("cropping%d" % idx, c)
+		# 	cv2.waitKey(0)
+		# cv2.destroyAllWindows()
+	print("saved %d croppings!" % (len(croppings)))
 # >>>>>>> Stashed changes
 
