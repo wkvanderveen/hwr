@@ -100,7 +100,6 @@ class SlidingWindow:
                         predict = self.model.predict(temp)
                         onehot = self.probs_to_one_hot(predict)
                         idxes = [np.where(onehot != 0.0)[0]][0]
-                        # softmaxes = [np.where(predict[0] != 0.0)[0]][0]
                         self.txtfile.write(str(self.i) + " - ")
                         for idx in idxes:  # loop, in case 2 or more characters have same probability
                             self.classificationMatrix[idx][x] += 1

@@ -22,7 +22,12 @@ $ python3 setup.py build_req --inplace
 ## The Two Systems
 
 ### Sliding Window
-[TODO]
+Both the sliding window and the Yolo implementation don't have a very high accuracy in predicting the right characters given input lines. For the final system test we want to use this sliding window approach because its performance is in general better than the Yolo approach. 
+####To run Sliding Window:
+1. Make sure to have the required packages (as listed in `requirements.txt`).
+2. Make a directory named `data`, and place it in the same folder as the `hwr/` folder. In this `data/` folder, make a new folder named `image-data`. Here, place one or more dead sea scroll images. Also, place the pretrained weights in this `data/` folder. 
+3. To run the sliding window pipeline you can now use the command in the terminal: `python3 final_classifier.py ../data/input_images`.
+4. The output of the program will be in a `.txt` file in the `data/image-data/` directory. The `.txt` file will have the same filename as the input image. 
 
 ### YOLO
 #### To run YOLO:

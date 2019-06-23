@@ -28,7 +28,6 @@ class WeightConverter(object):
         self.weights_dir = os.path.join(weights_dir, "yolov3.weights")
 
     def convert_weights(self):
-        # flags = parser(description="freeze yolov3 graph from checkpoint file").parse_args()
         print(f"=> the input image size is [{self.img_h}, {self.img_w}]")
         anchors = utils.get_anchors(self.anchors_path, self.img_h, self.img_w)
         model = yolov3.yolov3(self.num_classes, anchors)
