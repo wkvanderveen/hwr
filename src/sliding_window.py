@@ -60,6 +60,9 @@ class SlidingWindow:
             for y in range(0, self.image.shape[0], self.stepSize):
                 self.i = self.i + 1
                 filename = ""
+                spickles = 0
+                whites_top = 0
+                whites_bottom = 0
 
                 if (y + self.w_height) >= self.image.shape[0]:
                     y = self.image.shape[0] - self.w_height
@@ -70,26 +73,24 @@ class SlidingWindow:
                     temp = window.reshape((1, self.w_height, self.w_width, 1))
                     temp = np.interp(temp, (temp.min(), temp.max()), (0, 1))  # Normalize image between 0 and 1
 
-                    whites_top = 0
-                    spickles = 0
                     for i in range(self.w_height):
                         whiteness = np.count_nonzero(temp[0][i] > 0.8) / 39.
                         if whiteness == 1:
                             whites_top += 1
-                        elif 1 > whiteness > 0.8:
-                            spickles += 1
-                            break
                         else:
                             break
-                    whites_bottom = 0
                     for i in range(self.w_height):
                         whiteness = np.count_nonzero(temp[0][i] > 0.8) / 39.
                         if whiteness == 1:
                             whites_bottom += 1
+                        elif 1 > whiteness > 0.9:
+                            whites_bottom = 0
+                            spickles += 1
+                            continue
                         else:
                             whites_bottom = 0
                             continue
-                    if whites_top > 30 or whites_bottom > 30 or spickles > 5:
+                    if whites_top > 35 or whites_bottom > 35 or spickles >= 3 or whites_bottom+whites_top > 30:
                         if self.final_xaxis and self.final_yaxis:
                             self.stop = True
                         continue
@@ -106,7 +107,8 @@ class SlidingWindow:
                             filename += self.characters[idx]
                             self.txtfile.write(self.characters[idx] + " " + str(predict) + " ")
                         self.txtfile.write('\n')
-                        filename = self.save_kernel_path + str(self.i) + "-" + filename + ".png"
+                        filename = self.save_kernel_path + str(self.i) + "-" + filename + "S:" + str(spickles) + "WT:" \
+                                   + str(whites_top) + "WB:" + str(whites_bottom) + ".png"
                         if self.WRITE_WINDOWS:
                             cv2.imwrite(filename, window)
                         predict = predict[0]  # collapse dimensions of double list 'predict'
