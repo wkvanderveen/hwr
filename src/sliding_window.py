@@ -24,25 +24,7 @@ class SlidingWindow:
         self.SHOW_PLOT = False
         self.WRITE_WINDOWS = False
 
-    def load_image(self, image_path):
-        self.run_final = False
-        self.image_file = image_path
-        self.image = cv2.imread(self.image_file, cv2.IMREAD_GRAYSCALE)  # your image path
-        self.aspect = self.image.shape[1] / self.image.shape[0]
-        self.reshape_height = 60
-        self.reshape_width = int(60 * self.aspect)
-        if self.reshape_width < 39:
-            print('reshaping')
-            self.reshape_width = 39
-            self.reshape_height = int(39 / self.aspect)
-        self.image = cv2.resize(self.image, (self.reshape_width, self.reshape_height))
-        self.stepSize = 1
-        (self.w_width, self.w_height) = (39, 39)  # window size
-        self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
-        self.PEAK_CONCAT_DIST = self.image.shape[0] * 0.2
-
-    def load_image_final_pipeline(self, image):
-        self.run_final = True
+    def load_image(self, image):
         self.image = image
         self.aspect = self.image.shape[1] / self.image.shape[0]
         self.reshape_height = 60
@@ -56,53 +38,6 @@ class SlidingWindow:
         (self.w_width, self.w_height) = (39, 39)  # window size
         self.classificationMatrix = np.zeros(shape=(len(self.characters), self.reshape_width))
         self.PEAK_CONCAT_DIST = self.image.shape[0] * 0.2
-
-    def find_mean(self, x):
-        length = len(x)
-        total = 0
-        for i in range(length):
-            total += x[i]
-        return total / length
-
-    def merge_peaks(self, x):
-        width, height = x.shape  # shape: [27, n]
-        last_saved_idx = 0
-        for idx in range(width):
-            for idx2 in range(height):
-                if x[idx, idx2] > 0:
-                    # print(x[idx, idx2])
-                    if (idx2 - last_saved_idx) < self.PEAK_CONCAT_DIST:
-                        x[idx, last_saved_idx:idx2] = x[idx, last_saved_idx]
-                    last_saved_idx = idx2
-        return x
-
-    def find_peaks(self, x):
-        peaks = []
-        upper_arr = []
-        max = np.max(x)
-        length = len(x)
-        width, height = x.shape  # shape: [27, n]
-
-        for idx2 in range(height):  # Loop over the histogram heights
-            mean1 = self.find_mean(
-                np.unique(x))  # unique since there are a lot of 0s; count the mean hist count of all letters
-            last_saved_idx = 0  # used to concat same character peaks with small distance
-            if mean1 != 0:
-                for idx in range(width):
-                    item = x[idx, idx2]
-                    if item <= mean1:
-                        x[idx, idx2] = 0.0
-
-                    if item > mean1:
-                        upper_arr.append(item)
-                # mean2 = self.find_mean(np.unique(np.array(upper_arr))) #unique since there are a lot of 0s
-                # for idx in range(width):
-                #     item = x[idx, idx2]
-                #     if item <= mean2:
-                #         x[idx, idx2] = 0.0
-                # print(mean1, mean2)
-        # print(x)
-        return x
 
     def probs_to_one_hot(self, arr):
         arr_len = arr.shape[1]
@@ -177,26 +112,12 @@ class SlidingWindow:
                 prediction_list.append(mean_of_column)
 
         self.txtfile.close()
-        ret = self.find_peaks(self.classificationMatrix).tolist()
-        ret = self.merge_peaks(np.array(ret)).tolist()
-        plt.subplot(2, 1, 1)
-        for idx in range(0, 27):
-            if any(item > 0 for item in ret[idx]) is True:
-                plt.plot(ret[idx], label=self.characters[idx])
-                plt.legend()
-        plt.subplot(2, 1, 2)
-        try:
-            img = mpimg.imread(self.image_file)
-            if self.SHOW_PLOT:
-                plt.imshow(img)
-                plt.show()
-        except:
-            pass
         return prediction_list
 
 
 if __name__ == '__main__':
     sw = SlidingWindow()
     image_file = "../data/backup_val_lines/line1.png"
-    sw.load_image(image_file)
+    image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)  # your image path
+    sw.load_image(image)
     prediction_list = sw.get_letters()
