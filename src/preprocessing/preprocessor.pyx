@@ -54,7 +54,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 
 	#type declarations for cython
 	cdef int x, y, xmax, ymax
-	cdef np.ndarray[np.uint8_t, ndim=2] img, c, s, out, c2
+	cdef np.ndarray[np.uint8_t, ndim=2] img, c, s, out
 	cdef np.ndarray[np.uint64_t, ndim=1] hist
 	cdef list croppings, smear_croppings, final_croppings
 	cdef dict linedict, linedict_old
