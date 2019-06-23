@@ -22,7 +22,7 @@ class SlidingWindow:
         self.i = 0
         self.CONFIDENCE_THRESHOLD = 0.6
         self.SHOW_PLOT = False
-        self.WRITE_WINDOWS = False
+        self.WRITE_WINDOWS = True
 
     def load_image(self, image):
         self.image = image
@@ -60,6 +60,9 @@ class SlidingWindow:
             for y in range(0, self.image.shape[0], self.stepSize):
                 self.i = self.i + 1
                 filename = ""
+                spickles = 0
+                whites_top = 0
+                whites_bottom = 0
 
                 if (y + self.w_height) >= self.image.shape[0]:
                     y = self.image.shape[0] - self.w_height
@@ -70,33 +73,41 @@ class SlidingWindow:
                     temp = window.reshape((1, self.w_height, self.w_width, 1))
                     temp = np.interp(temp, (temp.min(), temp.max()), (0, 1))  # Normalize image between 0 and 1
 
-                    whites_top = 0
                     for i in range(self.w_height):
-                        if np.count_nonzero(temp[0][i] == 1) / 39. == 1:
+                        whiteness = np.count_nonzero(temp[0][i] > 0.8) / 39.
+                        if whiteness == 1:
                             whites_top += 1
                         else:
                             break
-                    whites_bottom = 0
                     for i in range(self.w_height):
-                        if np.count_nonzero(temp[0][i] == 1) / 39. == 1:
+                        whiteness = np.count_nonzero(temp[0][i] > 0.8) / 39.
+                        if whiteness == 1:
                             whites_bottom += 1
+                        elif 1 > whiteness > 0.9:
+                            whites_bottom = 0
+                            spickles += 1
+                            continue
                         else:
                             whites_bottom = 0
                             continue
+                    if whites_top > 35 or whites_bottom > 35 or spickles >= 3 or whites_bottom+whites_top > 30:
+                        if self.final_xaxis and self.final_yaxis:
+                            self.stop = True
+                        continue
 
                     # IF WHITE LINES TOP AND BOTTOM IS EQUAL:
                     if abs(whites_bottom - whites_top) <= 1:
                         predict = self.model.predict(temp)
                         onehot = self.probs_to_one_hot(predict)
                         idxes = [np.where(onehot != 0.0)[0]][0]
-                        # softmaxes = [np.where(predict[0] != 0.0)[0]][0]
                         self.txtfile.write(str(self.i) + " - ")
                         for idx in idxes:  # loop, in case 2 or more characters have same probability
                             self.classificationMatrix[idx][x] += 1
                             filename += self.characters[idx]
                             self.txtfile.write(self.characters[idx] + " " + str(predict) + " ")
                         self.txtfile.write('\n')
-                        filename = self.save_kernel_path + str(self.i) + "-" + filename + ".png"
+                        filename = self.save_kernel_path + str(self.i) + "-" + filename + "S:" + str(spickles) + "WT:" \
+                                   + str(whites_top) + "WB:" + str(whites_bottom) + ".png"
                         if self.WRITE_WINDOWS:
                             cv2.imwrite(filename, window)
                         predict = predict[0]  # collapse dimensions of double list 'predict'
@@ -117,7 +128,7 @@ class SlidingWindow:
 
 if __name__ == '__main__':
     sw = SlidingWindow()
-    image_file = "../data/backup_val_lines/line1.png"
+    image_file = "../data/lines/0_0_6014.png"
     image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)  # your image path
     sw.load_image(image)
     prediction_list = sw.get_letters()

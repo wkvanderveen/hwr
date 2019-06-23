@@ -57,15 +57,6 @@ class Augmenter(object):
                     self.increment_state()
                     continue
 
-                # aug_seq = []
-                # if self.shear:
-                #     aug_seq.append(iaa.Affine(STATE[SHEAR], cval=(255)))
-
-                # if not self.coarse_dropout == (0, 0):
-                #     aug_seq.append(iaa.Invert(1))
-                #     aug_seq.append(iaa.CoarseDropout(STATE[DAMAGE], size_percent=self.coarse_dropout))
-                #     aug_seq.append(iaa.Invert(1))
-
                 seq = iaa.Sequential([
                     iaa.Affine(shear=self.STATE[self.SHEAR], cval=(255)), #Good
                     iaa.Invert(1),

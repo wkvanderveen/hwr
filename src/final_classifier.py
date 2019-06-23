@@ -55,17 +55,17 @@ if __name__ == '__main__':
 
         ## classify lines
         for line in preprocessed_lines:
+            sentence = ''
             ## neural network call here
             sw = SlidingWindow()
             sw.WRITE_WINDOWS = False  # If True, the input images of the cnn will be written to a file
-            sw.load_image_final_pipeline(line)
+            sw.load_image(line)
             transcribed_lines = sw.get_letters()
 
             ## apply postprocessing
             postp = Bayesian_processor()
-            final_line = postp.apply_postprocessing(transcribed_lines)
-            print(final_line)
-            sentence = str(final_line)
+            final_letter = postp.apply_postprocessing(transcribed_lines)
+            sentence = sentence + str(final_letter)
 
             ## write croppings to file
             write_to_file(sentence, path, outfile)

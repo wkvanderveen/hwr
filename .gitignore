@@ -1,5 +1,3 @@
-data/*
-*.pyd
 *.png
 src/preprocessing/build/*
 src/preprocessing/*.html

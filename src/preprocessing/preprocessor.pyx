@@ -54,7 +54,7 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 
 	#type declarations for cython
 	cdef int x, y, xmax, ymax
-	cdef np.ndarray[np.uint8_t, ndim=2] img, c, s, out
+	cdef np.ndarray[np.uint8_t, ndim=2] img, c, c2, s, out
 	cdef np.ndarray[np.uint64_t, ndim=1] hist
 	cdef list croppings, smear_croppings, final_croppings
 	cdef dict linedict, linedict_old
@@ -198,8 +198,9 @@ def preprocess_image(np.ndarray[np.uint8_t, ndim=3] imgin):
 						out = rotate_bound(out, 270) ## rotate back into place
 						if sum_black_pixels(out) > MIN_BLACK_PIXELS_CHAR:
 							char_croppings.append(out)
-				char_croppings_final.append(deepcopy(char_croppings))
-				char_croppings = []
+			char_croppings.reverse()
+			char_croppings_final.append(char_croppings)
+			char_croppings = []
 
 		final_croppings = char_croppings_final
 
