@@ -13,7 +13,7 @@ from random import choice
 class Tester(object):
     """docstring for Tester"""
     def __init__(self, img_dims, num_classes, size_threshold, checkpoint_dir,
-                 letters_test_dir, max_boxes, filters):
+                 letters_test_dir, max_boxes, filters, orig_letters):
 
         super(Tester, self).__init__()
         self.img_h = img_dims[0]
@@ -24,6 +24,7 @@ class Tester(object):
         self.checkpoint_dir = checkpoint_dir
         self.letters_test_dir = letters_test_dir
         self.max_boxes = max_boxes
+        self.orig_letters = orig_letters
 
     def test(self, source_dir=None, image_path=None, show=False):
         if source_dir:
@@ -44,7 +45,7 @@ class Tester(object):
         img = cv2.resize(img, (self.img_w, self.img_h))
         img = expand_dims(img, axis=2)
 
-        classes = os.listdir(self.letters_test_dir)
+        classes = os.listdir(self.orig_letters)
 
         cpu_nms_graph = tf.Graph()
 

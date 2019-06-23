@@ -4,7 +4,7 @@ Repository for the Handwriting Recognition course, 2019
 We are the Sayaret team, and this repository contains the code of our dead sea scroll reading system.
 
 ## Running the preprocessing pipeline
-Precompiled binaries are supplied and automatically available in the pipeline when cloning this repository. The binaries are located in `hwr/src/preprocessing` and have the `.so` extension for linux systems and `.pwd` extension for Windows systems. Mac binaries are not precompiled as noone in our team used a Mac computer. 
+Precompiled binaries are supplied and automatically available in the pipeline when cloning this repository. The binaries are located in `hwr/src/preprocessing` and have the `.so` extension for linux systems and `.pwd` extension for Windows systems. Mac binaries are not precompiled as noone in our team used a Mac computer.
 
 ### In case the binaries do not work
 The binaries can be compiled by the user themself. The nescesssary python packages needed are located in `requirements.txt`. In addition to the packages the preprocessor needs a functioning C++ compiler available on the system. These should come pre-installed on linux as `g++` and on Windows through Visual studio.
@@ -18,22 +18,22 @@ $ python3 setup.py build_req --inplace
 ```
 4. If the compilation process executes without any errors (warnings might occur depending on your system) the system is ready for use. If it executed with errors, the problem is most likely due to the c++ compiler not being on the system path or otherwise unfindable by python.
 
- 
+
 ## The Two Systems
 
 ### Sliding Window
-Both the sliding window and the Yolo implementation don't have a very high accuracy in predicting the right characters given input lines. For the final system test we want to use this sliding window approach because its performance is in general better than the Yolo approach. 
+Both the sliding window and the Yolo implementation don't have a very high accuracy in predicting the right characters given input lines. For the final system test we want to use this sliding window approach because its performance is in general better than the Yolo approach.
 ####To run Sliding Window:
 1. Make sure to have the required packages (as listed in `requirements.txt`).
-2. Make a directory named `data`, and place it in the same folder as the `hwr/` folder. In this `data/` folder, make a new folder named `image-data`. Here, place one or more dead sea scroll images. Also, place the pretrained weights in this `data/` folder. 
+2. Make a directory named `data`, and place it in the same folder as the `hwr/` folder. In this `data/` folder, make a new folder named `image-data`. Here, place one or more dead sea scroll images. Also, place the pretrained weights in this `data/` folder.
 3. To run the sliding window pipeline you can now use the command in the terminal: `python3 final_classifier.py ../data/input_images`.
-4. The output of the program will be in a `.txt` file in the `data/image-data/` directory. The `.txt` file will have the same filename as the input image. 
+4. The output of the program will be in a `.txt` file in the `data/image-data/` directory. The `.txt` file will have the same filename as the input image.
 
 ### YOLO
 #### To run YOLO:
 1. Make sure to have the required packages (as listed in `requirements.txt`).
 2. Make a directory named `data`, and place it in the same folder as the `hwr/` folder. In this `data/` folder, make a new folder named `image-data`. Here, place one or more dead sea scroll images.
-3. Optionally: to use the pretrained weights, copy the "checkpoints-yolo" folder to the `data/` folder, and rename it to `checkpoints`. Else, run `clear_network.py`.
+3. Optionally: to use the pretrained weights, copy the "checkpoints-yolo" folder to the `data/` folder, and rename it to `checkpoints`. Also copy the `anchors.txt` file to `hwr/data/`. Else, run `clear_network.py`.
 4. Also in the `hwr/data/` directory, make a folder named "original_letters", which contains 27 subfolders, each with images of Hebrew charaters. The subfolders are named according to their character class (i.e., "Alef", "Bet", etc.)
 5. `cd` to the `hwr/src/` directory, and open the `main.py` file. You can optionally set the Yolo parameters here.
 6. Run the yolo pipeline using `python3 main.py`.
