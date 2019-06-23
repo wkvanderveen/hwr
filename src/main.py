@@ -49,8 +49,8 @@ output_file = join(core_data_path, "output_file")
 num_classes = 27
 split_percentage = 20
 augment = False
-line_length_bounds = (30, 30)
-n_training_lines = 5000
+line_length_bounds = (20, 20)
+n_training_lines = 20000
 n_testing_lines = 200
 max_overlap_train = 0
 max_overlap_test = 0
@@ -58,21 +58,21 @@ test_on_train = False
 test_on_scrolls = True
 
 # Network parameters (darknet)
-n_filters_dn = (1024*1024,)  # More is better
-n_strides_dn = (1, )  # Only increase beyond 1 if needed for memory savings
+n_filters_dn = (2048*2048*4,)  # More is better
+n_strides_dn = (2, )  # Only increase beyond 1 if needed for memory savings
 n_ksizes_dn = (30, )  # Optimally: half of the usual letter width and height
 
 # Thresholds and filters
-filters = False
+filters = True
 size_threshold = (1, 1)  # in pixels
 # Also remember the min_dist in utils and score/iou_threshold in quick_train
 # and quick test!
 
 batch_size = 1
-steps = 85000
+steps = 82000
 learning_rate = 1e-3
-decay_steps = 100
-decay_rate = 0.95
+decay_steps = 50
+decay_rate = 0.9
 shuffle_size = 10
 eval_internal = 1000
 save_internal = 50

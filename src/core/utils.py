@@ -5,8 +5,8 @@ from collections import Counter
 from PIL import ImageFont, ImageDraw, Image, ImageChops
 np.set_printoptions(threshold=sys.maxsize)
 
-IOU = 0.001
-SCORE = 0.001
+IOU = 0.5
+SCORE = 0.02
 
 #  Discard all boxes with low scores and high IOU
 def gpu_nms(boxes, scores, num_classes, max_boxes=50, score_thresh=SCORE,
@@ -172,7 +172,7 @@ def draw_boxes(image, boxes, scores, labels, classes, detection_size,
     picked_labels = []
     picked_scores = []
 
-    min_dist = 30
+    min_dist = 5
 
     for i, box in enumerate(boxes):
         for io, other in enumerate(picked_boxes):
