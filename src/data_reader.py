@@ -8,8 +8,8 @@ from skimage.transform import warp, AffineTransform
 from matplotlib import pyplot as plt
 
 np.set_printoptions(threshold=sys.maxsize)
-TRAIN_X_PATH = '../../data/letters-train'
-TEST_X_PATH = '../../data/letters-test'
+TRAIN_X_PATH = '../data/letters-train'
+TEST_X_PATH = '../data/letters-test'
 AUGMENTATION_FACTOR = 1
 SHOW_AUGMENT = False
 AUGMENT = True
@@ -22,7 +22,7 @@ class DataReader:
         self.max_width = self.max_height = 0
         self.path_train = TRAIN_X_PATH  # '../../data/letters/' #define path of example letter images
         self.path_test = TEST_X_PATH
-        self.save_path = '../../data/'
+        self.save_path = '../data/'
         self.save_file_train = self.save_path + "train_letters"
         self.save_file_train_labels = self.save_path + "train_labels"
         self.save_file_train_aug = self.save_path + "train_letters_aug"
@@ -30,7 +30,6 @@ class DataReader:
         self.save_file_test = self.save_path + "test_letters"
         self.save_file_test_labes = self.save_path + "test_labels"
         self.save_file_dimensions = self.save_path + "max_dimensions"
-        self.threshold = 200
         self.show_augment = SHOW_AUGMENT
         self.augment = AUGMENT
 
