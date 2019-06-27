@@ -9,6 +9,7 @@ from keras.layers import Conv2D, MaxPooling2D
 from skimage.transform import resize
 from skimage.util import pad
 import numpy as np
+from keras.utils import plot_model
 
 np.set_printoptions(threshold=np.inf)
 
@@ -17,17 +18,17 @@ class CNN_network:
 	def __init__(self):
 		self.BATCH_SIZE = 10
 		self.CLASSES = 27  # Default
-		self.EPOCHS = 3  # Loops once throug all data
+		self.EPOCHS = 20  # Loops once throug all data
 		self.IMG_H = 39
 		self.IMG_W = 39
 		self.CHANNELS = 1
-		self.TRAIN_X_FILE = '../../data/train_letters.npy'
-		self.TRAIN_Y_FILE = '../../data/train_labels.npy'
-		self.TRAIN_X_FILE_AUG = '../../data/train_letters_aug.npy' 
-		self.TRAIN_Y_FILE_AUG = '../../data/train_labels_aug.npy'
-		self.TEST_X_FILE = '../../data/test_letters.npy' 
-		self.TEST_Y_FILE = '../../data/test_labels.npy'
-		self.MODEL_SAVE = '../../data/backup_model.model'
+		self.TRAIN_X_FILE = '../data/train_letters.npy'
+		self.TRAIN_Y_FILE = '../data/train_labels.npy'
+		self.TRAIN_X_FILE_AUG = '../data/train_letters_aug.npy' 
+		self.TRAIN_Y_FILE_AUG = '../data/train_labels_aug.npy'
+		self.TEST_X_FILE = '../data/test_letters.npy' 
+		self.TEST_Y_FILE = '../data/test_labels.npy'
+		self.MODEL_SAVE = '../data/backup_model.model'
 		# Hyperparameters
 		self.CONV_KERNELSIZES = [(3, 3), (3, 3), (5, 5)]
 		self.CONV_FILTERS = [8, 16, 16]
@@ -40,7 +41,7 @@ class CNN_network:
 		self.TRAIN_ON_AUGMENT = True
 
 		self.SAVE_EVERY = 1000  # steps
-		self.EARLY_STOPPING_PATIENCE = 5 # Epochs
+		self.EARLY_STOPPING_PATIENCE = 3 # Epochs
 
 	def build_net(self, input_shape):
 		model = Sequential()
@@ -170,6 +171,7 @@ class CNN_network:
 		self.read_data(self.TEST_X_FILE, self.TEST_Y_FILE, 'test')
 		model = self.build_net(input_shape)
 		model = self.compile_model(model)
+		plot_model(model, to_file='model.png', show_shapes=True, show_layer_names=False)
 		model = self.train_model(model, self.trainX, self.trainY)
 		if self.TRAIN_ON_AUGMENT:
 			# EMPTY PREVIOUS TRAIN DATA, FREEING MEMORY

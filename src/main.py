@@ -27,7 +27,7 @@ from preprocessor import preprocess_image
 # # PARAMETERS # #
 
 # File structure parameters
-core_data_path = join(join(abspath(".."), ".."), "data")
+core_data_path = join(join(abspath(".."), ""), "data")
 
 orig_letters_dir = join(core_data_path, "original_letters")
 letters_train_dir = join(core_data_path, "letters-train")
@@ -48,7 +48,7 @@ output_file = join(core_data_path, "output_file")
 # Data parameters
 num_classes = 27
 split_percentage = 20
-augment = False
+augment = True
 line_length_bounds = (20, 20)
 n_training_lines = 20000
 n_testing_lines = 200
