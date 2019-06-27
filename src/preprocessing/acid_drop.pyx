@@ -19,8 +19,6 @@ cdef float VCOST2 = -0.5		#penalty to move in the vertical direction toward the 
 cdef float LCOST = 1.5			#penalty to move to the left (back)
 cdef float RCOST = 1.0			#penalty to move right (forward; this is the preferred action)
 
-# VCOST = 1.0 		#multiplication penalty (test)
-
 cdef list acid_drop_c(np.ndarray[np.uint8_t, ndim=2] img, int x, int y, int tx, int ty, float max_len):
 	#type declarations
 	cdef int maxx, maxy, sx, sy
@@ -56,7 +54,6 @@ cdef list acid_drop_c(np.ndarray[np.uint8_t, ndim=2] img, int x, int y, int tx, 
 		else:
 			#enqueue all directions
 			if x+1 < maxx and visitedmap[y, x+1] == 0:
-				# dist = np.linalg.norm(np.array((x+1, y)) - startv)
 				rdist = dist + RCOST
 				if img[y, x+1] != 255:
 					rdist += BURNCOST
@@ -65,7 +62,6 @@ cdef list acid_drop_c(np.ndarray[np.uint8_t, ndim=2] img, int x, int y, int tx, 
 				navmap[y, x+1, 0] = x
 				navmap[y, x+1, 1] = y
 			if x-1 > -1 and visitedmap[y, x-1] == 0:
-				# dist = np.linalg.norm(np.array((x-1, y)) - startv)
 				ldist = dist + LCOST
 				if img[y, x-1] != 255:
 					ldist += BURNCOST
@@ -74,12 +70,10 @@ cdef list acid_drop_c(np.ndarray[np.uint8_t, ndim=2] img, int x, int y, int tx, 
 				navmap[y, x-1, 0] = x
 				navmap[y, x-1, 1] = y
 			if y+1 < maxy and visitedmap[y+1, x] == 0:
-				# dist = np.linalg.norm(np.array((x, y+1)) - startv)
 				if ((y+1) - ty)*((y+1) - ty) > (y - ty)*(y - ty): #diverging from the target y
 					udist = dist + VCOST1
 				else:	#coming towards the target y
 					udist = dist + VCOST2
-				# udist = dist + VCOST * np.abs((y+1) - ty) / 20.0
 				if img[y+1, x] != 255:
 					udist += BURNCOST
 				heappush(heap, (udist, x, y+1))
@@ -88,12 +82,10 @@ cdef list acid_drop_c(np.ndarray[np.uint8_t, ndim=2] img, int x, int y, int tx, 
 				navmap[y+1, x, 1] = y
 
 			if y-1 > -1 and visitedmap[y-1, x] == 0:
-				# dist = np.linalg.norm(np.array((x, y-1)) - startv)
 				if ((y-1) - ty)*((y-1) - ty) > (y - ty)*(y - ty): #diverging from the target y
 					ddist = dist + VCOST1
 				else:	#coming towards the target y
 					ddist = dist + VCOST2
-				# ddist = dist + VCOST * np.abs((y-1) - ty) / 20.0
 				if img[y-1, x] != 255:
 					ddist += BURNCOST
 				heappush(heap, (ddist, x, y-1))
@@ -102,7 +94,6 @@ cdef list acid_drop_c(np.ndarray[np.uint8_t, ndim=2] img, int x, int y, int tx, 
 				navmap[y-1, x, 1] = y
 
 	if target_found:
-		# print("target found!")
 		line = []
 		while x != sx or y != sy:
 			line.append((x, y))

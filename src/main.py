@@ -343,7 +343,8 @@ if network_exists and test_example:
                     checkpoint_dir=checkpoint_dir,
                     letters_test_dir=letters_train_dir,
                     max_boxes=line_length_bounds[1],
-                    filters=filters)
+                    filters=filters,
+                    orig_letters=orig_letters_dir)
 
     if test_on_scrolls:
         source_dir = processed_image_dir
@@ -394,7 +395,8 @@ if network_exists and test_example:
                         checkpoint_dir=checkpoint_dir,
                         letters_test_dir=letters_train_dir,
                         max_boxes=line_length_bounds[1],
-                        filters=filters)
+                        filters=filters,
+                        orig_letters=orig_letters_dir)
 
         results = tester.test(source_dir=source_dir, show=True)
 

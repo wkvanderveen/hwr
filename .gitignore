@@ -1,4 +1,3 @@
-data/*
 *.png
 src/preprocessing/build/*
 src/preprocessing/*.html

@@ -66,10 +66,6 @@ class Binarizer:
 		else:
 			img = imgin
 
-
-
-		 
-
 		cdef np.ndarray[np.uint8_t, ndim=2] mask = self.get_mask(img)
 
 		#give the mask here, as the mask over the text is the biggest connected component.
@@ -80,10 +76,7 @@ class Binarizer:
 		mask = mask[y:y+h, x:x+w]
 
 		#mask image
-		# cv2.imwrite('img_in.png', img)
 		img = self.apply_mask(img, mask)
-		# cv2.imwrite('masked_new.png', img)
-		# cv2.imwrite('mask.png', mask)
 
 		#remove noise
 		img = cv2.medianBlur(img, 7)
@@ -128,7 +121,6 @@ class Binarizer:
 		mask_thres = 100 # (mask is already binarized, so an arbitrary number works as a threshold)
 		img_out = np.zeros((y_max, x_max), dtype=np.uint8) #alloc memory
 
-		# img_thres = threshold_otsu(img) #create global otsu threshold (sauvola was tried, but gave worse results)
 		img_thres = threshold_sauvola(img)
 		for y in range(y_max):
 			for x in range(x_max):
@@ -142,7 +134,7 @@ if __name__ == '__main__':
 
 	# Test on actual dead sea scroll image
 	path = join(abspath('..'), 'data')
-	img_name = 'P21-Fg006-R-C01-R01'#'P583-Fg006-R-C01-R01'#'P22-Fg008-R-C01-R01' #'P513-Fg001-R-C01-R01' 'P106-Fg002-R-C01-R01' 'P21-Fg006-R-C01-R01.jpg';
+	img_name = 'P21-Fg006-R-C01-R01'
 	col_img = cv2.imread(join(join(path, 'image-data'), img_name + '.jpg'))
 	bw_img =  cv2.imread(join(join(path, 'image-data'), img_name + '-fused.jpg'))
 	print("converting image: " + img_name)
